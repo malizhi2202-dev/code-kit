@@ -1,4 +1,4 @@
-# GO — flow-kit 统一入口（每个 IDE 都用这一个）
+# GO —code-kit 统一入口（每个 IDE 都用这一个）
 
 > **用户使用方式**：`@flow-kit/GO.md` + 一句话意图
 > AI 看到 `@GO.md` 就按本文件路由，自动决定阶段、自动生成 ID、自动按需加载工件，**不要等用户提供 ID 或路径**。
@@ -17,7 +17,7 @@ flow-kit 的文件分两类，**加载策略不同**：
 
 **违规示例**（AI 常犯）：
 
-- ❌ 进入 2-design 阶段后直接 `read_file flow-kit/reference/tech-stacks.md` 整读 467 行
+- ❌ 进入 2-design 阶段后直接 `read_filecode-kit/reference/tech-stacks.md` 整读 467 行
 - ✅ 正确：`grep_search` 查 `适用矩阵` 或 `read_file offset=??? limit=80` 只读所需那节
 
 - ❌ 进入 2a-ui-design 后同时读 `ui-aesthetics.md` 与 `ui-anti-patterns.md` 两全文
@@ -55,7 +55,7 @@ flow-kit 的文件分两类，**加载策略不同**：
    1. 完整（推荐 500+ 行 / 团队项目 / 长期维护）
    2. 极简（推荐 100~500 行 · 非 UI 项目可跳 2a / 跳第四轮 / 跳跨模型，省 ~20%；UI 项目 2a 不可跳）
    3. 单点（你只想跑某一阶段，告诉我哪一个）
-   4. 不走 flow-kit（< 50 行代码 / bugfix 直接修，别走闭环）
+   4. 不走code-kit（< 50 行代码 / bugfix 直接修，别走闭环）
 ```
 
 ### 何时**不必**跑这段
@@ -84,7 +84,7 @@ flow-kit 的文件分两类，**加载策略不同**：
 | 想要全套产物（CHANGE / REQUIREMENT / DESIGN / UI-DESIGN（前端）/ TASK / SUMMARY × N / TEST / REVIEW） | 完整 |
 | 想要核心产物但能少则少（REQUIREMENT / DESIGN / TASK / SUMMARY × N / REVIEW；UI 项目另含 UI-DESIGN） | 极简 |
 | 只想跑某一阶段（如只 review / 只 design / 只 体检）| 单点 · 见 README 决策表 |
-| 代码 < 50 行 · 一次性修补 · hackathon | 不走 flow-kit，走 7 个原生 skill 更划算 |
+| 代码 < 50 行 · 一次性修补 · hackathon | 不走code-kit，走 7 个原生 skill 更划算 |
 
 ---
 
@@ -177,7 +177,7 @@ Preflight 失败时，路由声明必须写明：
 
 | 文档 | 路径 | 来自哪个生态 |
 |---|---|---|
-| `CONTEXT.md` | 仓库根 / `.specs/` | flow-kit 自己 |
+| `CONTEXT.md` | 仓库根 / `.specs/` |code-kit 自己 |
 | `AGENTS.md` | 仓库根 | OpenAI Codex / 标准 agents 协议 |
 | `CLAUDE.md` | 仓库根 / `.claude/` | Anthropic Claude Code |
 | `.cursor/rules/*.md` | `.cursor/` | Cursor IDE |
@@ -325,7 +325,7 @@ read_file path="flow-kit/reference/tech-stacks.md" offset=380 limit=60
    - .specs/companion-platform/CHANGE.md（全读，52 行）
    - .specs/companion-platform/REQUIREMENT.md（全读，98 行）
    - .specs/CONTEXT.md（全读，41 行）
-   - flow-kit/reference/tech-stacks.md（仅查「适用矩阵」，line 380-405，提取出 5 张候选卡）
+   -code-kit/reference/tech-stacks.md（仅查「适用矩阵」，line 380-405，提取出 5 张候选卡）
 ✅ 未加载：ui-aesthetics.md / test-pyramid.md / ui-anti-patterns.md（后面阶段才需）
 ✅ 第一动作：按 2-design 步骤 0，列 5 张技术栈卡片 + 推荐 + 排除，等用户选定后才出 ADR。
 ```

@@ -10,11 +10,11 @@ Forge 检查“实际有没有做到”：通过 Claude Code hooks、routing log
 
 ## 安装关系
 
-Forge 不应该成为 flow-kit 的依赖。
+Forge 不应该成为code-kit 的依赖。
 
 - 没装 Forge：flow-kit 行为不变，继续按 `@flow-kit/GO.md` 和 `prompts/*.md` 使用。
-- 装了 Forge：AI 可以把 flow-kit 的阶段、change-id、task-id 和风险信息写入 Forge state/routing，供 runtime guard 使用。
-- Forge 缺失或不可用：必须 fail-open 到纯 markdown 流程，不应阻断 flow-kit。
+- 装了 Forge：AI 可以把code-kit 的阶段、change-id、task-id 和风险信息写入 Forge state/routing，供 runtime guard 使用。
+- Forge 缺失或不可用：必须 fail-open 到纯 markdown 流程，不应阻断code-kit。
 
 ## 检测方式
 
@@ -28,11 +28,11 @@ flow-kit/templates/TASK.md
 .claude/hooks/forge-session-audit.ps1
 ```
 
-只有前 3 个存在时，说明项目使用 flow-kit；同时存在 Forge hooks 时，说明可以启用 Forge runtime adapter。
+只有前 3 个存在时，说明项目使用code-kit；同时存在 Forge hooks 时，说明可以启用 Forge runtime adapter。
 
 ## 阶段映射
 
-| flow-kit 阶段 | Forge 用途 |
+|code-kit 阶段 | Forge 用途 |
 |---|---|
 | `0-change` | 记录新 change、风险、是否需要完整流程 |
 | `1-requirement` | 标记需求产物生成中，禁止直接跳到实现 |
@@ -46,7 +46,7 @@ flow-kit/templates/TASK.md
 
 ## 建议写入的 routing 字段
 
-Forge adapter 不要求 flow-kit 改变产物格式。推荐只写一条轻量 routing event：
+Forge adapter 不要求code-kit 改变产物格式。推荐只写一条轻量 routing event：
 
 ```json
 {
@@ -73,4 +73,4 @@ Forge adapter 不要求 flow-kit 改变产物格式。推荐只写一条轻量 r
 - 发现 AI 经常跳过 `3-task`、`5-test`、`6-review`。
 - 希望 Claude Code 写文件前有 fail-close 门禁。
 
-小改动、一次性脚本、纯讨论和非 Claude Code 环境，继续用纯 markdown flow-kit 即可。
+小改动、一次性脚本、纯讨论和非 Claude Code 环境，继续用纯 markdowncode-kit 即可。

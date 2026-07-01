@@ -1,6 +1,6 @@
 # I-intel-scan · 入场扫描（横向命令）
 
-> 在已存在的项目（brownfield）里第一次用 flow-kit 时，**先跑这个**。
+> 在已存在的项目（brownfield）里第一次用code-kit 时，**先跑这个**。
 > 自动扫描代码库 → 自动填 `CONTEXT.md` → 后续所有 change 都受益。
 > 不是周期命令，跑过一次就行；项目结构有大变化（重构 / 框架升级 / 新增模块）时再跑。
 
@@ -32,7 +32,7 @@
 
 | 文档 | 路径 | 来自哪个生态 |
 |---|---|---|
-| `CONTEXT.md` | 仓库根 / `.specs/` | flow-kit 自己 |
+| `CONTEXT.md` | 仓库根 / `.specs/` |code-kit 自己 |
 | `AGENTS.md` | 仓库根 | OpenAI Codex / 标准 agents 协议 |
 | `CLAUDE.md` | 仓库根 / `.claude/` | Anthropic Claude Code |
 | `.cursor/rules/*.md` | `.cursor/` | Cursor IDE |

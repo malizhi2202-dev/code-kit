@@ -5,7 +5,7 @@
 
 ---
 
-## 你正在协作一个使用 flow-kit 流程的项目
+## 你正在协作一个使用code-kit 流程的项目
 
 完整流程：`CHANGE → REQUIREMENT → DESIGN → TASK → DEV → TEST → REVIEW → INTEGRATION → ARCHIVE`
 
