@@ -45,58 +45,6 @@ AI 不允许自行编造临时最小 TASK；缺字段必须反问用户或回到
 
 ## 你的职责
 
-### 0. Git 安全网 · 任务前安全提交（强制 · R10）
-
-**在任何代码修改之前**，AI 必须创建安全提交作为回滚点。
-
-#### 0.1 检查工作区状态
-
-```bash
-git status --porcelain
-```
-
-- 工作区干净 → 输出「✅ 工作区干净，跳过 safety commit」→ 进入步骤 1
-- 工作区有未提交内容 → 继续 0.2
-
-#### 0.2 创建安全提交
-
-```bash
-git add -A
-git diff --cached --stat          # 显示将要提交的变更概要，贴入 SUMMARY
-git commit -m "safety(<change-id>): pre-T<NN> checkpoint"
-```
-
-提交后输出：
-```
-✅ Safety commit: <commit-hash-short>
-   回滚命令: git reset --hard <commit-hash-short>
-   单文件恢复: git checkout <commit-hash-short> -- <file>
-```
-
-#### 0.3 确认 TASK 边界
-
-在开始修改代码前，AI 必须在回复中**显式声明**本次 task 的修改范围：
-
-```
-📋 Task T<NN>: <name>
-   📖 允许读取: <read_files>
-   ✏️ 允许修改: <write_files>
-   🔒 禁止触碰: 其他所有文件
-   
-✅ Safety commit: abc1234（可回滚到此点）
-```
-
-#### 0.4 如果用户说"从头开始这个 task"
-
-当用户要求"重做"/"从头开始"时：
-
-```bash
-# 回滚到上一个 safety commit
-git reset --hard $(git log --oneline | grep "safety(" | head -1 | cut -d' ' -f1)
-```
-
-然后重新开始步骤 0.2（创建新的 safety commit）。
-
 ### 1. 读取任务
 
 从 TASK.md 取出对应 `<task>` 块，读懂 `action / files / verify / done`。
@@ -384,70 +332,9 @@ grep -rn "from.*old-helpers\|import.*old-helpers" src/ tests/
 
 > 例外：纯文档/纯配置任务可跳过 TDD，但需在 SUMMARY.md 里说明为何跳过。
 
-### 3. 跑 verify + 强制错误处理循环
-
-#### 3.1 执行 verify
+### 3. 跑 verify
 
 按 `<verify>` 命令执行，**贴出真实输出**到 SUMMARY.md。
-
-#### 3.2 失败诊断与修复（强制 · 每次错误必须输出下表 · 最多 3 轮）
-
-> ⚠️ AI **不允许**发现错误后默默修复。每次 verify 失败，**必须在回复中显式输出错误记录表**。
-
-**错误记录表格式（每次失败必须输出）**：
-
-```
-🔴 错误记录 · 第 <N> 轮 · 错误类型: <编译/链接/测试/crash/asan>
-   错误信息: <完整错误第一行>
-   文件:行号: <file:line>
-   修复: <一句话描述要改什么>
-   已排除方案: <之前试过但没用的方案（第2轮起必填）>
-```
-
-**修复循环流程**：
-
-```
-verify 失败 → 输出错误记录表 → 最小修复 → 重新 verify
-                                              │
-                                        ┌─────┴─────┐
-                                        │           │
-                                      通过        失败
-                                        │           │
-                                        ▼           ▼
-                                    继续执行   轮次 +1
-                                                 │
-                                            N ≥ 3？
-                                            ┌──┴──┐
-                                           是     否
-                                            │      │
-                                            ▼      ▼
-                                    触发 R10.8   继续诊断
-                                    1. git add -A && git commit -m "safety(<id>): pre-T<NN> error-round3"
-                                    2. 写 PROGRESS「已排除方案」
-                                    3. ⚠️ 暂停，反问用户：
-                                       "已尝试 3 种修复方案均失败。
-                                        已排除: <方案1/2/3>。
-                                        回滚 / 换方案 / 拆分 task？"
-```
-
-#### 3.3 AI 自检清单（每次 verify 失败时必须过）
-
-- [ ] 已输出 🔴 错误记录表（含轮次/类型/文件:行号/修复方案）
-- [ ] 没有顺手改无关文件
-- [ ] 第 2 轮起已填写「已排除方案」
-- [ ] N < 3：继续修复 / N ≥ 3：已触发 R10.8 暂停
-
-#### 3.4 常见错误速查
-
-| 症状 | 类型 | 常见修复 |
-|---|---|---|
-| `implicit declaration of function` | 编译 | 添加 `#include <header.h>` |
-| `undefined reference to` | 链接 | CMake `target_link_libraries` 添加对应库 |
-| `multiple definition of` | 链接 | 测试文件中移除 `#include` 源码，改为 CMake 链接 |
-| `ISO C forbids empty translation unit` | 编译 | stub 文件加 `__attribute__((unused)) static void __stub(void){}` |
-| `PATH_MAX undeclared` / `strdup implicit` | 编译 | CMake 加 `add_compile_definitions(_GNU_SOURCE)` |
-| `SIGSEGV` / ASAN heap-use-after-free | 运行时 | 检查 `free()` 后是否仍在使用指针；`strtok` 返回指针生命周期 |
-| 测试断言失败（逻辑错误） | 测试 | 核对 AC 规格 → 修正代码逻辑或修正测试预期 |
 只有 verify 通过才能进入下一步。
 
 ### 4. 提交前 self-review（书本驱动 6 维 · 装了 brooks-lint 优先）
@@ -546,61 +433,6 @@ git status --short                  # 含 untracked
 
 **禁止**："顺手修了个 bug" / "看到这里很丑就改了"——必须开新 task 或新 CHANGE。
 
-### 5.4 变更规模异常检测（强制 · R10.4 · AI 发疯防护）
-
-> 提交前检查 diff 规模。超过阈值 → 暂停反问用户，禁止自动提交。
-
-#### 5.4.1 统计变更规模
-
-```bash
-# 与上一个 safety commit 对比
-git diff --stat $(git log --oneline | grep "safety(" | head -1 | cut -d' ' -f1)
-
-# 精确统计
-git diff --numstat $(git log --oneline | grep "safety(" | head -1 | cut -d' ' -f1) | awk '{added+=$1; deleted+=$2; files++} END {print files" files, +"added"/-"deleted" lines"}'
-```
-
-#### 5.4.2 阈值判定
-
-| 检测项 | 命令 | 阈值 | 超限动作 |
-|---|---|---|---|
-| 修改文件数 | `git diff --name-only` 计数 | > 10 个 | 🔴 暂停，反问用户确认 |
-| 新增+删除行数 | `git diff --numstat` 求和 | > 500 行 | 🔴 暂停，反问用户确认/回滚/拆分 |
-| 删除行数 | `git diff --numstat` 仅删除列 | > 100 行 | 🔴 暂停，触发 R4.6 协议 |
-| 删除文件数 | `git diff --diff-filter=D --name-only` | ≥ 3 个 | 🔴 暂停，逐个解释原因 |
-
-#### 5.4.3 超限时 AI 必须输出的内容
-
-```
-⚠️ 变更规模异常（R10.4 触发）：
-
-   修改文件: N 个（阈值: 10）
-   新增行数: +X
-   删除行数: -Y（阈值: 100）
-   删除文件: Z 个（阈值: 3）
-
-   超出项：
-   - 修改文件数 X > 10
-   - 删除行数 Y > 100
-
-   请选择：
-   1. ✅ 确认提交（我审查过 diff，所有变更都是必要的）
-   2. ↩️ 回滚到 safety commit: git reset --hard <hash>
-   3. ✂️ 拆分为多个 task（更新 TASK.md 再分别执行）
-```
-
-**AI 不允许在用户未确认的情况下继续提交。**
-
-#### 5.4.4 异常结果写入 SUMMARY「变更规模」段
-
-```
-✅ 变更规模检查（R10.4）：
-  - 修改文件: 3 个（阈值: 10）
-  - 新增: +120 / 删除: -35（阈值: 500 / 100）
-  - 删除文件: 0（阈值: 3）
-  - 判定: ✅ 在阈值范围内
-```
-
 ### 5.5 原子提交（R4.1）
 
 提交格式：
@@ -678,34 +510,7 @@ PROGRESS 是临时文件，不归档。
 - [ ] 没有改动 `REQUIREMENT.md` / `DESIGN.md`
 - [ ] 没有越界改其他任务的文件（R7.3）
 
-## 触发下一步 · 自动继续规则（R9.4 自动化投票）
+## 触发下一步
 
-> **AI 在任务提交后自动判断是否继续，不需要问用户"继续？"。**
-> 仅在以下情况暂停等待用户：
-
-### 自动继续（不需要用户确认）
-
-| 场景 | 动作 |
-|---|---|
-| 当前 wave 还有未完成的 `[P]` 任务 | ✅ 自动执行下一个 `[P]` 任务（同 wave 内并行） |
-| 当前 wave 全部完成，下一 wave 存在 | ✅ 自动进入下一 wave 的第一个任务 |
-| 全部 waves 完成 | ✅ 自动进入 `5-test` 阶段 |
-
-### 需要暂停（询问用户）
-
-| 场景 | 动作 |
-|---|---|
-| 触发 R10.8（3 轮错误仍失败） | ⚠️ 暂停，反问用户 |
-| 触发 R10.4 变更规模超限 | ⚠️ 暂停，要求用户确认 diff |
-| 触发 R4.6 破坏性变更协议 | ⚠️ 暂停，要求用户确认 |
-| 发现需要修改 REQUIREMENT/DESIGN | ⚠️ 暂停，要求开新 CHANGE |
-| 用户显式说"暂停"/"stop" | ⚠️ 暂停 |
-
-### AI 自动继续时的标准输出
-
-```
-✅ T<NN> 完成（<hash>）· 测试: <N>/<N> · Wave <X>/<Y>
-▶️ 自动继续: T<NN+1>（同 wave） / Wave <X+1>（下一波次）
-```
-
-**禁止**：在自动继续场景下输出"要继续吗？"/"下一步？"等询问语句。
+- 还有未完成任务 → 清窗，再次进入 `@code-kit/prompts/4-dev.md` 跑下一个
+- 全部完成 → `@code-kit/prompts/5-test.md`

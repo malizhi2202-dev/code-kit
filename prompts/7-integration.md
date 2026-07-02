@@ -55,63 +55,12 @@
 把入选的失败按 LESSONS.md 的条目格式追加到 `.specs/LESSONS.md`，编号续上 `L-NNN`，必须填齐：标签 / 关键词 / 适用栈 / 状态。
 **复核**：扫一眼现有 active 条目，看是否有本次 change 让它们 `superseded` 或 `deprecated`，标注上。
 
-### 4.5 最终范围审计（最小更改评估 · 归档前必跑）
-
-> 在归档之前，做最后一次"交付 vs 承诺"的对比审计。
-
-#### 4.5.1 对比 CHANGE.md 原始范围
-
-| 审计项 | 来源 | 对比对象 | 判定 |
-|---|---|---|---|
-| 承诺交付 | `CHANGE.md` What 段 + 验收线 | 实际 git diff（所有 task 汇总） | ✅ 一致 / ⚠️ 超出 / ❌ 缺失 |
-| 范围排除 | `CHANGE.md` 范围排除段 | 实际代码中是否有排除项被实现 | ✅ 遵守 / ❌ 写了不该写的 |
-| AC 覆盖 | `REQUIREMENT.md` v1 AC 总数 | `TEST.md` 实际覆盖数 | X/Y = Z% |
-| 非功能达标 | `REQUIREMENT.md` 非功能性需求 | 实测数据（性能/内存/二进制） | 逐项 ✅/❌ |
-
-#### 4.5.2 归档门禁判定
-
-```
-┌─────────────────────────────────────────┐
-│  存在 ❌ 写了 CHANGE 明确排除的功能？     │
-│    │                                    │
-│    是 → 🔴 阻塞归档                      │
-│    否 → 继续                             │
-│                                         │
-│  存在 ⚠️ 超出 CHANGE 范围但合理的功能？   │
-│    │                                    │
-│    是 → 🟡 更新 CHANGE.md 后再归档       │
-│    否 → 继续                             │
-│                                         │
-│  AC 覆盖率 < 90%？                       │
-│    │                                    │
-│    是 → 🔴 阻塞，回到 5-test             │
-│    否 → 继续                             │
-│                                         │
-│  全部通过 → ✅ 允许归档                   │
-└─────────────────────────────────────────┘
-```
-
-#### 4.5.3 审计结果写入归档目录
-
-在归档目录中生成 `SCOPE-AUDIT.md`：
-
-```markdown
-# SCOPE-AUDIT · <change-id>
-
-- **审计日期**: <YYYY-MM-DD>
-- **原始 CHANGE 范围**: <一句话>
-- **实际交付**: <一句话>
-- **范围偏离**: <无 / 列出并说明>
-- **AC 覆盖率**: X/Y = Z%
-- **归档判定**: ✅ 通过
-```
-
 ### 5. 归档（ARCHIVE）
 
 全部通过后：
 
-- 把 `.specs/<change-id>/` 移动到 `.specs/archive/<YYYY-MM-DD>-<change-id>/`（含 `SCOPE-AUDIT.md`）
-- 在 `.specs/CHANGELOG.md` 里追加一行（日期 / change-id / 一句话摘要 / PR 链接 / 新增 LESSONS 条目编号 / 范围审计结果）
+- 把 `.specs/<change-id>/` 移动到 `.specs/archive/<YYYY-MM-DD>-<change-id>/`
+- 在 `.specs/CHANGELOG.md` 里追加一行（日期 / change-id / 一句话摘要 / PR 链接 / 新增 LESSONS 条目编号）
 - 更新仓库根的 `STATE.md`
 - **不要归档 `.specs/LESSONS.md`**——它是项目级常驻文件，跨 change 累积
 

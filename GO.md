@@ -1,4 +1,4 @@
-# GO —code-kit 统一入口（每个 IDE 都用这一个）
+# GO — code-kit 统一入口（每个 IDE 都用这一个）
 
 > **用户使用方式**：`@code-kit/GO.md` + 一句话意图
 > AI 看到 `@GO.md` 就按本文件路由，自动决定阶段、自动生成 ID、自动按需加载工件，**不要等用户提供 ID 或路径**。
@@ -12,12 +12,12 @@ code-kit 的文件分两类，**加载策略不同**：
 | 类型 | 路径 | 长度 | 加载方式 |
 |---|---|---|---|
 | **SPEC**（项目产物）| `.specs/<id>/*.md` | 通常 < 200 行 | 整读 OK |
-| **REFERENCE**（查阅型）| code-kit/reference/*.md` | 75~470 行 | **禁止默认整读**，只 grep / read offset 需要的那一节 |
-| **TEMPLATE / PROMPT** | code-kit/templates|prompts/*.md` | < 150 行 | 整读 OK |
+| **REFERENCE**（查阅型）| `code-kit/reference/*.md` | 75~470 行 | **禁止默认整读**，只 grep / read offset 需要的那一节 |
+| **TEMPLATE / PROMPT** | `code-kit/templates|prompts/*.md` | < 150 行 | 整读 OK |
 
 **违规示例**（AI 常犯）：
 
-- ❌ 进入 2-design 阶段后直接 `read_filecode-kit/reference/tech-stacks.md` 整读 467 行
+- ❌ 进入 2-design 阶段后直接 `read_file code-kit/reference/tech-stacks.md` 整读 467 行
 - ✅ 正确：`grep_search` 查 `适用矩阵` 或 `read_file offset=??? limit=80` 只读所需那节
 
 - ❌ 进入 2a-ui-design 后同时读 `ui-aesthetics.md` 与 `ui-anti-patterns.md` 两全文
@@ -55,7 +55,7 @@ code-kit 的文件分两类，**加载策略不同**：
    1. 完整（推荐 500+ 行 / 团队项目 / 长期维护）
    2. 极简（推荐 100~500 行 · 非 UI 项目可跳 2a / 跳第四轮 / 跳跨模型，省 ~20%；UI 项目 2a 不可跳）
    3. 单点（你只想跑某一阶段，告诉我哪一个）
-   4. 不走code-kit（< 50 行代码 / bugfix 直接修，别走闭环）
+   4. 不走 code-kit（< 50 行代码 / bugfix 直接修，别走闭环）
 ```
 
 ### 何时**不必**跑这段
@@ -84,7 +84,7 @@ code-kit 的文件分两类，**加载策略不同**：
 | 想要全套产物（CHANGE / REQUIREMENT / DESIGN / UI-DESIGN（前端）/ TASK / SUMMARY × N / TEST / REVIEW） | 完整 |
 | 想要核心产物但能少则少（REQUIREMENT / DESIGN / TASK / SUMMARY × N / REVIEW；UI 项目另含 UI-DESIGN） | 极简 |
 | 只想跑某一阶段（如只 review / 只 design / 只 体检）| 单点 · 见 README 决策表 |
-| 代码 < 50 行 · 一次性修补 · hackathon | 不走code-kit，走 7 个原生 skill 更划算 |
+| 代码 < 50 行 · 一次性修补 · hackathon | 不走 code-kit，走 7 个原生 skill 更划算 |
 
 ---
 
@@ -121,9 +121,6 @@ Forge adapter: detected / not detected
 | `5-test` | `REQUIREMENT.md` + `DESIGN.md` + `TASK.md` + 各 `*-SUMMARY.md` | 回缺失阶段补齐 |
 | `6-review` | `REQUIREMENT.md` + `TASK.md` + `TEST.md` + 本次 diff；有 `DESIGN.md` / `UI-DESIGN.md` 时必须一起读 | 回缺失阶段补齐 |
 | `7-integration` | `.specs/<id>/` 下本 change 的全部应有产物 | 回缺失阶段补齐 |
-| `G-gate-review`（跑 Gate 2） | `CHANGE.md` + `REQUIREMENT.md` + `DESIGN.md` + ADR | 回缺失阶段补齐 |
-| `G-gate-review`（跑 Gate 3） | `TASK.md` + 当前 task 的 `SUMMARY.md` + diff | 回缺失阶段补齐 |
-| `G-gate-review`（跑 Gate 4） | `REQUIREMENT.md` + `TEST.md` | 回缺失阶段补齐 |
 
 临时最小 TASK 不是正式 `TASK.md` 的隐式替代品。它只允许用于单点调用 `4-dev`，且必须由用户显式给出，包含 `id / name / read_files / write_files / action / verify / done`。AI 不允许为了绕过 `3-task` 自己编造临时 TASK。
 
@@ -142,8 +139,6 @@ Preflight 失败时，路由声明必须写明：
 | 用户输入特征 | 路由到 | 备注 |
 |---|---|---|
 | `继续` / `接着上次` / `恢复` / `resume` | `prompts/4-dev.md` 的「入场恢复」段 | 加载 `STATE.md` 中断任务对应的 PROGRESS |
-| `回滚` / `rollback` / `撤销` / `回到安全点` / `revert to safety` | 执行 R10.5 回滚协议 | 回滚到最近的 `safety:` commit；AI 输出回滚文件列表 |
-| `清理安全提交` / `squash safety` / `clean safety` | 执行 R10.3 | 列出所有 safety 提交，提醒用户手动 rebase |
 | `执行 T<NN>` / `跑 T<NN>` / `do T<NN>` | `prompts/4-dev.md` | task-id 从用户输入提取 |
 | `审查` / `review` / `检查代码` / `code review` | `prompts/6-review.md` | |
 | `测试` / `写测试` / `UAT` / `test` | `prompts/5-test.md` | |
@@ -158,8 +153,6 @@ Preflight 失败时，路由声明必须写明：
 | `同步架构` / `沉淀架构` / `evolve` / `架构演进` / `同步 CONTEXT` / `整理沉淀` | `prompts/A-evolve.md` | 扫近期归档 change 的 DESIGN § 9，批量 review + patch CONTEXT.md / ARCHITECTURE.md（不属任何 change）|
 | `建立架构` / `架构梳理` / `重构架构` / `architect` / `重审 ADR` / `画架构图` | `prompts/A-architect.md` | 首次 / 重构时建立 `ARCHITECTURE.md`。项目级 ADR / 模块图 / 跨模块契约（不属任何 change）|
 | `需求` / `spec` / `requirement` | `prompts/1-requirement.md` | |
-| `门审` / `gate` / `多角色审查` / `需求审查` / `方案审查` / `代码审查门` / `测试审查` | `prompts/G-gate-review.md` | 指定 Gate N 或从当前阶段自动判定；必须已有对应上游产物 |
-| `对抗` / `角色对抗` / `多角色` / `adversarial` | `prompts/G-gate-review.md` | 不指定 Gate 时，基于当前阶段自动判定跑哪个 Gate |
 | 任何**新事物描述**（"做 / 想 / 加 / 实现 / 设计 + X"，且当前无活跃 change） | `prompts/0-change.md` | **自动生成 change-id**，不要问用户要 |
 | 模糊不清 | 反问用户：「你想做的是新需求 / 继续上次 / 别的吗？」 | 一句话定位 |
 
@@ -177,7 +170,7 @@ Preflight 失败时，路由声明必须写明：
 
 | 文档 | 路径 | 来自哪个生态 |
 |---|---|---|
-| `CONTEXT.md` | 仓库根 / `.specs/` |code-kit 自己 |
+| `CONTEXT.md` | 仓库根 / `.specs/` | code-kit 自己 |
 | `AGENTS.md` | 仓库根 | OpenAI Codex / 标准 agents 协议 |
 | `CLAUDE.md` | 仓库根 / `.claude/` | Anthropic Claude Code |
 | `.cursor/rules/*.md` | `.cursor/` | Cursor IDE |
@@ -274,21 +267,17 @@ code-kit 后续阶段需要项目上下文给 AI 用。请选择：
 
 | 阶段 | 全读（SPEC） | 查表（REFERENCE，只读指定节） | 按需 |
 |---|---|---|---|
-| 0 / 1 | —（新建）| code-kit/reference/ui-aesthetics.md` 只查「给 AI 在 0-change 阶段展示用的标准模板」一节（仅前端项目）| — |
-| 2 | `<id>/CHANGE.md` + `<id>/REQUIREMENT.md` + `.specs/CONTEXT.md` + `.specs/ARCHITECTURE.md`（如存在 · brownfield 强烈推荐 · 重点读 § 2/§ 3/§ 4）| code-kit/reference/tech-stacks.md` 只查「适用矩阵」+ 过滤出的 5~6 张卡片 | ADR 阶段某项要深谈时再读 |
-| 2a | `<id>/CHANGE.md` + `<id>/REQUIREMENT.md` + `<id>/DESIGN.md` `## 0` 段 + `.specs/CONTEXT.md` + code-kit/reference/ui-anti-patterns.md`（仅 75 行可全读）| code-kit/reference/ui-aesthetics.md` 查「5 维度」+ 「给 AI 的模板」 | uipro / impeccable 查询（装了才调）|
+| 0 / 1 | —（新建）| `code-kit/reference/ui-aesthetics.md` 只查「给 AI 在 0-change 阶段展示用的标准模板」一节（仅前端项目）| — |
+| 2 | `<id>/CHANGE.md` + `<id>/REQUIREMENT.md` + `.specs/CONTEXT.md` + `.specs/ARCHITECTURE.md`（如存在 · brownfield 强烈推荐 · 重点读 § 2/§ 3/§ 4）| `code-kit/reference/tech-stacks.md` 只查「适用矩阵」+ 过滤出的 5~6 张卡片 | ADR 阶段某项要深谈时再读 |
+| 2a | `<id>/CHANGE.md` + `<id>/REQUIREMENT.md` + `<id>/DESIGN.md` `## 0` 段 + `.specs/CONTEXT.md` + `code-kit/reference/ui-anti-patterns.md`（仅 75 行可全读）| `code-kit/reference/ui-aesthetics.md` 查「5 维度」+ 「给 AI 的模板」 | uipro / impeccable 查询（装了才调）|
 | 3 | `<id>/REQUIREMENT.md` + `<id>/DESIGN.md` + `<id>/UI-DESIGN.md`（前端项目）+ `.specs/CONTEXT.md` | — | 任务模板查询 |
-| 4 | `<id>/TASK.md`（只读当前 task 块）+ `<id>/DESIGN.md` `## 0` 段 + `<id>/UI-DESIGN.md`（UI 任务）+ `.specs/CONTEXT.md` + `.specs/LESSONS.md` | code-kit/reference/ui-anti-patterns.md`（UI 任务 · 75 行可全读）| — |
-| 5 | `<id>/REQUIREMENT.md` + `<id>/DESIGN.md` `## 0` 段 + `<id>/TASK.md` + 各 `*-SUMMARY.md` | code-kit/reference/test-pyramid.md` 只查「适用矩阵」+ 需要的那几轮详情 | — |
-| 6 | `<id>/REQUIREMENT.md` + `<id>/DESIGN.md` + `<id>/TASK.md` + `<id>/TEST.md` + `git diff` | code-kit/reference/ui-anti-patterns.md`（前端项目第三轮 · 75 行可全读）| — |
+| 4 | `<id>/TASK.md`（只读当前 task 块）+ `<id>/DESIGN.md` `## 0` 段 + `<id>/UI-DESIGN.md`（UI 任务）+ `.specs/CONTEXT.md` + `.specs/LESSONS.md` | `code-kit/reference/ui-anti-patterns.md`（UI 任务 · 75 行可全读）| — |
+| 5 | `<id>/REQUIREMENT.md` + `<id>/DESIGN.md` `## 0` 段 + `<id>/TASK.md` + 各 `*-SUMMARY.md` | `code-kit/reference/test-pyramid.md` 只查「适用矩阵」+ 需要的那几轮详情 | — |
+| 6 | `<id>/REQUIREMENT.md` + `<id>/DESIGN.md` + `<id>/TASK.md` + `<id>/TEST.md` + `git diff` | `code-kit/reference/ui-anti-patterns.md`（前端项目第三轮 · 75 行可全读）| — |
 | 7 | `.specs/<id>/` 全部产物 + `.specs/LESSONS.md` | — | — |
-| **G1** (需求门审) | `<id>/REQUIREMENT.md` + `.specs/CONTEXT.md` | — | — |
-| **G2** (方案门审) | `<id>/CHANGE.md` + `<id>/REQUIREMENT.md` + `<id>/DESIGN.md` + `.specs/CONTEXT.md` + `.specs/ARCHITECTURE.md`（如存在） | code-kit/reference/tech-stacks.md` 仅查相关 ADR 部分 | — |
-| **G3** (代码门审) | `<id>/TASK.md`（当前 task 块）+ `<id>/DESIGN.md` `## 0` 段 + 当前 task 的 `SUMMARY.md` + `git diff` + `.specs/LESSONS.md` | — | code-kit/reference/ui-anti-patterns.md`（UI 任务） |
-| **G4** (测试门审) | `<id>/REQUIREMENT.md` + `<id>/TEST.md` + 各 `*-SUMMARY.md` + `.specs/LESSONS.md` | code-kit/reference/test-pyramid.md` 仅查「适用矩阵」 | — |
 | **M** (health) | `.specs/CONTEXT.md` + `.specs/LESSONS.md` + 最近 1 份 `.specs/health/*.md`（如有，做对比基线）| — | 抽样 5 个最近改动频繁的 src/ 模块 + 5 个测试文件 + 最近 30 天 git log |
 | **A** (evolve) | `STATE.md` + `.specs/CONTEXT.md` + `.specs/ARCHITECTURE.md`（如存在）+ 范围内每个 `.specs/archive/<change>/DESIGN.md` 的 § 9 段（仅 § 9，非整份 DESIGN）| — | 仅扫 `last_evolve_at` 之后归档的 change，禁止越界读 § 9 以外的 DESIGN 内容 |
-| **A** (architect) | `.specs/CONTEXT.md` + `.specs/ARCHITECTURE.md`（如存在）+ `.specs/CHANGELOG.md` + code-kit/templates/ARCHITECTURE.md`（模板）| — | `src/` 顶层结构 + `package.json` / 依赖文件 + 抽样几份 `.specs/archive/*/DESIGN.md` |
+| **A** (architect) | `.specs/CONTEXT.md` + `.specs/ARCHITECTURE.md`（如存在）+ `.specs/CHANGELOG.md` + `code-kit/templates/ARCHITECTURE.md`（模板）| — | `src/` 顶层结构 + `package.json` / 依赖文件 + 抽样几份 `.specs/archive/*/DESIGN.md` |
 
 ### 查 reference 某一节的实际动作示例
 
@@ -325,7 +314,7 @@ read_file path="code-kit/reference/tech-stacks.md" offset=380 limit=60
    - .specs/companion-platform/CHANGE.md（全读，52 行）
    - .specs/companion-platform/REQUIREMENT.md（全读，98 行）
    - .specs/CONTEXT.md（全读，41 行）
-   -code-kit/reference/tech-stacks.md（仅查「适用矩阵」，line 380-405，提取出 5 张候选卡）
+   - code-kit/reference/tech-stacks.md（仅查「适用矩阵」，line 380-405，提取出 5 张候选卡）
 ✅ 未加载：ui-aesthetics.md / test-pyramid.md / ui-anti-patterns.md（后面阶段才需）
 ✅ 第一动作：按 2-design 步骤 0，列 5 张技术栈卡片 + 推荐 + 排除，等用户选定后才出 ADR。
 ```

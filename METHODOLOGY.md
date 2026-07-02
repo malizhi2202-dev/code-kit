@@ -1,6 +1,6 @@
 # 方法论（code-kit 骨架 · AI 必读）
 
-> **你是 AI 助手。这是code-kit 的方法论全文，每次会话开始 / 清窗恢复时必读一遍。**
+> **你是 AI 助手。这是 code-kit 的方法论全文，每次会话开始 / 清窗恢复时必读一遍。**
 > 读完之后你应该知道：当前处于哪个阶段、要产出什么工件、和其他阶段的输入输出关系、哪些核心机制不允许绕过。
 > 后续具体执行按各阶段 `prompts/<n>-*.md` 的指令走，本文件只定义骨架。
 
@@ -9,20 +9,20 @@
 ## 标准流程
 
 ```
-CHANGE → REQUIREMENT → 🚪G1 → DESIGN → [2a UI-DESIGN]* → 🚪G2 → TASK → DEV → 🚪G3 → TEST → 🚪G4 → REVIEW → INTEGRATION → ARCHIVE
-   │          │         │        │            │              │       │      │       │       │        │            │
-   │          └─ CONTEXT.md 跨阶段共享 ┘     前端项目 ┘        │       └ TDD ─┘       │       │        │            │
-   │                                                           │                    │       │        │            │
-   └─────────────────────── 迭代回灌（new CHANGE） ←─────────────────────────────────┘       │        │            │
-                                                                                             │        │            │
-                                                                                             └────────┴────────────┘
-                                                                                               🚪G3 每 task/wave
-                                                                                               🚪G4 测试完成后
+CHANGE → REQUIREMENT → DESIGN → [2a UI-DESIGN]* → TASK → DEV → TEST → REVIEW → INTEGRATION → ARCHIVE
+   │          │           │            │            │      │       │         │            │
+   │          └─ CONTEXT.md 跨阶段共享 ┘     前端项目 ┘     └ TDD ─┘         │            │
+   │                                                                          │            │
+   └─────────────────────── 迭代回灌（new CHANGE） ←──────────────────────────┘            │
+                                                                                            ↓
+                                                                                     SHIP / 归档
+
+* 仅前端项目走 2a；后端 / CLI / lib 跳过
 ```
 
-**前端项目路径**：`CHANGE → REQUIREMENT → 🚪G1 → DESIGN → 2a UI-DESIGN → 🚪G2 → TASK → DEV → 🚪G3 → TEST → 🚪G4 → REVIEW (3 轮) → INTEGRATION`
-**后端项目路径**：`CHANGE → REQUIREMENT → 🚪G1 → DESIGN → 🚪G2 → TASK → DEV → 🚪G3 → TEST → 🚪G4 → REVIEW → INTEGRATION`
-**MVP 路径**：`REQUIREMENT → 🚪G1 (轻量) → DESIGN-lite → 🚪G2 (轻量) → TASK → DEV → 🚪G3 → TEST → 🚪G4`（阶段可压缩，但关键工件和 Gate 不能缺）
+**前端项目路径**：`CHANGE → REQUIREMENT → DESIGN → 2a UI-DESIGN → TASK → DEV → TEST → REVIEW (3 轮) → INTEGRATION`
+**后端项目路径**：`CHANGE → REQUIREMENT → DESIGN → TASK → DEV → TEST → REVIEW → INTEGRATION`
+**MVP 路径**：`REQUIREMENT → DESIGN-lite → TASK → DEV`（阶段可压缩，但关键工件不能缺；`DESIGN-lite` 至少写清技术栈、触碰边界和不做什么）
 
 ---
 
@@ -73,23 +73,9 @@ CHANGE → REQUIREMENT → 🚪G1 → DESIGN → [2a UI-DESIGN]* → 🚪G2 → 
 | **Planner** | DESIGN（+ UI-DESIGN）| TASK.md | TASK 阶段 |
 | **Dev**（多实例并行）| TASK 中一项 | 代码 + 任务级 SUMMARY | DEV 阶段，每任务一个 fresh context |
 | **Reviewer** | diff + SPEC | REVIEW.md | REVIEW 阶段（建议双轮：同模型 spec 审 + 异模型代码审）|
-| **Gate Reviewer**（多角色）| 阶段产物 | `GATE-<N>-REVIEW.md` | 4 个 Gate 审查门（需求/设计/代码/测试），每个 Gate 至少 4 角色对抗 |
 | **Verifier** | 构建产物 + AC | UAT.md / fix-plan | INTEGRATION 阶段 |
 
 **红线**：Architect 不写代码，UI Director 不写完整组件，Dev 不改 SPEC / UI-DESIGN，Reviewer 不修代码（只产报告 + 修复 task）。
-
-### Gate Reviewer 角色（每个 Gate 至少 4 个）
-
-| 角色 | 核心关切 | 必出场 Gate |
-|---|---|---|
-| 🟫 **架构师** | 模块边界、数据流、ADR 一致性、扩展性 | G1 · G2 |
-| 🟦 **研发负责人** | 可实现性、构建管线、测试覆盖、技术债 | G1 · G2 · G3 · G4 |
-| 🟩 **资产开发** | 模型/数据管线、benchmark、prompt 版本 | G2 · G3 · G4 |
-| 🟨 **Agent 开发** | API 扩展点、多步交互、上下文传递 | G1 · G3 · G4 |
-| 🔴 **安全审计师** | 注入攻击、权限边界、数据泄露、CVE | G1 · G2 · G3 · G4 |
-| 🟪 **测试专家** | 测试策略、覆盖率缺口、边界 case、回归风险、AC 可测试性 | G1 · G3 · G4 |
-
-> 详细审查维度见 `@code-kit/prompts/G-gate-review.md`。
 
 ---
 
