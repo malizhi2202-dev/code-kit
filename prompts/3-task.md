@@ -14,9 +14,9 @@
 
 开始拆任务前先检查上游工件，缺任何一项都不要继续：
 
-- 缺 `REQUIREMENT.md`：停止，回到 `@flow-kit/prompts/1-requirement.md`。
-- 缺 `DESIGN.md`：停止，回到 `@flow-kit/prompts/2-design.md`；MVP 模式也必须生成 `DESIGN-lite`。
-- 前端 / UI 项目缺 `UI-DESIGN.md`：停止，回到 `@flow-kit/prompts/2a-ui-design.md`。纯后端 / CLI / lib 项目才可跳过。
+- 缺 `REQUIREMENT.md`：停止，回到 `@code-kit/prompts/1-requirement.md`。
+- 缺 `DESIGN.md`：停止，回到 `@code-kit/prompts/2-design.md`；MVP 模式也必须生成 `DESIGN-lite`。
+- 前端 / UI 项目缺 `UI-DESIGN.md`：停止，回到 `@code-kit/prompts/2a-ui-design.md`。纯后端 / CLI / lib 项目才可跳过。
 - 禁止 Planner 自己脑补技术栈、触碰模块、禁动清单或 `write_files` 边界。
 
 触发时输出：
@@ -27,7 +27,7 @@
 
 ## 你的职责
 
-使用 `@flow-kit/templates/TASK.md` 模板产出**原子任务列表**。
+使用 `@code-kit/templates/TASK.md` 模板产出**原子任务列表**。
 
 ### 拆解原则
 
@@ -132,4 +132,4 @@ Wave 3:            T05 (depends on T03, T04)
 
 ## 触发下一步
 
-`@flow-kit/prompts/4-dev.md`（按波次逐个执行）
+`@code-kit/prompts/4-dev.md`（按波次逐个执行）

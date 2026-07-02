@@ -17,18 +17,18 @@
   - 重点读 `§ 3 ADR 列表`（看本 change 是否撞已有不可逆决策——撞了必须显式说"延续 ADR-NNN"或"申请 supersede ADR-NNN"）
   - 重点读 `§ 4 跨模块契约`（本 change 改 API / 事件 / Schema 时必查）
   - 不存在则跳过；如果用户从未跑过 `A-architect` 但项目复杂度已较高，提醒一句"建议先跑 `@A-architect.md` 建立项目级架构文档"
-- `@flow-kit/reference/tech-stacks.md`（技术栈卡片）
+- `@code-kit/reference/tech-stacks.md`（技术栈卡片）
 - 已有项目（如有）：`@DESIGN.md`、`@.specs/adr/`、相关源码（按需）
 
 ## 你的职责
 
-使用 `@flow-kit/templates/DESIGN.md` 模板产出。必须覆盖：
+使用 `@code-kit/templates/DESIGN.md` 模板产出。必须覆盖：
 
 ### 0₋. 架构级变更预检（在列技术栈卡片之前 · 二次保险）
 
 **目的**：用户可能跳过 0-change 直接进 2-design（"设计 XXX"），那 0-change 步骤 0.4 的拦截就没跑。这里再做一次。
 
-**判定标准**：与 `@flow-kit/prompts/0-change.md` 步骤 0.4.1 完全一致（5 条命中条件 + 反例）。
+**判定标准**：与 `@code-kit/prompts/0-change.md` 步骤 0.4.1 完全一致（5 条命中条件 + 反例）。
 
 **已跑过 0-change 的不必重判**：如果 `<change-id>/CHANGE.md` 末尾有「## 架构层影响声明」段或「## 走 A-architect 后回来」标记，说明 0.4 已处理，**直接跳到步骤 0**。
 
@@ -61,7 +61,7 @@
 
 #### 常规路径
 
-加载 `@flow-kit/reference/tech-stacks.md`，按其中的「适用矩阵」过滤出 **5~6 张最匹配项目类型**的卡片（不要 8 张全列），按「给 AI 在 2-design 阶段展示用的标准模板」**实际渲染**给用户：
+加载 `@code-kit/reference/tech-stacks.md`，按其中的「适用矩阵」过滤出 **5~6 张最匹配项目类型**的卡片（不要 8 张全列），按「给 AI 在 2-design 阶段展示用的标准模板」**实际渲染**给用户：
 
 - 5~6 张卡片（编号 + 名称 + 一句话栈描述）
 - **必给 1 首选 + 1 备选**，理由结合 REQUIREMENT.md 的 AC + 非功能需求（QPS / 团队 / 部署环境 / 数据规模）
@@ -161,7 +161,7 @@
 ### 9. 架构沉淀建议（软约束 · 为 `A-evolve` 准备素材）
 
 > 这一段是**给未来的礼物**。本 change 如果引入了"项目级有复用价值"的东西，记在 `DESIGN.md` § 9。
-> 以后用户跑 `@flow-kit/prompts/A-evolve.md` 会扫这段批量同步到 `CONTEXT.md`。
+> 以后用户跑 `@code-kit/prompts/A-evolve.md` 会扫这段批量同步到 `CONTEXT.md`。
 > **没有就写 `本 change 无架构层面沉淀建议`。不要凑**。
 
 #### 9.1 判定有没有“项目级复用价值”的阈值
@@ -176,7 +176,7 @@
 
 #### 9.2 填入哪几个子段
 
-按 `@flow-kit/templates/DESIGN.md` § 9 的五个子段（抽象 / 决策 / 契约 / 依赖 / 禁动清单）填写。不适用的子段不写也可（留一句"N/A"）。
+按 `@code-kit/templates/DESIGN.md` § 9 的五个子段（抽象 / 决策 / 契约 / 依赖 / 禁动清单）填写。不适用的子段不写也可（留一句"N/A"）。
 
 #### 9.3 严禁事项
 
@@ -208,5 +208,5 @@
 
 ## 触发下一步
 
-- **前端项目**（含任何用户可见 UI）→ `@flow-kit/prompts/2a-ui-design.md`（先决策视觉再拆任务）
-- **后端 / CLI / lib** → `@flow-kit/prompts/3-task.md`
+- **前端项目**（含任何用户可见 UI）→ `@code-kit/prompts/2a-ui-design.md`（先决策视觉再拆任务）
+- **后端 / CLI / lib** → `@code-kit/prompts/3-task.md`

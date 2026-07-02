@@ -246,4 +246,4 @@ UI 任务进入实现前，AI 必须能回答以下问题，否则**停下来反
 - `/impeccable polish <area>` — 出货前打磨
 - `/impeccable harden <area>` — 错误处理 / 边界 / i18n
 
-flow-kit 与 impeccable 互补：flow-kit 决定**什么时候做 UI 决策**，impeccable 决定**做得多深**。
+code-kit 与 impeccable 互补：code-kit 决定**什么时候做 UI 决策**，impeccable 决定**做得多深**。

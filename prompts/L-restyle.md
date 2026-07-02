@@ -1,7 +1,7 @@
 # L-restyle — 一键换调性（保留功能，重做视觉）
 
 > **L 前缀表示这是 lateral / lifecycle 命令**，不在主流程编号里。
-> 用法：`@flow-kit/prompts/L-restyle.md` + 一句话目标
+> 用法：`@code-kit/prompts/L-restyle.md` + 一句话目标
 > 例："换成有机调性"、"想要 Headspace 那种感觉"、"做个奢华版"
 
 ---
@@ -29,8 +29,8 @@ UI Director + Refactor Specialist。**保留功能不变**，只换视觉。
 - 用户的目标（一句话）
 - 现有项目代码（组件、CSS / theme 文件、字体加载）
 - 项目里已有的 `UI-DESIGN.md`（如有，作为 v1 调性来源）
-- `@flow-kit/reference/ui-aesthetics.md`（调性卡片）
-- `@flow-kit/reference/ui-anti-patterns.md`
+- `@code-kit/reference/ui-aesthetics.md`（调性卡片）
+- `@code-kit/reference/ui-anti-patterns.md`
 - 项目主 `REQUIREMENT.md`（确认要保留的 AC 不变）
 
 ---
@@ -186,7 +186,7 @@ npx impeccable detect <component-file> # 反 AI-slop（可选，如装了）
 
 ## 触发下一步
 
-- 用户确认 → `@flow-kit/prompts/3-task.md`（按上述波次落实任务）
-- → `@flow-kit/prompts/4-dev.md`（每任务 fresh context，UI 任务自动扫 anti-patterns）
-- → `@flow-kit/prompts/6-review.md`（**第三轮 UI 视觉审查必跑**，含 v1 vs v2 对比段）
-- → `@flow-kit/prompts/7-integration.md`（UAT 重点：老用户能否完成关键流程；视觉是否传达声明的调性）
+- 用户确认 → `@code-kit/prompts/3-task.md`（按上述波次落实任务）
+- → `@code-kit/prompts/4-dev.md`（每任务 fresh context，UI 任务自动扫 anti-patterns）
+- → `@code-kit/prompts/6-review.md`（**第三轮 UI 视觉审查必跑**，含 v1 vs v2 对比段）
+- → `@code-kit/prompts/7-integration.md`（UAT 重点：老用户能否完成关键流程；视觉是否传达声明的调性）

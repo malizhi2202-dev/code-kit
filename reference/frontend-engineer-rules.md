@@ -50,7 +50,7 @@ Object.assign(window, { Terminal, Line });
 
 ### 1.3 禁用 `scrollIntoView`
 
-**问题**：iframe 嵌入的预览环境（flow-kit 的大部分调试场景 + 在线预览工具都算）里，`scrollIntoView` 会触发外层 frame 的滚动，造成视觉错乱甚至把用户卷出预览区。
+**问题**：iframe 嵌入的预览环境（code-kit 的大部分调试场景 + 在线预览工具都算）里，`scrollIntoView` 会触发外层 frame 的滚动，造成视觉错乱甚至把用户卷出预览区。
 
 **正确**：用 `element.scrollTop = ...` 或 `window.scrollTo({ top: ..., behavior: 'smooth' })`。
 
@@ -337,5 +337,5 @@ CSS / HTML / JS / SVG 能做的远超大多数人想象。
 
 ## 触发下一步
 
-- 任务完成 → 回到 `@flow-kit/prompts/4-dev.md` 步骤 4 self-review
+- 任务完成 → 回到 `@code-kit/prompts/4-dev.md` 步骤 4 self-review
 - 需要更多代码模板 → 看 `garden-skills/skills/web-design-engineer/references/advanced-patterns.md`（幻灯片引擎 / 设备外框 / Tweaks 面板 / 动画时间线 / 设计画布 / 暗模式 / 可视化）

@@ -1,19 +1,19 @@
 # GO —code-kit 统一入口（每个 IDE 都用这一个）
 
-> **用户使用方式**：`@flow-kit/GO.md` + 一句话意图
+> **用户使用方式**：`@code-kit/GO.md` + 一句话意图
 > AI 看到 `@GO.md` 就按本文件路由，自动决定阶段、自动生成 ID、自动按需加载工件，**不要等用户提供 ID 或路径**。
 
 ---
 
 ## 红线·Token 预算（走任何阶段前必读）
 
-flow-kit 的文件分两类，**加载策略不同**：
+code-kit 的文件分两类，**加载策略不同**：
 
 | 类型 | 路径 | 长度 | 加载方式 |
 |---|---|---|---|
 | **SPEC**（项目产物）| `.specs/<id>/*.md` | 通常 < 200 行 | 整读 OK |
-| **REFERENCE**（查阅型）| `flow-kit/reference/*.md` | 75~470 行 | **禁止默认整读**，只 grep / read offset 需要的那一节 |
-| **TEMPLATE / PROMPT** | `flow-kit/templates|prompts/*.md` | < 150 行 | 整读 OK |
+| **REFERENCE**（查阅型）| code-kit/reference/*.md` | 75~470 行 | **禁止默认整读**，只 grep / read offset 需要的那一节 |
+| **TEMPLATE / PROMPT** | code-kit/templates|prompts/*.md` | < 150 行 | 整读 OK |
 
 **违规示例**（AI 常犯）：
 
@@ -96,7 +96,7 @@ flow-kit 的文件分两类，**加载策略不同**：
 
 ### 可选 runtime adapter 检测
 
-flow-kit 默认不依赖任何运行时。若项目同时存在 `.claude/hooks/forge-pretool-guard.ps1` 与 `.claude/hooks/forge-session-audit.ps1`，说明可选 Forge runtime adapter 已安装。
+code-kit 默认不依赖任何运行时。若项目同时存在 `.claude/hooks/forge-pretool-guard.ps1` 与 `.claude/hooks/forge-session-audit.ps1`，说明可选 Forge runtime adapter 已安装。
 
 检测到 Forge 时，在路由声明里追加一行：
 
@@ -163,7 +163,7 @@ Preflight 失败时，路由声明必须写明：
 | 任何**新事物描述**（"做 / 想 / 加 / 实现 / 设计 + X"，且当前无活跃 change） | `prompts/0-change.md` | **自动生成 change-id**，不要问用户要 |
 | 模糊不清 | 反问用户：「你想做的是新需求 / 继续上次 / 别的吗？」 | 一句话定位 |
 
-> **架构级变更的二次拦截**：路由表只看关键词，但 0-change / 2-design 进去后会**用判断**做二次检测——如果用户描述涉及「拆模块 / 换数据库 / 换鉴权方案 / 改公共契约 / 容量边界 / 跨服务编排」这类项目级变更，会停下来反问"是否先跑 A-architect"。判定细则见 `@flow-kit/prompts/0-change.md` 步骤 0.4 / `@flow-kit/prompts/2-design.md` 步骤 0₋。
+> **架构级变更的二次拦截**：路由表只看关键词，但 0-change / 2-design 进去后会**用判断**做二次检测——如果用户描述涉及「拆模块 / 换数据库 / 换鉴权方案 / 改公共契约 / 容量边界 / 跨服务编排」这类项目级变更，会停下来反问"是否先跑 A-architect"。判定细则见 `@code-kit/prompts/0-change.md` 步骤 0.4 / `@code-kit/prompts/2-design.md` 步骤 0₋。
 >
 > **AI 的额外职责**：路由到 0-change / 2-design 时，路由声明的「第一动作」一栏应明确写"按 0.4 / 0₋ 先做架构级预检"，避免遗漏。
 
@@ -211,7 +211,7 @@ Preflight 失败时，路由声明必须写明：
 🔍 检测到本项目已有以下 AI 上下文文档：
   - <列出找到的，含路径与文件大小>
 
-flow-kit 默认用 CONTEXT.md 作为单一源。请选择：
+code-kit 默认用 CONTEXT.md 作为单一源。请选择：
   1. 跑 intel-scan，综合现有文档 + 代码扫描，生成 CONTEXT.md（推荐）
   2. 以现有文档为准（告诉我哪个），跳过 intel-scan
   3. 跳过 intel-scan + 不读现有文档（不推荐 · AI 会盲飞）
@@ -230,7 +230,7 @@ flow-kit 默认用 CONTEXT.md 作为单一源。请选择：
 ```
 🔍 项目里未发现任何 AI 上下文文档。
 
-flow-kit 后续阶段需要项目上下文给 AI 用。请选择：
+code-kit 后续阶段需要项目上下文给 AI 用。请选择：
   1. 现在跑入场扫描，自动生成 CONTEXT.md（~15-30k tokens · 仅首次 · 推荐）
   2. 我手动指定项目里某个文档作为开发遵守依据：<请回复路径>
   3. 跳过 intel-scan，直接进 0-change（不推荐 · AI 会"盲飞"，老项目护栏 B1-B5 全失效）
@@ -260,7 +260,7 @@ flow-kit 后续阶段需要项目上下文给 AI 用。请选择：
 
 - **新 CHANGE**：按 `prompts/0-change.md` 的步骤 0 自动生成 `change-id`（kebab-case，2~4 词），并在第一条回复里显式声明
 - **目录不存在**：自行 `mkdir -p .specs/<id>/`，不要让用户先建
-- **规则加载**：若 IDE 未注入全局规则，读 `@flow-kit/RULES.md`（精简版 `@flow-kit/SYSTEM.md` 也行）
+- **规则加载**：若 IDE 未注入全局规则，读 `@code-kit/RULES.md`（精简版 `@code-kit/SYSTEM.md` 也行）
 - **检测外部扩展**（阶段 4/5/6/M 需要）：进入阶段前检查是否装了以下并在路由声明里表明走「外部路径」还是「内置回退」：
   - [`brooks-lint`](https://github.com/hyhmrright/brooks-lint)：4-dev self-review / 5-test 测试质量 / 6-review 代码质量 / M-health 巡检都会优先用
   - [`ui-ux-pro-max`](https://uupm.cc) / [`impeccable`](https://impeccable.style)：2a-ui-design / 4-dev UI 任务会优先用
@@ -274,29 +274,29 @@ flow-kit 后续阶段需要项目上下文给 AI 用。请选择：
 
 | 阶段 | 全读（SPEC） | 查表（REFERENCE，只读指定节） | 按需 |
 |---|---|---|---|
-| 0 / 1 | —（新建）| `flow-kit/reference/ui-aesthetics.md` 只查「给 AI 在 0-change 阶段展示用的标准模板」一节（仅前端项目）| — |
-| 2 | `<id>/CHANGE.md` + `<id>/REQUIREMENT.md` + `.specs/CONTEXT.md` + `.specs/ARCHITECTURE.md`（如存在 · brownfield 强烈推荐 · 重点读 § 2/§ 3/§ 4）| `flow-kit/reference/tech-stacks.md` 只查「适用矩阵」+ 过滤出的 5~6 张卡片 | ADR 阶段某项要深谈时再读 |
-| 2a | `<id>/CHANGE.md` + `<id>/REQUIREMENT.md` + `<id>/DESIGN.md` `## 0` 段 + `.specs/CONTEXT.md` + `flow-kit/reference/ui-anti-patterns.md`（仅 75 行可全读）| `flow-kit/reference/ui-aesthetics.md` 查「5 维度」+ 「给 AI 的模板」 | uipro / impeccable 查询（装了才调）|
+| 0 / 1 | —（新建）| code-kit/reference/ui-aesthetics.md` 只查「给 AI 在 0-change 阶段展示用的标准模板」一节（仅前端项目）| — |
+| 2 | `<id>/CHANGE.md` + `<id>/REQUIREMENT.md` + `.specs/CONTEXT.md` + `.specs/ARCHITECTURE.md`（如存在 · brownfield 强烈推荐 · 重点读 § 2/§ 3/§ 4）| code-kit/reference/tech-stacks.md` 只查「适用矩阵」+ 过滤出的 5~6 张卡片 | ADR 阶段某项要深谈时再读 |
+| 2a | `<id>/CHANGE.md` + `<id>/REQUIREMENT.md` + `<id>/DESIGN.md` `## 0` 段 + `.specs/CONTEXT.md` + code-kit/reference/ui-anti-patterns.md`（仅 75 行可全读）| code-kit/reference/ui-aesthetics.md` 查「5 维度」+ 「给 AI 的模板」 | uipro / impeccable 查询（装了才调）|
 | 3 | `<id>/REQUIREMENT.md` + `<id>/DESIGN.md` + `<id>/UI-DESIGN.md`（前端项目）+ `.specs/CONTEXT.md` | — | 任务模板查询 |
-| 4 | `<id>/TASK.md`（只读当前 task 块）+ `<id>/DESIGN.md` `## 0` 段 + `<id>/UI-DESIGN.md`（UI 任务）+ `.specs/CONTEXT.md` + `.specs/LESSONS.md` | `flow-kit/reference/ui-anti-patterns.md`（UI 任务 · 75 行可全读）| — |
-| 5 | `<id>/REQUIREMENT.md` + `<id>/DESIGN.md` `## 0` 段 + `<id>/TASK.md` + 各 `*-SUMMARY.md` | `flow-kit/reference/test-pyramid.md` 只查「适用矩阵」+ 需要的那几轮详情 | — |
-| 6 | `<id>/REQUIREMENT.md` + `<id>/DESIGN.md` + `<id>/TASK.md` + `<id>/TEST.md` + `git diff` | `flow-kit/reference/ui-anti-patterns.md`（前端项目第三轮 · 75 行可全读）| — |
+| 4 | `<id>/TASK.md`（只读当前 task 块）+ `<id>/DESIGN.md` `## 0` 段 + `<id>/UI-DESIGN.md`（UI 任务）+ `.specs/CONTEXT.md` + `.specs/LESSONS.md` | code-kit/reference/ui-anti-patterns.md`（UI 任务 · 75 行可全读）| — |
+| 5 | `<id>/REQUIREMENT.md` + `<id>/DESIGN.md` `## 0` 段 + `<id>/TASK.md` + 各 `*-SUMMARY.md` | code-kit/reference/test-pyramid.md` 只查「适用矩阵」+ 需要的那几轮详情 | — |
+| 6 | `<id>/REQUIREMENT.md` + `<id>/DESIGN.md` + `<id>/TASK.md` + `<id>/TEST.md` + `git diff` | code-kit/reference/ui-anti-patterns.md`（前端项目第三轮 · 75 行可全读）| — |
 | 7 | `.specs/<id>/` 全部产物 + `.specs/LESSONS.md` | — | — |
 | **G1** (需求门审) | `<id>/REQUIREMENT.md` + `.specs/CONTEXT.md` | — | — |
-| **G2** (方案门审) | `<id>/CHANGE.md` + `<id>/REQUIREMENT.md` + `<id>/DESIGN.md` + `.specs/CONTEXT.md` + `.specs/ARCHITECTURE.md`（如存在） | `flow-kit/reference/tech-stacks.md` 仅查相关 ADR 部分 | — |
-| **G3** (代码门审) | `<id>/TASK.md`（当前 task 块）+ `<id>/DESIGN.md` `## 0` 段 + 当前 task 的 `SUMMARY.md` + `git diff` + `.specs/LESSONS.md` | — | `flow-kit/reference/ui-anti-patterns.md`（UI 任务） |
-| **G4** (测试门审) | `<id>/REQUIREMENT.md` + `<id>/TEST.md` + 各 `*-SUMMARY.md` + `.specs/LESSONS.md` | `flow-kit/reference/test-pyramid.md` 仅查「适用矩阵」 | — |
+| **G2** (方案门审) | `<id>/CHANGE.md` + `<id>/REQUIREMENT.md` + `<id>/DESIGN.md` + `.specs/CONTEXT.md` + `.specs/ARCHITECTURE.md`（如存在） | code-kit/reference/tech-stacks.md` 仅查相关 ADR 部分 | — |
+| **G3** (代码门审) | `<id>/TASK.md`（当前 task 块）+ `<id>/DESIGN.md` `## 0` 段 + 当前 task 的 `SUMMARY.md` + `git diff` + `.specs/LESSONS.md` | — | code-kit/reference/ui-anti-patterns.md`（UI 任务） |
+| **G4** (测试门审) | `<id>/REQUIREMENT.md` + `<id>/TEST.md` + 各 `*-SUMMARY.md` + `.specs/LESSONS.md` | code-kit/reference/test-pyramid.md` 仅查「适用矩阵」 | — |
 | **M** (health) | `.specs/CONTEXT.md` + `.specs/LESSONS.md` + 最近 1 份 `.specs/health/*.md`（如有，做对比基线）| — | 抽样 5 个最近改动频繁的 src/ 模块 + 5 个测试文件 + 最近 30 天 git log |
 | **A** (evolve) | `STATE.md` + `.specs/CONTEXT.md` + `.specs/ARCHITECTURE.md`（如存在）+ 范围内每个 `.specs/archive/<change>/DESIGN.md` 的 § 9 段（仅 § 9，非整份 DESIGN）| — | 仅扫 `last_evolve_at` 之后归档的 change，禁止越界读 § 9 以外的 DESIGN 内容 |
-| **A** (architect) | `.specs/CONTEXT.md` + `.specs/ARCHITECTURE.md`（如存在）+ `.specs/CHANGELOG.md` + `flow-kit/templates/ARCHITECTURE.md`（模板）| — | `src/` 顶层结构 + `package.json` / 依赖文件 + 抽样几份 `.specs/archive/*/DESIGN.md` |
+| **A** (architect) | `.specs/CONTEXT.md` + `.specs/ARCHITECTURE.md`（如存在）+ `.specs/CHANGELOG.md` + code-kit/templates/ARCHITECTURE.md`（模板）| — | `src/` 顶层结构 + `package.json` / 依赖文件 + 抽样几份 `.specs/archive/*/DESIGN.md` |
 
 ### 查 reference 某一节的实际动作示例
 
 ```
 # ± 查「适用矩阵」那一节的起始行
-grep_search Query="适用矩阵" SearchPath="flow-kit/reference/tech-stacks.md"
+grep_search Query="适用矩阵" SearchPath="code-kit/reference/tech-stacks.md"
 # 取到 line 380 左右为起始，再：
-read_file path="flow-kit/reference/tech-stacks.md" offset=380 limit=60
+read_file path="code-kit/reference/tech-stacks.md" offset=380 limit=60
 ```
 
 不要「为了保险」一上来就整读。不仅费 token，还让你在后面的推理中被无关节况干扰。
@@ -340,7 +340,7 @@ read_file path="flow-kit/reference/tech-stacks.md" offset=380 limit=60
 
 ## 极少数情况：用户根本没说他想做什么
 
-例：用户只发了 `@flow-kit/GO.md`，正文空。
+例：用户只发了 `@code-kit/GO.md`，正文空。
 
 → AI 必须主动反问，给出 3 个最可能的选项让用户选：
 1. 我有个新想法想做

@@ -13,7 +13,7 @@
 
 ### 1. 写需求
 
-用 `@flow-kit/templates/REQUIREMENT.md` 模板填写：
+用 `@code-kit/templates/REQUIREMENT.md` 模板填写：
 
 - **用户故事**：以 `作为<角色>，我想<动作>，以便<价值>` 表达
 - **验收准则（AC）**：每条用 `Given / When / Then` 结构，必须可被一条命令或一次手动操作验证
@@ -58,5 +58,5 @@
 ## 触发下一步
 
 需用户确认 REQUIREMENT.md 后，进入：
-- `@flow-kit/prompts/2-design.md`（涉及架构决策时）
-- `@flow-kit/prompts/3-task.md`（无新架构时直接拆任务）
+- `@code-kit/prompts/2-design.md`（涉及架构决策时）
+- `@code-kit/prompts/3-task.md`（无新架构时直接拆任务）

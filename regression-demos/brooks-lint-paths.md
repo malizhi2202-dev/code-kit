@@ -148,8 +148,8 @@ AI 自己按 R1~R6 过 diff，发现的问题数会**少一些**（按 brooks-li
 /plugin install brooks-lint@brooks-lint-marketplace
 
 # 2. 把这个 fixture 喂给 4-dev 阶段
-@flow-kit/prompts/4-dev.md
-@flow-kit/regression-demos/brooks-lint-paths.md
+@code-kit/prompts/4-dev.md
+@code-kit/regression-demos/brooks-lint-paths.md
 
 请按 4-dev 步骤 4 跑这个 demo 的 self-review，对照验收清单。
 
@@ -163,8 +163,8 @@ AI 自己按 R1~R6 过 diff，发现的问题数会**少一些**（按 brooks-li
 ### 你是用户想试用code-kit + brooks-lint
 
 ```
-@flow-kit/GO.md
-帮我用这个 demo（@flow-kit/regression-demos/brooks-lint-paths.md）走一遇 4-dev 的 self-review
+@code-kit/GO.md
+帮我用这个 demo（@code-kit/regression-demos/brooks-lint-paths.md）走一遇 4-dev 的 self-review
 ```
 
 GO.md 路由命中 `执行 T<NN>` / `跑` 类触发词 → `prompts/4-dev.md` → AI 进入步骤 4，按你装没装 brooks-lint 自动选路径 A/B。

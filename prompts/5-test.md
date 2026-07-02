@@ -1,7 +1,7 @@
 # 阶段 5 · TEST — 五轮测试金字塔
 
 > **核心思想**：测试不是"跑一下单测"，是 5 个维度的金字塔。
-> 每轮按项目类型可裁剪。本 prompt 决定**做哪几轮**；具体怎么做查 `@flow-kit/reference/test-pyramid.md`。
+> 每轮按项目类型可裁剪。本 prompt 决定**做哪几轮**；具体怎么做查 `@code-kit/reference/test-pyramid.md`。
 
 ## 角色
 
@@ -14,7 +14,7 @@ Test Engineer。
 - `@.specs/<change-id>/TASK.md`
 - 各任务的 `*-SUMMARY.md`
 - 已存在的测试代码
-- `@flow-kit/reference/test-pyramid.md`（5 轮的工具 / 标准 / 清单）
+- `@code-kit/reference/test-pyramid.md`（5 轮的工具 / 标准 / 清单）
 
 ## 你的职责
 
@@ -239,7 +239,7 @@ Semgrep / CodeQL / Bandit 选一。无 high；medium 有处理记录。
 
 ## 输出
 
-- `.specs/<change-id>/TEST.md`（用 `@flow-kit/templates/TEST.md` 模板，含 5 轮报告段）
+- `.specs/<change-id>/TEST.md`（用 `@code-kit/templates/TEST.md` 模板，含 5 轮报告段）
 - 性能 / 安全扫描的原始输出贴入或链接到附件
 
 ## 约束（强制）
@@ -264,5 +264,5 @@ Semgrep / CodeQL / Bandit 选一。无 high；medium 有处理记录。
 
 ## 触发下一步
 
-- 任何轮次发现 🔴 问题 → 回到 `@flow-kit/prompts/4-dev.md` 修复（产 fix 任务）
-- 全部通过 → `@flow-kit/prompts/6-review.md`（review 阶段会再检查 5 轮都做了）
+- 任何轮次发现 🔴 问题 → 回到 `@code-kit/prompts/4-dev.md` 修复（产 fix 任务）
+- 全部通过 → `@code-kit/prompts/6-review.md`（review 阶段会再检查 5 轮都做了）

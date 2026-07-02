@@ -1,10 +1,10 @@
 # Forge runtime adapter（可选）
 
-flow-kit 默认仍然是纯 markdown：不需要 CLI、不需要安装运行时，也不绑定任何外部工具。Forge 是一个可选 runtime adapter，适合那些希望在 Claude Code 里防止 AI 跳阶段、漏产物、漏测试或漏 review 的项目。
+code-kit 默认仍然是纯 markdown：不需要 CLI、不需要安装运行时，也不绑定任何外部工具。Forge 是一个可选 runtime adapter，适合那些希望在 Claude Code 里防止 AI 跳阶段、漏产物、漏测试或漏 review 的项目。
 
 ## 它解决什么
 
-flow-kit 定义“应该怎么做”：阶段、prompt、template、产物和 review 规则。
+code-kit 定义“应该怎么做”：阶段、prompt、template、产物和 review 规则。
 
 Forge 检查“实际有没有做到”：通过 Claude Code hooks、routing log、session state、health check 和 smoke test，在运行时检查当前阶段是否允许写文件、是否缺关键产物、是否缺测试或 review 证据。
 
@@ -12,7 +12,7 @@ Forge 检查“实际有没有做到”：通过 Claude Code hooks、routing log
 
 Forge 不应该成为code-kit 的依赖。
 
-- 没装 Forge：flow-kit 行为不变，继续按 `@flow-kit/GO.md` 和 `prompts/*.md` 使用。
+- 没装 Forge：code-kit 行为不变，继续按 `@code-kit/GO.md` 和 `prompts/*.md` 使用。
 - 装了 Forge：AI 可以把code-kit 的阶段、change-id、task-id 和风险信息写入 Forge state/routing，供 runtime guard 使用。
 - Forge 缺失或不可用：必须 fail-open 到纯 markdown 流程，不应阻断code-kit。
 
@@ -21,9 +21,9 @@ Forge 不应该成为code-kit 的依赖。
 在项目根目录里检测以下文件：
 
 ```text
-flow-kit/GO.md
-flow-kit/prompts/4-dev.md
-flow-kit/templates/TASK.md
+code-kit/GO.md
+code-kit/prompts/4-dev.md
+code-kit/templates/TASK.md
 .claude/hooks/forge-pretool-guard.ps1
 .claude/hooks/forge-session-audit.ps1
 ```
@@ -50,7 +50,7 @@ Forge adapter 不要求code-kit 改变产物格式。推荐只写一条轻量 ro
 
 ```json
 {
-  "adapter": "flow-kit",
+  "adapter": "code-kit",
   "change_id": "<change-id>",
   "stage": "4-dev",
   "task_id": "T01",

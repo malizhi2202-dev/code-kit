@@ -19,7 +19,7 @@
 - **数据库**: <如有>
 - **测试**: <例如 vitest + playwright>
 - **构建/部署**: <例如 Vite + Vercel>
-- **栈卡片编号**（来自 `@flow-kit/reference/tech-stacks.md`）: <如 1 Next.js 全栈>
+- **栈卡片编号**（来自 `@code-kit/reference/tech-stacks.md`）: <如 1 Next.js 全栈>
 
 ## 域语言（术语表）
 

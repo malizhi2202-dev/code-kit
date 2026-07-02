@@ -1,7 +1,7 @@
 # SYSTEM — 永久注入版
 
 > 把这个文件的内容复制进你的 IDE 全局规则文件（`.windsurfrules` / `.cursorrules` / `CLAUDE.md` / `.aider.conf.yml`），IDE 会自动注入每次会话。
-> 注入后你只需要 `@flow-kit/prompts/<n>-*.md` 引用当前阶段，不用再 `@METHODOLOGY` 和 `@RULES`。
+> 注入后你只需要 `@code-kit/prompts/<n>-*.md` 引用当前阶段，不用再 `@METHODOLOGY` 和 `@RULES`。
 
 ---
 
@@ -99,4 +99,4 @@
 
 ---
 
-> 完整方法论与机制详见 `@flow-kit/METHODOLOGY.md`，本文件是其精简注入版。
+> 完整方法论与机制详见 `@code-kit/METHODOLOGY.md`，本文件是其精简注入版。

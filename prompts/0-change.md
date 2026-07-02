@@ -59,7 +59,7 @@
 
    **各选项后续动作**：
 
-   - **选 1**：暂停本工作流，引导用户跑 `@flow-kit/prompts/A-architect.md`。完成后用户回来重新跑 `@flow-kit/GO.md` + 同样意图，那时 ARCHITECTURE.md 已就绪，本步会通过。**已生成的 change-id 暂留**，A-architect 完成后复用
+   - **选 1**：暂停本工作流，引导用户跑 `@code-kit/prompts/A-architect.md`。完成后用户回来重新跑 `@code-kit/GO.md` + 同样意图，那时 ARCHITECTURE.md 已就绪，本步会通过。**已生成的 change-id 暂留**，A-architect 完成后复用
    - **选 2**：继续步骤 0.5。但**强制**：在 CHANGE.md 末尾加一段「## 架构层影响声明」列出本次 change 会冲击哪些 ADR / 模块边界（这段会在 2-design § 0.5 被读到）
    - **选 3**：用户给出"这其实只是 X"的解释，AI 重新判断。如果合理则继续；如果用户解释牵强，AI **可以坚持**（"我仍判定为架构级，理由：…，请你选 1 或 2"）
 
@@ -99,7 +99,7 @@
       ```
       从 67 styles 里选出 **9 个最匹配项目类型**的，按下面的标准卡片格式呈现。
       优势：后期 2a-ui-design 能联动调调色板（161 palettes）/ 字体（57 pairings）/ 图表（25 charts）。
-   2. **没装 uipro** → 回退到code-kit 内置基线：加载 `@flow-kit/reference/ui-aesthetics.md` 的「调性」一节，按其末尾的「给 AI 在 0-change 阶段展示用的标准模板」呈现 9 张调性卡片。
+   2. **没装 uipro** → 回退到code-kit 内置基线：加载 `@code-kit/reference/ui-aesthetics.md` 的「调性」一节，按其末尾的「给 AI 在 0-change 阶段展示用的标准模板」呈现 9 张调性卡片。
 
    ### 呈现要求（两条路径都适用）
 
@@ -126,7 +126,7 @@
    - 是否触及架构（需要更新 `DESIGN.md` / 新增 ADR）？
    - 是否影响现有 AC？
 3. **范围排除**：明确写出**这次不做什么**。
-4. **生成 CHANGE.md**：使用 `@flow-kit/templates/CHANGE.md` 模板，填好后保存到 `.specs/<change-id>/CHANGE.md`（id 来自步骤 0）。
+4. **生成 CHANGE.md**：使用 `@code-kit/templates/CHANGE.md` 模板，填好后保存到 `.specs/<change-id>/CHANGE.md`（id 来自步骤 0）。
 5. **路径建议**：基于影响面判定，给出本次走哪条路径：
    - 完整：`REQUIREMENT → DESIGN → TASK → DEV → TEST → REVIEW → INTEGRATION`
    - 中等：`(REQUIREMENT 增量) → TASK → DEV → TEST → REVIEW → INTEGRATION`
@@ -154,5 +154,5 @@
 ## 触发下一步
 
 CHANGE.md 经用户确认后，根据路径建议进入：
-- `@flow-kit/prompts/1-requirement.md`（影响需求时）
-- `@flow-kit/prompts/3-task.md`（直接拆任务时）
+- `@code-kit/prompts/1-requirement.md`（影响需求时）
+- `@code-kit/prompts/3-task.md`（直接拆任务时）

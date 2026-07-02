@@ -18,14 +18,14 @@
 - **R1.5 · 重启协议（清窗前后必须严格执行）**
 
   **清窗前** AI 必须依次完成：
-  1. 把当前任务的中间状态写入 `.specs/<id>/<task-id>-PROGRESS.md`（用 `@flow-kit/templates/PROGRESS.md`）。必须包含：已完成子步骤 / 当前正在做 / **已排除方案及理由** / 待确认假设。
+  1. 把当前任务的中间状态写入 `.specs/<id>/<task-id>-PROGRESS.md`（用 `@code-kit/templates/PROGRESS.md`）。必须包含：已完成子步骤 / 当前正在做 / **已排除方案及理由** / 待确认假设。
   2. 更新仓库根 `STATE.md` 的「中断任务」字段。
   3. 输出一段"重启指令"给用户，形如：
      ```
       已写入 PROGRESS。请在新会话开头粘贴：
-     @flow-kit/METHODOLOGY.md
-     @flow-kit/RULES.md
-     @flow-kit/prompts/4-dev.md
+     @code-kit/METHODOLOGY.md
+     @code-kit/RULES.md
+     @code-kit/prompts/4-dev.md
      @.specs/CONTEXT.md
      @.specs/<id>/REQUIREMENT.md
      @.specs/<id>/TASK.md
@@ -60,15 +60,15 @@
   | 类型 | 路径 | 长度 | 加载方式 |
   |---|---|---|---|
   | SPEC | `.specs/<id>/*.md` | 通常 < 200 行 | 整读 OK |
-  | REFERENCE | `flow-kit/reference/*.md` | 75~470 行 | **禁止默认整读**，按节 grep / read offset |
-  | TEMPLATE / PROMPT | `flow-kit/templates\|prompts/*.md` | < 150 行 | 整读 OK |
+  | REFERENCE | code-kit/reference/*.md` | 75~470 行 | **禁止默认整读**，按节 grep / read offset |
+  | TEMPLATE / PROMPT | code-kit/templates\|prompts/*.md` | < 150 行 | 整读 OK |
 
   规则：
   1. **首轮预算**：进入任何阶段的首轮消息，加载的 reference/* 总行数 ≤ **150 行**（仅 `ui-anti-patterns.md` 75 行可整读，其它必须按节读）
   2. **未越界**：`tech-stacks.md` / `ui-aesthetics.md` / `test-pyramid.md` 严禁默认整读，先 grep 标题再 read offset
   3. **声明义务**：路由声明 / 任务计划里必须列出每个加载项的**起止行**或标注「全读 N 行」
   4. **后置加载**：里面某节首轮没用到 → 标在「未加载」段并说明何时拉
-  5. 完整加载策略表见 `@flow-kit/GO.md` 顶部「红线·Token 预算」段
+  5. 完整加载策略表见 `@code-kit/GO.md` 顶部「红线·Token 预算」段
 
 ## R2 · 阶段门（Stage Gates）
 
@@ -109,11 +109,11 @@
      - 未找到凭据 → 生成 SQL 文件 + 在 `SUMMARY.md`「数据库迁移」段**显式提醒**用户手动在 local / dev / staging / prod 各环境执行
   5. **禁止**只改 model 不写迁移就提交。这种提交直接判违规，AI 自己回滚
 
-  详细操作步骤见 `@flow-kit/prompts/4-dev.md` 第 1.7 节。
+  详细操作步骤见 `@code-kit/prompts/4-dev.md` 第 1.7 节。
 
 - **R4.6 · 破坏性变更高门槛（强制）**
 
-  AI 在 4-dev 阶段命中下面**任一**条件时，禁止直接动手，必须先走「破坏性变更协议」（详见 `@flow-kit/prompts/4-dev.md` 第 1.8 节）：
+  AI 在 4-dev 阶段命中下面**任一**条件时，禁止直接动手，必须先走「破坏性变更协议」（详见 `@code-kit/prompts/4-dev.md` 第 1.8 节）：
 
   1. **删除既有代码** ≥ 5 行（不算空行/注释）
   2. **改公共导出**：导出函数 / 类 / 接口的签名变更（参数 / 返回值 / 类型）
@@ -133,7 +133,7 @@
 - **R5.1** 测试用例必须从 `REQUIREMENT.md` 的 AC 派生，禁止直接从实现代码派生。
 - **R5.2** 不允许用 mock 屏蔽真实失败。如必须 mock，须在测试上方注释说明 mock 的原因与假设。
 - **R5.3** 不允许通过删除/弱化测试来"修复"失败。
-- **R5.4** TEST.md 必须声明 5 轮金字塔（功能 / 性能 / 安全 / 兼容 / 可观测）的状态。跳过任意一轮必须给理由（"暂时跳过"不算理由）。详见 `@flow-kit/reference/test-pyramid.md`。
+- **R5.4** TEST.md 必须声明 5 轮金字塔（功能 / 性能 / 安全 / 兼容 / 可观测）的状态。跳过任意一轮必须给理由（"暂时跳过"不算理由）。详见 `@code-kit/reference/test-pyramid.md`。
 - **R5.5** 性能 / 安全 / 兼容轮次的"通过 / 失败"必须基于**可量化指标**或**工具输出**，禁止"看起来良好"、"基本没问题"等空话。每个判定必须含数字 + 与基线/预算的对比。
 
 ## R6 · 反幻觉
@@ -186,7 +186,7 @@
   | Gate 3 · 代码审查 | 4-dev（每 task/wave 完成）→ 下一 task/5-test | `SUMMARY.md` + diff | 4 |
   | Gate 4 · 测试审查 | 5-test → 6-review | `TEST.md` + AC 覆盖 | 4 |
 
-- **R9.2 · 角色不可减少**：每个 Gate 至少 4 个独立角色视角。6 个标准角色池：架构师、研发负责人、资产开发、Agent 开发、安全审计师、**测试专家**。默认组合见 `@flow-kit/prompts/G-gate-review.md`。不允许合并角色（同一段分析不能算作两个角色的产出）。Gate 4 必须以测试专家为主审角色。
+- **R9.2 · 角色不可减少**：每个 Gate 至少 4 个独立角色视角。6 个标准角色池：架构师、研发负责人、资产开发、Agent 开发、安全审计师、**测试专家**。默认组合见 `@code-kit/prompts/G-gate-review.md`。不允许合并角色（同一段分析不能算作两个角色的产出）。Gate 4 必须以测试专家为主审角色。
 
 - **R9.3 · 交叉对抗强制**：每个 🔴 Critical 发现必须被**至少一个其他角色**二次确认。主持人必须在审查报告中记录完整的交叉对抗过程。未经过交叉对抗的发现不能标记为「已确认」。
 
@@ -222,7 +222,7 @@
 
 - **R9.6 · 门禁强制**：Gate 审查中任何 🔴 Critical 未解决前，**禁止进入下一阶段**。阻塞时必须退回到对应上游阶段修复，修复后重新跑本 Gate（最多 3 轮，与 R2.6 对齐）。
 
-- **R9.7 · 产物强制**：每个 Gate 必须产出 `GATE-<N>-REVIEW.md`（使用模板 `@flow-kit/templates/GATE-REVIEW.md`）。无此文件视为 Gate 未跑。
+- **R9.7 · 产物强制**：每个 Gate 必须产出 `GATE-<N>-REVIEW.md`（使用模板 `@code-kit/templates/GATE-REVIEW.md`）。无此文件视为 Gate 未跑。
 
 - **R9.8 · Gate 3 与 6-review 不重复**：Gate 3 关注"实现是否符合设计意图 + 多角色交叉视角"；6-review 关注"整体交付物是否满足 AC + spec 合规 + 代码质量 + UI"。二者审查内容不同，不做重复劳动。Gate 3 的发现可作为 6-review 的输入。
 

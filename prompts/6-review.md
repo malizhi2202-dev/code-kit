@@ -12,11 +12,11 @@
 - `@.specs/<change-id>/TASK.md`
 - `@.specs/<change-id>/TEST.md`
 - 本次变更的 git diff（用户提供或 AI 通过工具获取）
-- `@flow-kit/reference/ui-anti-patterns.md`（如是前端项目）
+- `@code-kit/reference/ui-anti-patterns.md`（如是前端项目）
 
 ## 你的职责
 
-使用 `@flow-kit/templates/REVIEW.md` 模板分三轮审查（后端 / lib 项目跳过第三轮）。
+使用 `@code-kit/templates/REVIEW.md` 模板分三轮审查（后端 / lib 项目跳过第三轮）。
 
 ### 第一轮 · Spec 合规审查
 
@@ -126,7 +126,7 @@ AI 自己逐个维度诊断 diff，输出上面同样的 4 要素格式，发现
 
 #### 3.2 Anti-Pattern 扫描
 
-逐项对照 `@flow-kit/reference/ui-anti-patterns.md` 的"强制禁忌"段：
+逐项对照 `@code-kit/reference/ui-anti-patterns.md` 的"强制禁忌"段：
 
 - [ ] 字体类（无 AI slop 默认字体）
 - [ ] 颜色类（无纯黑/纯白、无紫色渐变、无彩底灰字、无第二个强调色）
@@ -224,5 +224,5 @@ AI 自己逐个维度诊断 diff，输出上面同样的 4 要素格式，发现
 
 ## 触发下一步
 
-- 有 Critical 待修 → `@flow-kit/prompts/4-dev.md`（执行 fix 任务）
-- 全部通过或人工接受 → `@flow-kit/prompts/7-integration.md`
+- 有 Critical 待修 → `@code-kit/prompts/4-dev.md`（执行 fix 任务）
+- 全部通过或人工接受 → `@code-kit/prompts/7-integration.md`

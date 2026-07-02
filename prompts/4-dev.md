@@ -33,9 +33,9 @@
 - `verify`
 - `done`
 
-AI 不允许自行编造临时最小 TASK；缺字段必须反问用户或回到 `@flow-kit/prompts/3-task.md` 生成正式 `TASK.md`。
+AI 不允许自行编造临时最小 TASK；缺字段必须反问用户或回到 `@code-kit/prompts/3-task.md` 生成正式 `TASK.md`。
 
-若当前 task 涉及前端 / UI 文件（`.css` / `.tsx` / `.vue` / `.html` / `.svelte` / 设计 token / 用户可见文案），必须先确认 `.specs/<change-id>/UI-DESIGN.md` 存在。缺失时停止，回到 `@flow-kit/prompts/2a-ui-design.md`。纯后端 / CLI / lib 任务才可跳过。
+若当前 task 涉及前端 / UI 文件（`.css` / `.tsx` / `.vue` / `.html` / `.svelte` / 设计 token / 用户可见文案），必须先确认 `.specs/<change-id>/UI-DESIGN.md` 存在。缺失时停止，回到 `@code-kit/prompts/2a-ui-design.md`。纯后端 / CLI / lib 任务才可跳过。
 
 触发时输出：
 
@@ -141,7 +141,7 @@ git reset --hard $(git log --oneline | grep "safety(" | head -1 | cut -d' ' -f1)
    - 「已查阅 L-NNN，本次方案与之差异是 X」 或
    - 「已查阅 L-NNN，本次确认仍适用，所以不会重试该方案」
 3. 若计划做的事与某条 active 条目完全相同 → 停下来按 R1.6 回答"本次与上次的差异是什么"，不允许盲目重试
-4. 若 `.specs/LESSONS.md` 不存在 → 用 `@flow-kit/templates/LESSONS.md` 创建空骨架
+4. 若 `.specs/LESSONS.md` 不存在 → 用 `@code-kit/templates/LESSONS.md` 创建空骨架
 
 ### 1.6 UI 任务额外检查（仅当任务涉及任何用户可见 UI）
 
@@ -149,9 +149,9 @@ git reset --hard $(git log --oneline | grep "safety(" | head -1 | cut -d' ' -f1)
 
 命中时，进入实现**之前**还必须：
 
-1. 加载 `@.specs/<id>/UI-DESIGN.md`（必须存在；不存在 → 停下来要求先跑 `@flow-kit/prompts/2a-ui-design.md`）
-2. 加载 `@flow-kit/reference/ui-anti-patterns.md`，按当前任务的关键词 grep 相关章节
-3. 加载 `@flow-kit/reference/frontend-engineer-rules.md`（**第 1 + 第 2 + 第 10 节必读**），其他节按输出类型按需读：
+1. 加载 `@.specs/<id>/UI-DESIGN.md`（必须存在；不存在 → 停下来要求先跑 `@code-kit/prompts/2a-ui-design.md`）
+2. 加载 `@code-kit/reference/ui-anti-patterns.md`，按当前任务的关键词 grep 相关章节
+3. 加载 `@code-kit/reference/frontend-engineer-rules.md`（**第 1 + 第 2 + 第 10 节必读**），其他节按输出类型按需读：
    - 任务是做交互原型 → 补读第 6.1
    - 任务是做幻灯片 / 演示 → 补读第 6.2
    - 任务是做仪表盘 / 数据可视化 → 补读第 6.3
@@ -613,7 +613,7 @@ git diff --numstat $(git log --oneline | grep "safety(" | head -1 | cut -d' ' -f
 
 ### 6. 写 SUMMARY
 
-使用 `@flow-kit/templates/SUMMARY.md` 模板，填到 `.specs/<change-id>/<task-id>-SUMMARY.md`。
+使用 `@code-kit/templates/SUMMARY.md` 模板，填到 `.specs/<change-id>/<task-id>-SUMMARY.md`。
 内容：做了什么 / 改了哪些文件 / verify 输出 / **6 维自查输出**（步骤 4 的 brooks-review 或内置回退结果）/ 是否触发新 fix-plan。
 
 ### 7. 标记完成
@@ -635,7 +635,7 @@ git diff --numstat $(git log --oneline | grep "safety(" | head -1 | cut -d' ' -f
 若执行中出现 token > 50k / 自我复读 / 同错重现 / 用户说"打转了"中任一信号：
 
 1. **立即停手**——不要再写代码或跑工具
-2. 用 `@flow-kit/templates/PROGRESS.md` 写出 `.specs/<id>/<task-id>-PROGRESS.md`，重点填：
+2. 用 `@code-kit/templates/PROGRESS.md` 写出 `.specs/<id>/<task-id>-PROGRESS.md`，重点填：
    - 已完成子步骤（勾选清单）
    - 当前正在做（一段话，恢复后能直接续上）
    - **已排除的方案 + 理由 + 失败次数**（这是反重复的核心）

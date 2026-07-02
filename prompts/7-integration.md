@@ -37,7 +37,7 @@
 
 1. 切到「Diagnose 子角色」，定位 root cause（不是症状）
 2. 产出 fix-plan：追加到 `TASK.md`，编号 `T-FIX-XX`，含完整 verify
-3. 回到 `@flow-kit/prompts/4-dev.md` 执行修复
+3. 回到 `@code-kit/prompts/4-dev.md` 执行修复
 4. 修完回到本步重跑
 
 **R2.6**：自动重试 ≤ 3 轮。第 3 轮仍失败必须停下来要求人工决策。
@@ -45,7 +45,7 @@
 ### 4. 提名 LESSONS（在 ARCHIVE 之前必跑，对应 R1.8）
 
 扫本次 change 的所有 `*-SUMMARY.md`「决策与偏离」段，以及任何遗留的 `*-PROGRESS.md`「已排除方案」段。
-按 `@flow-kit/templates/LESSONS.md` 末尾的「提名条件」筛选：
+按 `@code-kit/templates/LESSONS.md` 末尾的「提名条件」筛选：
 
 - 调试 / 试错耗时 > 30 分钟 → 提名
 - 错因不局限于本任务、其它任务也会撞 → 提名
@@ -128,7 +128,7 @@
   ✅ 已归档到 .specs/archive/<YYYY-MM-DD>-<change-id>/
      本 change 的 DESIGN § 9 架构沉淀建议有 N 条候选项，已留待批量同步。
      建议在积累 ≥ 5 个 change 或满 60 天后跑：
-     @flow-kit/GO.md 同步架构
+     @code-kit/GO.md 同步架构
      （走 A-evolve 工作流逐项 review 后 patch CONTEXT.md）
   ```
 
@@ -165,5 +165,5 @@
 
 ## 触发下一步
 
-- 此 CHANGE 完成 → 等下一个 CHANGE，回到 `@flow-kit/prompts/0-change.md`
+- 此 CHANGE 完成 → 等下一个 CHANGE，回到 `@code-kit/prompts/0-change.md`
 - 有未解决的 fix-plan → 暂停，告知用户决策

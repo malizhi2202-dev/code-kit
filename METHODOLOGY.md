@@ -1,4 +1,4 @@
-# 方法论（flow-kit 骨架 · AI 必读）
+# 方法论（code-kit 骨架 · AI 必读）
 
 > **你是 AI 助手。这是code-kit 的方法论全文，每次会话开始 / 清窗恢复时必读一遍。**
 > 读完之后你应该知道：当前处于哪个阶段、要产出什么工件、和其他阶段的输入输出关系、哪些核心机制不允许绕过。
@@ -89,7 +89,7 @@ CHANGE → REQUIREMENT → 🚪G1 → DESIGN → [2a UI-DESIGN]* → 🚪G2 → 
 | 🔴 **安全审计师** | 注入攻击、权限边界、数据泄露、CVE | G1 · G2 · G3 · G4 |
 | 🟪 **测试专家** | 测试策略、覆盖率缺口、边界 case、回归风险、AC 可测试性 | G1 · G3 · G4 |
 
-> 详细审查维度见 `@flow-kit/prompts/G-gate-review.md`。
+> 详细审查维度见 `@code-kit/prompts/G-gate-review.md`。
 
 ---
 

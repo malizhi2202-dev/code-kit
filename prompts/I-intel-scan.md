@@ -55,7 +55,7 @@
   - CLAUDE.md（仓库根，<size>）
   - .cursor/rules/architecture.md（<size>）
 
-flow-kit 用 CONTEXT.md 作为单一源。请选择：
+code-kit 用 CONTEXT.md 作为单一源。请选择：
   1. 综合 + 扫描（推荐）：我读所有现有文档 + 跑入场扫描，合并生成 CONTEXT.md
   2. 以现有文档为准：选定其中一个作为基础（告诉我哪个）→ 我提取关键信息到 CONTEXT.md，保留双向链接
   3. 忽略现有文档，重新扫描生成
@@ -98,7 +98,7 @@ flow-kit 用 CONTEXT.md 作为单一源。请选择：
 ```
  项目里未发现任何 AI 上下文文档（CONTEXT/AGENTS/CLAUDE/Cursor/Windsurf/Copilot/Cline/README/ARCHITECTURE/CONTRIBUTING）。
 
-flow-kit 需要一份 CONTEXT.md 给 AI 用。请选择：
+code-kit 需要一份 CONTEXT.md 给 AI 用。请选择：
   1. 现在跑入场扫描，纯从代码生成 CONTEXT.md（~15-30k tokens，仅首次）
   2. 我手动指定项目里某个文档作为开发遵守依据：<请回复路径>
   3. 跳过 intel-scan，直接进 0-change（不推荐 · AI 会"盲飞"，老项目护栏 B1-B5 全失效）
@@ -246,5 +246,5 @@ detected_stack: <主要技术栈一句话总结>
 
 ## 触发下一步
 
-- 跑完 → 用户继续原本意图（如 `@flow-kit/GO.md` + 一句新需求）
+- 跑完 → 用户继续原本意图（如 `@code-kit/GO.md` + 一句新需求）
 - AI 此时会自动读 `.specs/CONTEXT.md`（或步骤 0 选 4 指定的替代文档）→ 后续阶段都基于它
