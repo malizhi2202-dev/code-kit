@@ -81,6 +81,45 @@ cpcode-kit/prompts/0-change.md .claude/skills/flow-change/SKILL.md
 
 或者最简单——直接在会话里 `@code-kit/...` 引用。
 
+### Hermes Agent
+
+Hermes Agent 原生支持 `@` 文件引用和 Agent Skills 开放标准，code-kit 可以直接对接：
+
+**方式一：作为 Skills 导入（推荐）**
+
+```bash
+mkdir -p ~/.hermes/skills/flow-change
+cp code-kit/prompts/0-change.md ~/.hermes/skills/flow-change/SKILL.md
+# 其他阶段同理，批量复制：
+for f in code-kit/prompts/*.md; do
+  name=$(basename "$f" .md)
+  mkdir -p ~/.hermes/skills/flow-${name}
+  cp "$f" ~/.hermes/skills/flow-${name}/SKILL.md
+done
+```
+
+之后在 Hermes 会话里直接调用 skill 名即可触发对应阶段。
+
+**方式二：项目级规则注入**
+
+把 `SYSTEM.md` 内容复制到项目根的 `.hermes.md`（或 `HERMES.md`），Hermes Agent 会在进入项目时自动加载：
+
+```bash
+cp code-kit/SYSTEM.md .hermes.md
+```
+
+> Hermes Agent 的 `.hermes.md` 等价于 Claude Code 的 `CLAUDE.md`，都是项目级常驻规则。
+
+**方式三：`@` 引用（通用）**
+
+直接在会话里 `@code-kit/prompts/0-change.md` 引用，和通用方式一致。
+
+**Hermes 的特色能力：自进化**
+
+Hermes Agent 的 L7 自进化能力意味着：跑过几次完整 change 流程后，它可以自动把频繁使用的模式沉淀为 `SKILL.md`，后续调用更短、更精准。code-kit 的每个阶段 prompt 本身就是高质量的 skill 种子——Hermes 会在使用中自动学习你的偏好（比如你总是跳 2a、总是在 review 前跑 brooks-lint），逐渐形成你的个人变体。
+
+> 💡 **提示**：如果你同时用 Claude Code 和 Hermes Agent，两者都遵循 [agentskills.io](https://agentskills.io) 开放标准，code-kit 的 skills 可以一次配置两边通用。详见[Auto-Porting CLAUDE.md Skills to Hermes Agent](https://dev.to/akaranjkar08/auto-porting-your-claudemd-skills-to-hermes-agent-the-agentskillsio-open-standard-nobody-is-5h89)。
+
 ### Cursor
 
 把 `RULES.md` 复制为 `.cursorrules`，prompts 用 `@` 引用即可。
@@ -272,6 +311,184 @@ copycode-kit\prompts\*.md .windsurf\workflows\
 
 产物：`REQUIREMENT.md` + `DESIGN.md`（可很短，但必须含技术栈 / 边界）+ `TASK.md` + `SUMMARY.md`。
 跑顺了再升级到完整版。
+
+---
+
+## 整体工作流程图
+
+> 以下 mermaid 图在 GitHub / VS Code / 多数 markdown 渲染器中直接可见。若你的阅读器不支持 mermaid，参考旁边文字描述。
+
+### 1. 完整闭环（greenfield 新项目从 0 到归档）
+
+```mermaid
+flowchart TD
+    START["💡 一句话想法 / bug"] --> C0["<b>0-change</b><br/>反问澄清 + 影响面判定<br/>📄 CHANGE.md"]
+    C0 --> C1["<b>1-requirement</b><br/>AC + 术语 + 范围切分<br/>📄 REQUIREMENT.md<br/>📄 CONTEXT.md"]
+    C1 --> G1{"🚪 <b>G1 需求门禁</b><br/>至少 4 角色对抗审查"}
+    G1 -->|"✅ 通过"| C2["<b>2-design</b><br/>技术栈预选 + ADR + 风险<br/>📄 DESIGN.md"]
+    G1 -->|"❌ 驳回"| C1
+    C2 --> UI{"前端项目？"}
+    UI -->|"是"| C2A["<b>2a UI-DESIGN</b><br/>调性 + design tokens<br/>📄 UI-DESIGN.md"]
+    UI -->|"否"| G2
+    C2A --> G2{"🚪 <b>G2 设计门禁</b><br/>至少 4 角色对抗审查"}
+    G2 -->|"✅ 通过"| C3["<b>3-task</b><br/>原子任务 + 依赖图 + [P] 并行<br/>📄 TASK.md"]
+    G2 -->|"❌ 驳回"| C2
+    C3 --> C4["<b>4-dev 🔄</b><br/>逐任务 fresh context + TDD<br/>📄 SUMMARY.md × N"]
+    C4 --> G3{"🚪 <b>G3 代码门禁</b><br/>每 task/wave 审查"}
+    G3 -->|"✅ 通过"| C5["<b>5-test</b><br/>5 轮金字塔：功能/性能/安全/兼容/可观测<br/>📄 TEST.md"]
+    G3 -->|"❌ 驳回"| C4
+    C5 --> G4{"🚪 <b>G4 测试门禁</b><br/>至少 4 角色对抗审查"}
+    G4 -->|"✅ 通过"| C6["<b>6-review</b><br/>双/三轮审查：spec + 代码 + UI 视觉<br/>📄 REVIEW.md"]
+    G4 -->|"❌ 驳回"| C4
+    C6 --> C7["<b>7-integration</b><br/>UAT + 集成 smoke + LESSONS 提名<br/>📄 LESSONS.md"]
+    C7 --> ARCHIVE["📦 <b>ARCHIVE</b><br/>折叠进主 spec"]
+
+    style C0 fill:#e1f5fe,stroke:#0288d1
+    style C1 fill:#e8f5e9,stroke:#388e3c
+    style C2 fill:#fff3e0,stroke:#f57c00
+    style C2A fill:#fce4ec,stroke:#c62828
+    style C3 fill:#f3e5f5,stroke:#7b1fa2
+    style C4 fill:#e8eaf6,stroke:#283593
+    style C5 fill:#e0f2f1,stroke:#00695c
+    style C6 fill:#fff8e1,stroke:#f9a825
+    style C7 fill:#efebe9,stroke:#4e342e
+    style G1 fill:#ffcdd2,stroke:#b71c1c
+    style G2 fill:#ffcdd2,stroke:#b71c1c
+    style G3 fill:#ffcdd2,stroke:#b71c1c
+    style G4 fill:#ffcdd2,stroke:#b71c1c
+```
+
+**关键机制**：
+- 🚪 **4 个 Gate**（G1~G4）各由至少 4 个角色（架构师/研发负责人/安全审计师/测试专家等）对抗审查，防止 AI 幻觉产物进入下一阶段
+- 🔄 **4-dev 逐任务循环**，每个 task 一个 fresh context，靠 `.md` 工件传递状态
+- 📄 **每个阶段产出 1 个工件**，工件不缺席 = 阶段不跳过
+
+### 2. Brownfield 老项目安全护栏流程
+
+```mermaid
+flowchart TD
+    START["🏚️ 老项目 · 首次使用 code-kit"] --> GO["@code-kit/GO.md<br/>「帮我加 X 功能」"]
+    GO --> CHECK{"检测 .specs/CONTEXT.md"}
+    CHECK -->|"❌ 不存在"| SCAN["<b>I-intel-scan</b><br/>自动扫描项目栈/命名/抽象<br/>~15-30k tokens（仅首次）"]
+    CHECK -->|"✅ 已存在"| CHANGE
+    SCAN --> CTX["📄 生成/更新 CONTEXT.md<br/>既有抽象索引 · 禁动清单 · 命名约定"]
+    CTX --> CHANGE["<b>0-change</b> → <b>1-requirement</b>"]
+    CHANGE --> D05["<b>2-design 步骤 0.5</b><br/>既有架构对齐：列出触碰模块 + 沿用决策"]
+    D05 --> GUARDS["🛡️ <b>5 道护栏激活</b>"]
+
+    GUARDS --> B1["<b>B1</b> 入场扫描：AI 知道项目栈/命名/既有抽象"]
+    GUARDS --> B2["<b>B2</b> 架构对齐：DESIGN 强制沿用既有模式"]
+    GUARDS --> B3["<b>B3</b> 文件边界：TASK write_files 不超出范围"]
+    GUARDS --> B4["<b>B4</b> 破坏性变更：删 5+ 行/grep 引用图/反问用户"]
+    GUARDS --> B5["<b>B5</b> 防重复：写代码前 grep 既有抽象"]
+
+    B1 --> TASK["<b>3-task</b> → <b>4-dev</b>"]
+    B2 --> TASK
+    B3 --> TASK
+    B4 --> TASK
+    B5 --> TASK
+
+    TASK --> VERIFY["提交前 diff 边界 verify"]
+    VERIFY -->|"越界"| ROLLBACK["回滚/扩范围/开新 task"]
+    VERIFY -->|"合规"| REST["<b>5-test</b> → <b>6-review</b> → <b>7-integration</b>"]
+
+    style SCAN fill:#e1f5fe,stroke:#0288d1
+    style GUARDS fill:#ffebee,stroke:#c62828
+    style VERIFY fill:#fff3e0,stroke:#f57c00
+```
+
+**为什么需要这套护栏**：老项目最大的风险不是 AI 写得慢，而是 AI **不知道项目里已经有什么**——重复造轮子、引入冲突模式、顺手删了"看起来没用"的反射调用。5 道护栏把最常见的老项目事故拦在提交之前。
+
+### 3. 三条路径对比（完整 vs MVP vs 已有项目加功能）
+
+```mermaid
+flowchart LR
+    subgraph FULL["🟢 完整路径（greenfield 从零建）"]
+        direction TB
+        F1["0-change"] --> F2["1-requirement"] --> F3["2-design"] --> F4["2a UI-DESIGN*"]
+        F4 --> F5["3-task"] --> F6["4-dev 🔄"] --> F7["5-test"] --> F8["6-review"] --> F9["7-integration"]
+    end
+
+    subgraph BROWNFIELD["🟡 已有项目加功能（CHANGE 驱动）"]
+        direction TB
+        B1["0-change"] --> B2["preflight：补轻量<br/>REQUIREMENT + DESIGN"]
+        B2 --> B3["3-task"] --> B4["4-dev 🔄"] --> B5["5-test"] --> B6["6-review"] --> B7["7-integration"]
+    end
+
+    subgraph MVP["🔵 MVP 模式（当天跑通）"]
+        direction TB
+        M1["1-requirement<br/>（含 CONTEXT）"] --> M2["DESIGN-lite<br/>（技术栈/边界）"]
+        M2 --> M3["3-task"] --> M4["4-dev<br/>（含 self-verify）"]
+    end
+
+    style FULL fill:#e8f5e9,stroke:#388e3c
+    style BROWNFIELD fill:#fff8e1,stroke:#f9a825
+    style MVP fill:#e1f5fe,stroke:#0288d1
+```
+
+| 路径 | 产物数 | 适用场景 | 典型 token |
+|---|---|---|---|
+| 🟢 完整 | 8+ 个 .md | 团队项目 / 500+ 行 / 长期维护 | ~250k-530k |
+| 🟡 CHANGE 驱动 | 6+ 个 .md | 已有项目加中等 feature | ~200k-400k |
+| 🔵 MVP | 4 个 .md | 个人项目 / < 100 行 / hackathon | ~50k-100k |
+
+### 4. 横向命令体系（主流程外按需调用）
+
+```mermaid
+flowchart TD
+    MAIN["🔄 主流程<br/>0 → 1 → 2 → 2a → 3 → 4 → 5 → 6 → 7"] 
+
+    MAIN -.->|"老项目入场"| L1["<b>I-intel-scan</b><br/>生成 CONTEXT.md"]
+    MAIN -.->|"月度/季度"| L2["<b>M-health</b><br/>代码库体检 + 技术债"]
+    MAIN -.->|"里程碑后"| L3["<b>A-architect</b><br/>重构 ARCHITECTURE.md"]
+    MAIN -.->|"多 change 后"| L4["<b>A-evolve</b><br/>增量同步 CONTEXT + ARCHITECTURE"]
+    MAIN -.->|"换视觉"| L5["<b>L-restyle</b><br/>一键换调性"]
+    MAIN -.->|"任意阶段"| L6["<b>G-gate-review</b><br/>多角色门禁审查"]
+
+    L1 -.->|"产出"| CTX["📄 CONTEXT.md"]
+    L2 -.->|"产出"| HEALTH["📄 .specs/health/DATE-HEALTH.md"]
+    L3 -.->|"产出/更新"| ARCH["📄 ARCHITECTURE.md"]
+    L4 -.->|"patch"| CTX2["📄 CONTEXT.md + ARCHITECTURE.md"]
+    L5 -.->|"产出"| UI["📄 UI-DESIGN v2"]
+
+    style MAIN fill:#e8eaf6,stroke:#283593,stroke-width:3px
+    style L1 fill:#e1f5fe,stroke:#0288d1
+    style L2 fill:#e8f5e9,stroke:#388e3c
+    style L3 fill:#fff3e0,stroke:#f57c00
+    style L4 fill:#f3e5f5,stroke:#7b1fa2
+    style L5 fill:#fce4ec,stroke:#c62828
+    style L6 fill:#ffcdd2,stroke:#b71c1c
+```
+
+**前缀规则**：`L-` 生命周期 · `M-` 维护巡检 · `I-` 项目情报 · `A-` 架构演进 · `G-` 门禁审查。都不在主流程里，按需调用，每个都可独立使用。
+
+### 5. 项目级文档三层联动
+
+```mermaid
+flowchart TD
+    subgraph LAYER1["🔵 第一层：rules 层（每个 change 都加载）"]
+        CTX["<b>.specs/CONTEXT.md</b><br/>技术栈版本 · 命名约定 · 既有抽象索引<br/>禁动清单 · code-style<br/><i>50-200 行 · I-intel-scan 首创 · A-evolve 增量</i>"]
+    end
+
+    subgraph LAYER2["🟠 第二层：structure 层（仅 2-design 加载）"]
+        ARCH["<b>.specs/ARCHITECTURE.md</b><br/>模块图 · 依赖规则 · ADR 列表<br/>跨模块契约 · 扩展点 · 容量边界<br/><i>200-600 行 · A-architect 首创/重构 · A-evolve 增量</i>"]
+    end
+
+    subgraph LAYER3["🟢 第三层：change 层（仅本 change 加载）"]
+        DESIGN["<b>.specs/change-id/DESIGN.md</b><br/>本次技术栈选定 · 架构对齐 · ADR<br/>风险 · §9 架构沉淀建议<br/><i>100-400 行 · 2-design 写 · 归档后冻结</i>"]
+    end
+
+    DESIGN -->|"§9 提名"| EVOLVE["<b>A-evolve</b><br/>扫各 change §9 → 用户逐项 review"]
+    EVOLVE -->|"patch"| CTX
+    EVOLVE -->|"patch + append ADR"| ARCH
+    CTX -->|"ADR 冲突 ≥ 5 或 > 200 行"| AARCH["触发 <b>A-architect</b> 重审"]
+
+    style LAYER1 fill:#e1f5fe,stroke:#0288d1
+    style LAYER2 fill:#fff3e0,stroke:#f57c00
+    style LAYER3 fill:#e8f5e9,stroke:#388e3c
+```
+
+**三层职责不重叠**：CONTEXT 告诉 AI「这个项目怎么写的」，ARCHITECTURE 告诉人「这个项目怎么设计的」，DESIGN 记录「这次 change 做了什么决策」。三层通过 A-evolve 定期同步，决策从 change 层逐级沉淀到 rules/structure 层。
 
 ---
 
