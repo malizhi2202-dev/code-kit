@@ -43,6 +43,9 @@ Wave 3:            T05               (depends on T03, T04)
     <完成判定。一句话，对应 AC 的某个子项，例如 AC-1>
   </done>
   <depends_on></depends_on>
+  <auto>true</auto>
+  <!-- 专家团门禁投票结果（R13）：true=🤖自动化 / false=👤人工介入 -->
+  <!-- 由 3-task 阶段门禁写入，4-dev 步骤 0 读取 -->
 </task>
 
 <task id="T02" parallel="true" status="pending">
@@ -53,6 +56,7 @@ Wave 3:            T05               (depends on T03, T04)
   <verify>……</verify>
   <done>……</done>
   <depends_on></depends_on>
+  <auto>true</auto>
 </task>
 
 <!-- 其他任务继续追加 -->
@@ -84,5 +88,10 @@ Wave 3:            T05               (depends on T03, T04)
 > 此区域由 review/integration 阶段自动追加，编号 `T-FIX-XX`。
 
 ```xml
-<!-- 占位 -->
+<!-- Fix 任务模板（由 review/integration 阶段追加，也需含 <auto> 字段） -->
+<task id="T-FIX-01" parallel="false" status="pending">
+  <name><修复内容></name>
+  ...
+  <auto>false</auto>  <!-- fix 任务默认人工确认 -->
+</task>
 ```
