@@ -608,6 +608,7 @@ code-kit 与四类扩展的关系：
 ### 可选运行时门禁：Forge
 
 code-kit 默认仍然是纯 markdown、无运行时。如果你在 Claude Code 里经常遇到 AI 跳过阶段、漏写产物、漏测试或漏 review，可以额外接入 Forge 作为可选 runtime adapter。
+有简单的gi最小提交，多角色专家审核。但是不能替代门禁系统
 
 Forge 的角色不是替代code-kit，而是读取code-kit 的阶段 / change-id / task-id，并通过 Claude Code hooks、routing log、health check 和 smoke test 做运行时门禁。没装 Forge 时，code-kit 行为完全不变。
 
