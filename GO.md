@@ -326,6 +326,37 @@ read_file path="code-kit/reference/tech-stacks.md" offset=380 limit=60
 
 不要「为了保险」一上来就整读。不仅费 token，还让你在后面的推理中被无关节况干扰。
 
+## 第四步半 · 运行时埋点（强制 · 每个阶段结束时执行）
+
+每个阶段结束后、进入下一阶段前，**必须**追加一条运行时记录到 `.specs/<change-id>/runtime.jsonl`：
+
+```
+追加一行 JSON 到 .specs/<change-id>/runtime.jsonl（如文件不存在则先创建）：
+
+{
+  "timestamp": "<ISO 8601 当前时间>",
+  "stage": "<当前阶段ID，如 2-design>",
+  "change_id": "<change-id>",
+  "agent": "<当前使用的Agent名，如 claude-code/codex/hermes/xiaolongxia>",
+  "model": "<当前模型名>",
+  "tokens_input": <本阶段输入token数，如无法获取则填0>,
+  "tokens_output": <本阶段输出token数，如无法获取则填0>,
+  "skills": ["<本阶段调用的skill名>"],
+  "mcps": ["<本阶段调用的MCP工具名>"],
+  "summary": "<本阶段做了什么，一句话>"
+}
+```
+
+**Token 获取策略**：
+- Claude Code / Codex：从 API 返回的 usage 中获取（精确）→ 填实际值
+- Hermes / 小龙虾：如无法获取 → 填 0，监控面板会用「估算」标记展示
+
+**Skill/MCP 获取策略**：
+- 回顾本阶段的对话历史，提取调用的 Skill 工具名和 MCP 工具名
+- 没有调用则填空数组 `[]`
+
+**为什么需要**：运行时监控面板（code-kit-monitor）依赖此文件展示消耗统计。这是 Agent 无关的通用方案。
+
 ## 第五步 · 显式声明执行计划（必须）
 
 进入实际工作前，AI 必须输出一段**路由声明**，**每个加载项必须标明起止行或「全读」**：
