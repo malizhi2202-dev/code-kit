@@ -460,7 +460,9 @@ git status --short                  # 含 untracked
 
 **禁止**："顺手修了个 bug" / "看到这里很丑就改了"——必须开新 task 或新 CHANGE。
 
-### 5.5 原子提交（R4.1）
+### 5.5 原子提交（R4.1 + R4.7 · 硬性限制 · 不可跳过）
+
+**每个 task verify 通过后、写 SUMMARY 之前，必须先 commit。不允许等用户提醒。不允许合并多个 task 为一次提交。**
 
 提交格式：
 ```
@@ -468,7 +470,19 @@ git status --short                  # 含 untracked
 ```
 例：`feat(add-dark-mode): T03 add ThemeContext provider`
 
+提交后**必须向用户报告**：
+```
+✅ R4.7 提交：<hash> — feat(<id>): T<NN> <subject>
+```
+
 代码 + 测试同次提交（或紧邻的下次提交）。
+
+**每波次完成后**，额外一次 wave 级提交：
+```
+milestone(<change-id>): Wave<N> 完成 — <task1>,<task2>,...
+```
+
+> **R4.7 规则**：task 提交 → 写 SUMMARY → 标记 done → 下一 task。缺一不可。AI 在切换到下一 task 前必须检查当前 task 是否已提交。
 
 ### 6. 写 SUMMARY
 

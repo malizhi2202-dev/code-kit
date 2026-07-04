@@ -114,5 +114,8 @@
 
 ## 触发下一步
 
+门禁通过后，**先执行 R4.7 检查点提交**，然后：
 - 此 CHANGE 完成 → 等下一个 CHANGE，回到 `@code-kit/prompts/0-change.md`
 - 有未解决的 fix-plan → 暂停，告知用户决策
+
+> **R4.7**：INTEGRATION.md 写入后，必须 `git commit`：`docs(<id>): 7-integration — INTEGRATION.md + 归档完成`。提交后报告 hash。
