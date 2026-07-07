@@ -94,17 +94,9 @@ code-kit 的文件分两类，**加载策略不同**：
 2. 关注字段：`活跃 Change` / `当前阶段` / `当前 Task` / `中断任务`
 3. 如果存在 `中断任务` 非空 → **优先级最高**，直接走"恢复中断任务"分支（见下表）
 
-### 可选 runtime adapter 检测
+### 可选运行时检测
 
-code-kit 默认不依赖任何运行时。若项目同时存在 `.claude/hooks/forge-pretool-guard.ps1` 与 `.claude/hooks/forge-session-audit.ps1`，说明可选 Forge runtime adapter 已安装。
-
-检测到 Forge 时，在路由声明里追加一行：
-
-```text
-Forge adapter: detected / not detected
-```
-
-若 detected，进入 `4-dev`、`5-test`、`6-review`、`7-integration` 时，可以把当前 `change-id`、阶段、task-id、风险、测试和 review 证据写入 Forge routing/state，供运行时门禁使用。Forge 缺失时不要报错，继续纯 markdown 流程。
+code-kit 默认不依赖任何运行时。**Hermes Agent 用户**：已安装 `flow-*` skill 时，直接走 skill 路由，跳过文件读取开销。项目存在 `.hermes.md` 视为 Hermes 原生模式，优先使用 `skill_view()` 加载阶段 prompt。
 
 ## 第二步前 · Artifact Preflight Gate（强制）
 
@@ -207,8 +199,9 @@ Preflight 失败时，路由声明必须写明：
 按下面顺序 `ls` / `find` 探测：
 
 | 文档 | 路径 | 来自哪个生态 |
-|---|---|---|
+|---|---|---|---|
 | `CONTEXT.md` | 仓库根 / `.specs/` | code-kit 自己 |
+| `.hermes.md` / `HERMES.md` | 仓库根 | Hermes Agent（优先于 AGENTS.md） |
 | `AGENTS.md` | 仓库根 | OpenAI Codex / 标准 agents 协议 |
 | `CLAUDE.md` | 仓库根 / `.claude/` | Anthropic Claude Code |
 | `.cursor/rules/*.md` | `.cursor/` | Cursor IDE |
@@ -234,7 +227,7 @@ Preflight 失败时，路由声明必须写明：
 
 读 CONTEXT.md，**提醒用户**："上次扫描已 X 天，可重跑 intel-scan"，但**不强制**。
 
-#### 情况 D · 未发现 CONTEXT.md，但有其他 AI 上下文文档（AGENTS / CLAUDE / Cursor / 等）
+#### 情况 D · 未发现 CONTEXT.md，但有其他 AI 上下文文档（.hermes.md / AGENTS / CLAUDE / Cursor / 等）
 
 **反问用户**（**必须**等待回复才能继续）：
 
@@ -254,7 +247,7 @@ code-kit 默认用 CONTEXT.md 作为单一源。请选择：
 - **选 2**：在 `STATE.md` 写 `ai_context_doc: <用户指定路径>`，回到原意图（直接进 0-change）
 - **选 3**：在 `STATE.md` 写 `ai_context_doc: none / skip`，回到原意图（带警告）
 
-#### 情况 E · 未发现任何 AI 上下文文档（CONTEXT / AGENTS / CLAUDE / Cursor / Windsurf / Copilot / Cline 全无）
+#### 情况 E · 未发现任何 AI 上下文文档（CONTEXT / .hermes.md / AGENTS / CLAUDE / Cursor / Windsurf / Copilot / Cline 全无）
 
 **反问用户**（**必须**等待回复才能继续）：
 
@@ -283,7 +276,7 @@ code-kit 后续阶段需要项目上下文给 AI 用。请选择：
 - AI 不知项目架构 → 写出不合项目风格的代码
 - AI 重复实现已有抽象 → 费 token 且产生重复代码
 - 4-dev 1.7 schema 任务 / 1.8 破坏性变更检测都会不准
-- 用户明明有 CLAUDE.md 写好的约定 → AI 完全不读 → 抱怨"为什么不按我说的来"
+- 用户明明有 `.hermes.md` / `CLAUDE.md` 写好的约定 → AI 完全不读 → 抱怨"为什么不按我说的来"
 
 ## 第四步 · 自动准备（不打扰用户）
 
@@ -352,7 +345,7 @@ AI 在路由声明的「第一动作」一栏末尾追加 `R4.7: <检查点> →
   "timestamp": "<ISO 8601 当前时间>",
   "stage": "<当前阶段ID，如 2-design>",
   "change_id": "<change-id>",
-  "agent": "<当前使用的Agent名，如 claude-code/codex/hermes/xiaolongxia>",
+  "agent": "<当前使用的Agent名，如 hermes/claude-code/codex>",
   "model": "<当前模型名>",
   "tokens_input": <本阶段输入token数，如无法获取则填0>,
   "tokens_output": <本阶段输出token数，如无法获取则填0>,
@@ -364,7 +357,7 @@ AI 在路由声明的「第一动作」一栏末尾追加 `R4.7: <检查点> →
 
 **Token 获取策略**：
 - Claude Code / Codex：从 API 返回的 usage 中获取（精确）→ 填实际值
-- Hermes / 小龙虾：如无法获取 → 填 0，监控面板会用「估算」标记展示
+- Hermes：如无法获取 → 填 0，监控面板用「估算」标记展示
 
 **Skill/MCP 获取策略**：
 - 回顾本阶段的对话历史，提取调用的 Skill 工具名和 MCP 工具名

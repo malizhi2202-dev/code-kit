@@ -2,6 +2,8 @@
 
 code-kit 默认仍然是纯 markdown：不需要 CLI、不需要安装运行时，也不绑定任何外部工具。Forge 是一个可选 runtime adapter，适合那些希望在 Claude Code 里防止 AI 跳阶段、漏产物、漏测试或漏 review 的项目。
 
+> **Hermes Agent 用户**：Hermes 通过 skill 系统 + delegate_task + cron 提供等效的运行时能力。Forge 是 Claude Code 专有的 hooks 方案，Hermes 用户不需要它。
+
 ## 它解决什么
 
 code-kit 定义“应该怎么做”：阶段、prompt、template、产物和 review 规则。

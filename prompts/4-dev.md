@@ -10,7 +10,7 @@
 - 要执行的 task id（用户指定，例如 `T03`）
 - `@.specs/<change-id>/DESIGN.md`（**必读 `## 0. 技术栈选定` + `## 0.5 既有架构对齐`**——install / build / test 命令必须匹配选定的栈；触碰模块 / 禁动清单 / 沿用决策必须严格遵循）
 - **项目上下文文档**（从 `STATE.md` 读 `ai_context_doc` 字段决定）：
-  - 有 `ai_context_doc: <path>` → 读那个文档（如 `AGENTS.md` / `CLAUDE.md`）
+  - 有 `ai_context_doc: <path>` → 读那个文档（如 `AGENTS.md` / `.hermes.md` / `CLAUDE.md`）
   - 没或为 `CONTEXT.md` / `.specs/CONTEXT.md` → 读 `@.specs/CONTEXT.md`
   - `none` → 跳过此输入（AI "盲飞"，1.4 沿用既有抽象 grep 必须更彻底以补偿）
 - `@.specs/LESSONS.md`

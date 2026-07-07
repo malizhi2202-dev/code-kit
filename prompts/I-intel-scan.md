@@ -33,6 +33,7 @@
 | 文档 | 路径 | 来自哪个生态 |
 |---|---|---|
 | `CONTEXT.md` | 仓库根 / `.specs/` | code-kit 自己 |
+| `.hermes.md` / `HERMES.md` | 仓库根 | Hermes Agent |
 | `AGENTS.md` | 仓库根 | OpenAI Codex / 标准 agents 协议 |
 | `CLAUDE.md` | 仓库根 / `.claude/` | Anthropic Claude Code |
 | `.cursor/rules/*.md` | `.cursor/` | Cursor IDE |
@@ -45,7 +46,7 @@
 
 #### 0.2 三种分支
 
-##### 分支 A · 找到了至少一个标准 AI 上下文文档（CONTEXT / AGENTS / CLAUDE / Cursor / Windsurf / Copilot / Cline）
+##### 分支 A · 找到了至少一个标准 AI 上下文文档（CONTEXT / .hermes.md / AGENTS / CLAUDE / Cursor / Windsurf / Copilot / Cline）
 
 **反问用户**：
 
@@ -76,7 +77,7 @@ code-kit 用 CONTEXT.md 作为单一源。请选择：
 这些不是 AI 专用文档但常含有用信息。**反问用户**：
 
 ```
- 未发现标准 AI 上下文文档（CONTEXT/AGENTS/CLAUDE/...）。
+ 未发现标准 AI 上下文文档（CONTEXT/.hermes.md/AGENTS/CLAUDE/...）。
 
 但发现这些项目级文档：
   - README.md（<size>）
@@ -96,7 +97,7 @@ code-kit 用 CONTEXT.md 作为单一源。请选择：
 **反问用户**（**必须**确认才能开始扫描）：
 
 ```
- 项目里未发现任何 AI 上下文文档（CONTEXT/AGENTS/CLAUDE/Cursor/Windsurf/Copilot/Cline/README/ARCHITECTURE/CONTRIBUTING）。
+ 项目里未发现任何 AI 上下文文档（CONTEXT/.hermes.md/AGENTS/CLAUDE/Cursor/Windsurf/Copilot/Cline/README/ARCHITECTURE/CONTRIBUTING）。
 
 code-kit 需要一份 CONTEXT.md 给 AI 用。请选择：
   1. 现在跑入场扫描，纯从代码生成 CONTEXT.md（~15-30k tokens，仅首次）

@@ -9,7 +9,7 @@
 - `@.specs/<change-id>/REQUIREMENT.md`
 - `@.specs/<change-id>/CHANGE.md`（含项目类型与调性信息）
 - **项目上下文文档**（从 `STATE.md` 读 `ai_context_doc` 字段决定）：
-  - 有 `ai_context_doc: <path>` → 读那个文档（如 `AGENTS.md` / `CLAUDE.md`）
+  - 有 `ai_context_doc: <path>` → 读那个文档（如 `AGENTS.md` / `.hermes.md` / `CLAUDE.md`）
   - 没 `ai_context_doc` 或 `ai_context_doc: CONTEXT.md` / `.specs/CONTEXT.md` → 读 `@.specs/CONTEXT.md`
   - `ai_context_doc: none` → 跳过此输入（AI "盲飞"，必须在 DESIGN.md 顶部贴警告）
 - **项目级架构文档**（如存在 · brownfield 强烈推荐）：`@.specs/ARCHITECTURE.md`

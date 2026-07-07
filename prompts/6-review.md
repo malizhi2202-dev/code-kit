@@ -64,7 +64,7 @@
 
 ##### 路径 A · 装了 brooks-lint（首选）
 
-在 Claude Code / Gemini CLI / Codex CLI 里调用：
+在 Hermes / Claude Code / Gemini CLI / Codex CLI 里调用：
 
 ```
 /brooks-review            # 基于 diff 的 PR 级诊断

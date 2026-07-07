@@ -4,7 +4,7 @@
 
 **集成能力**：10 阶段主流程（0-change→…→7-integration）+ 8 道专家团门禁（12 个领域角色）+ 逐 task 自动化投票（🤖自动/👤人工）+ git 最小化安全提交（每 task checkpoint，一键回滚）+ 门禁通过自动进入下一阶段（全票/多数→自动，平票→交人裁决）+ 5 道老项目安全护栏 + 横向命令 + 11 个独立可用的工件模板 + 4 个参考文档。纯 markdown，无运行时依赖。
 
-主要是把最近折腾过的几个开源项目——bmad、spec-kit、OpenSpec、GSD、claude-task-master、superpowers、gstack、skills——里面我觉得有用的部分挑出来，再按自己的工作流重排一遍。各自的品牌和 CLI 依赖都剥掉了，只留 markdown。
+主要是把最近折腾过的几个开源项目——bmad、spec-kit、OpenSpec、GSD、claude-task-master、hermes-agent、superpowers、gstack、skills——里面我觉得有用的部分挑出来，再按自己的工作流重排一遍。各自的品牌和 CLI 依赖都剥掉了，只留 markdown。
 
 **新增策略**（相比原始版）：8 Gate 专家团门禁（每阶段领域专属角色）、逐 task 自动化投票（🤖/👤 + `<auto>` 字段）、git 最小化安全提交（每 task safety checkpoint + 门禁通过自动前进 + 一键回滚）、角色定义文件体系（`R-*.md`）、5 道 brownfield 护栏、MVP 模式、极简模式、token 预算估算。
 
@@ -16,7 +16,7 @@
 写多了项目会发现：一个工具只要"装"了，就一定会有版本问题、依赖冲突、哪天突然 breaking change。code-kit 故意反过来——它不是工具，是一组文件。clone 到项目根目录就用，没有运行时。
 
 - 不用 `npm install`、不用 `pip`、不用 CLI
-- Windsurf / Claude Code / Cursor / Copilot / Codex / Gemini / Cline 都能跑，只要 AI IDE 支持 `@` 引用文件
+- Hermes Agent / Windsurf / Claude Code / Cursor / Copilot / Codex / Gemini / Cline 都能跑，只要 AI IDE 支持 `@` 引用文件或 skill 系统
 - 所有规则都在文件里，想改哪条就改哪个 md
 
 坏处是手动操作多了点，好处是不会某天被工具更新坑到。
@@ -73,18 +73,6 @@ copycode-kit\prompts\*.md .windsurf\workflows\
 
 > 也可以把 `RULES.md` 内容复制到 `.windsurfrules`，作为常驻系统规则。
 
-### Claude Code
-
-把每个 prompt 包成 skill：
-
-```bash
-mkdir -p .claude/skills/flow-change
-cp code-kit/prompts/0-change.md .claude/skills/flow-change/SKILL.md
-# 其他阶段同理
-```
-
-或者最简单——直接在会话里 `@code-kit/...` 引用。
-
 ### Hermes Agent
 
 Hermes Agent 原生支持 `@` 文件引用和 Agent Skills 开放标准，code-kit 可以直接对接：
@@ -120,9 +108,19 @@ cp code-kit/SYSTEM.md .hermes.md
 
 **Hermes 的特色能力：自进化**
 
-Hermes Agent 的 L7 自进化能力意味着：跑过几次完整 change 流程后，它可以自动把频繁使用的模式沉淀为 `SKILL.md`，后续调用更短、更精准。code-kit 的每个阶段 prompt 本身就是高质量的 skill 种子——Hermes 会在使用中自动学习你的偏好（比如你总是跳 2a、总是在 review 前跑 brooks-lint），逐渐形成你的个人变体。
+Hermes Agent 的 L7 自进化能力意味着：跑过几次完整 change 流程后，它可以自动把频繁使用的模式沉淀为 `SKILL.md`，后续调用更短、更精准。
 
-> 💡 **提示**：如果你同时用 Claude Code 和 Hermes Agent，两者都遵循 [agentskills.io](https://agentskills.io) 开放标准，code-kit 的 skills 可以一次配置两边通用。详见[Auto-Porting CLAUDE.md Skills to Hermes Agent](https://dev.to/akaranjkar08/auto-porting-your-claudemd-skills-to-hermes-agent-the-agentskillsio-open-standard-nobody-is-5h89)。
+### Claude Code
+
+把每个 prompt 包成 skill：
+
+```bash
+mkdir -p .claude/skills/flow-change
+cp code-kit/prompts/0-change.md .claude/skills/flow-change/SKILL.md
+# 其他阶段同理
+```
+
+或者最简单——直接在会话里 `@code-kit/...` 引用。
 
 ### Cursor
 
@@ -203,10 +201,11 @@ copycode-kit\prompts\*.md .windsurf\workflows\
 
 ### 方式 B · 全局规则注入（每次少 1~2 个 @）
 
-把 code-kit/SYSTEM.md` 的内容**复制一次**到 IDE 全局规则文件，永久注入：
+把 code-kit/SYSTEM.md` 的内容**复制一次**到项目级规则文件，永久注入：
 
 | IDE | 复制到哪 |
 |---|---|
+| **Hermes Agent** | 项目根 `.hermes.md`（自动注入，推荐） |
 | Windsurf | 项目根 `.windsurfrules` 或全局 rules |
 | Cursor | 项目根 `.cursorrules` |
 | Claude Code | 项目根 `CLAUDE.md` 或 `~/.claude/CLAUDE.md`（全局） |
@@ -766,7 +765,7 @@ code-kit 与四类扩展的关系：
 
 ### 可选运行时门禁：Forge
 
-code-kit 默认仍然是纯 markdown、无运行时。如果你在 Claude Code 里经常遇到 AI 跳过阶段、漏写产物、漏测试或漏 review，可以额外接入 Forge 作为可选 runtime adapter。
+code-kit 默认仍然是纯 markdown、无运行时。**Hermes Agent 用户**通过 skill 系统 + delegate_task + cron 已经具备等效的运行时能力，不需要额外适配器。如果你在 Claude Code 里经常遇到 AI 跳过阶段、漏写产物、漏测试或漏 review，可以额外接入 Forge 作为可选 runtime adapter。
 有简单的gi最小提交，多角色专家审核。但是不能替代门禁系统
 
 Forge 的角色不是替代code-kit，而是读取code-kit 的阶段 / change-id / task-id，并通过 Claude Code hooks、routing log、health check 和 smoke test 做运行时门禁。没装 Forge 时，code-kit 行为完全不变。

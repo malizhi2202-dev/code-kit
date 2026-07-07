@@ -229,7 +229,7 @@ v0 = 占位符 + 关键布局 + 步骤 2 决定的 token + 假设清单。
 
 ### 装了 impeccable
 
-检测：`.claude/skills/impeccable/` / `.cursor/skills/impeccable/` / `node_modules/impeccable/` 之一存在。
+检测：`.hermes/skills/impeccable/` / `.claude/skills/impeccable/` / `.cursor/skills/impeccable/` / `node_modules/impeccable/` 之一存在。
 
 - **步骤 1-3** 可替换为：调用 `/impeccable shape <area>` 一站完成
 - **步骤 6** 替换为：调用 `/impeccable audit <area>` + `/impeccable critique <area>`

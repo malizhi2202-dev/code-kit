@@ -238,7 +238,7 @@ UI 任务进入实现前，AI 必须能回答以下问题，否则**停下来反
 
 ## 装了 impeccable 的话怎么办
 
-如果项目里有 `.claude/skills/impeccable/` 或类似目录，**优先调用** impeccable 的命令：
+如果项目里有 `.hermes/skills/impeccable/` / `.claude/skills/impeccable/` 或类似目录，**优先调用** impeccable 的命令：
 
 - `/impeccable shape <area>` — 替代本文档的"4 个问题 + 5 维度"环节
 - `/impeccable critique <area>` — UX 评审

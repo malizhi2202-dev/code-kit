@@ -1,7 +1,8 @@
 # SYSTEM — 永久注入版
 
-> 把这个文件的内容复制进你的 IDE 全局规则文件（`.windsurfrules` / `.cursorrules` / `CLAUDE.md` / `.aider.conf.yml`），IDE 会自动注入每次会话。
-> 注入后你只需要 `@code-kit/prompts/<n>-*.md` 引用当前阶段，不用再 `@METHODOLOGY` 和 `@RULES`。
+> **Hermes Agent**：将本文复制为项目根 `.hermes.md`，Hermes 进入项目时自动注入。
+> **其他 IDE**：复制进 `.windsurfrules` / `.cursorrules` / `CLAUDE.md`。
+> **code-kit 流程**：Hermes 用户优先加载 `flow-go` skill，其他 AI 使用 `@code-kit/prompts/<n>-*.md`。
 
 ---
 
