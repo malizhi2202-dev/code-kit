@@ -1,6 +1,6 @@
 # UI 反模式清单（grep 用）
 
-> 来源：Anthropic `frontend-design` skill + impeccable 项目的 anti-pattern 库。
+> 来源：经典前端设计方法论中的 anti-pattern 清单，收编为 code-kit 内置。
 > 用法：每个 UI 任务进入实现前 grep 此文件；提交前再扫一遍。
 
 ---
@@ -81,19 +81,9 @@
 
 ---
 
-## 自检脚本（可选）
+## 自检方法
 
-如果项目装了 [impeccable CLI](https://impeccable.style)：
-
-```bash
-npx impeccable detect src/                   # 扫描目录
-npx impeccable detect index.html             # 扫描 HTML
-npx impeccable detect --fast --json .        # 快速扫描，JSON 输出
-```
-
-输出会标记 24 类常见 anti-pattern。
-
-如果没装：手动按上面"强制禁忌"清单 grep。
+按上面"强制禁忌"清单 grep 本次 diff 涉及的 UI 文件，每条命中列出 `文件:行号`。对照 `ui-samples/` 基线可以快速目测布局类禁忌（卡片嵌套 / 模板化 hero）。
 
 ---
 

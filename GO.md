@@ -72,7 +72,6 @@ code-kit 的文件分两类，**加载策略不同**：
 |---|---|
 | 前端项目 | +20%（多 2a-ui-design 阶段 + UI 第三轮）|
 | 涉及 schema 变更 | +5~10%（多 1.7 段 + 5-test 4.2 验证）|
-| brooks-lint 已装 | +10%（多 4 个命令调用）|
 | 跨模型 spot-check 触发 | +30%（双模型走同样 review）|
 | task 数 < 3 | -30%（建议走单点调用不走闭环）|
 | task 数 > 10 | +50%（建议拆 milestone）|
@@ -94,17 +93,9 @@ code-kit 的文件分两类，**加载策略不同**：
 2. 关注字段：`活跃 Change` / `当前阶段` / `当前 Task` / `中断任务`
 3. 如果存在 `中断任务` 非空 → **优先级最高**，直接走"恢复中断任务"分支（见下表）
 
-### 可选 runtime adapter 检测
+### 零外部依赖声明
 
-code-kit 默认不依赖任何运行时。若项目同时存在 `.claude/hooks/forge-pretool-guard.ps1` 与 `.claude/hooks/forge-session-audit.ps1`，说明可选 Forge runtime adapter 已安装。
-
-检测到 Forge 时，在路由声明里追加一行：
-
-```text
-Forge adapter: detected / not detected
-```
-
-若 detected，进入 `4-dev`、`5-test`、`6-review`、`7-integration` 时，可以把当前 `change-id`、阶段、task-id、风险、测试和 review 证据写入 Forge routing/state，供运行时门禁使用。Forge 缺失时不要报错，继续纯 markdown 流程。
+code-kit 只依赖 markdown 与 git 本身：不检测、不调用任何包管理器、语言运行时、外部设计工具或运行时适配器。所有决策基线（美学 / 反模式 / 测试金字塔 / 界面样例）均内置在 `reference/` 与 `ui-samples/`，断网可用。
 
 ## 第二步前 · Artifact Preflight Gate（强制）
 
@@ -138,6 +129,9 @@ Preflight 失败时，路由声明必须写明：
 
 | 用户输入特征 | 路由到 | 备注 |
 |---|---|---|
+| `调研` / `议题讨论` / `看看有啥改进` / `怎么优化` / `竞品分析后给建议` / `探索一下方案` / `评估这个改进想法` | `prompts/D-discovery.md` | 议题发现循环：事实文档拆子议题 → 逐个五步讨论 → roadmap；全程零代码改动（R16），不属任何 change |
+| `写产品文档` / `产品 PRD 和原型` / `产品设计文档` / `出一份带原型的需求文档` | `prompts/P-product.md` | 产品 PR + 界面原型合一：单文件 `PRODUCT-DESIGN.html`（九段制）；是 1-requirement 的可选上游 |
+| `对齐检查` / `拉齐` / `检查漂移` / `文档和代码是不是偏了` / `留痕补齐` | `prompts/S-align.md` | 五层对齐检测（R15）；7-integration 前强制跑一次 |
 | `继续` / `接着上次` / `恢复` / `resume` | `prompts/4-dev.md` 的「入场恢复」段 | 加载 `STATE.md` 中断任务对应的 PROGRESS |
 | `执行 T<NN>` / `跑 T<NN>` / `do T<NN>` | `prompts/4-dev.md` | task-id 从用户输入提取 |
 | `审查` / `review` / `检查代码` / `code review` | `prompts/6-review.md` | |
@@ -148,7 +142,7 @@ Preflight 失败时，路由声明必须写明：
 | `选技术` / `选栈` / `选框架` / `tech stack` / `用什么开发` / `迁移评估` | `prompts/2-design.md` 步骤 0 | 只需技术栈选型时入口 |
 | `UI` / `视觉` / `美学` / `theme` / `design system` / `design tokens` | `prompts/2a-ui-design.md` | 前端项目，用户可见 UI；必须已有 `CHANGE.md` + `REQUIREMENT.md` + `DESIGN.md` |
 | `换调性` / `改风格` / `换风格` / `redesign` / `restyle` / `重做视觉` / `换皮` | `prompts/L-restyle.md` | 已有项目换视觉，保留功能 |
-| `健康检查` / `health` / `体检` / `技术债扫描` / `巡检` / `brooks-health` / `brooks-sweep` / `brooks-audit` / `brooks-debt` / `扫冗余` / `找死代码` / `找重复` / `清未用导出` / `清未用依赖` / `dedupe` / `dead code` | `prompts/M-health.md` | 代码库周期性巡检 + 冗余扫描（步骤 2.5），不属任何 change |
+| `健康检查` / `health` / `体检` / `技术债扫描` / `巡检` / `扫冗余` / `找死代码` / `找重复` / `清未用导出` / `清未用依赖` / `dedupe` / `dead code` | `prompts/M-health.md` | 代码库周期性巡检 + 冗余扫描（步骤 2.5），不属任何 change |
 | `扫描代码` / `scan` / `intel` / `入场扫描` / `给项目体检` / `老项目首次访问` | `prompts/I-intel-scan.md` | 生成 / 更新 `.specs/CONTEXT.md`，brownfield 项目首次使用必跑 |
 | `同步架构` / `沉淀架构` / `evolve` / `架构演进` / `同步 CONTEXT` / `整理沉淀` | `prompts/A-evolve.md` | 扫近期归档 change 的 DESIGN § 9，批量 review + patch CONTEXT.md / ARCHITECTURE.md（不属任何 change）|
 | `建立架构` / `架构梳理` / `重构架构` / `architect` / `重审 ADR` / `画架构图` | `prompts/A-architect.md` | 首次 / 重构时建立 `ARCHITECTURE.md`。项目级 ADR / 模块图 / 跨模块契约（不属任何 change）|
@@ -290,9 +284,7 @@ code-kit 后续阶段需要项目上下文给 AI 用。请选择：
 - **新 CHANGE**：按 `prompts/0-change.md` 的步骤 0 自动生成 `change-id`（kebab-case，2~4 词），并在第一条回复里显式声明
 - **目录不存在**：自行 `mkdir -p .specs/<id>/`，不要让用户先建
 - **规则加载**：若 IDE 未注入全局规则，读 `@code-kit/RULES.md`（精简版 `@code-kit/SYSTEM.md` 也行）
-- **检测外部扩展**（阶段 4/5/6/M 需要）：进入阶段前检查是否装了以下并在路由声明里表明走「外部路径」还是「内置回退」：
-  - [`brooks-lint`](https://github.com/hyhmrright/brooks-lint)：4-dev self-review / 5-test 测试质量 / 6-review 代码质量 / M-health 巡检都会优先用
-  - [`ui-ux-pro-max`](https://uupm.cc) / [`impeccable`](https://impeccable.style)：2a-ui-design / 4-dev UI 任务会优先用
+- **路由声明**：用户话语是自然语言而非阶段号时，先走 `@code-kit/prompts/ROUTER.md` 语义路由（含调研 `D-discovery` / 产品文档 `P-product` / 五层对齐 `S-align` 三个新入口）
 
 ### 加载工件（严格区分 必读 / 按需）
 
@@ -305,7 +297,7 @@ code-kit 后续阶段需要项目上下文给 AI 用。请选择：
 |---|---|---|---|
 | 0 / 1 | —（新建）| `code-kit/reference/ui-aesthetics.md` 只查「给 AI 在 0-change 阶段展示用的标准模板」一节（仅前端项目）| — |
 | 2 | `<id>/CHANGE.md` + `<id>/REQUIREMENT.md` + `.specs/CONTEXT.md` + `.specs/ARCHITECTURE.md`（如存在 · brownfield 强烈推荐 · 重点读 § 2/§ 3/§ 4）| `code-kit/reference/tech-stacks.md` 只查「适用矩阵」+ 过滤出的 5~6 张卡片 | ADR 阶段某项要深谈时再读 |
-| 2a | `<id>/CHANGE.md` + `<id>/REQUIREMENT.md` + `<id>/DESIGN.md` `## 0` 段 + `.specs/CONTEXT.md` + `code-kit/reference/ui-anti-patterns.md`（仅 75 行可全读）| `code-kit/reference/ui-aesthetics.md` 查「5 维度」+ 「给 AI 的模板」 | uipro / impeccable 查询（装了才调）|
+| 2a | `<id>/CHANGE.md` + `<id>/REQUIREMENT.md` + `<id>/DESIGN.md` `## 0` 段 + `.specs/CONTEXT.md` + `code-kit/reference/ui-anti-patterns.md`（仅 75 行可全读）| `code-kit/reference/ui-aesthetics.md` 查「5 维度」+ 「给 AI 的模板」 | `ui-samples/INDEX.md` 挑基线（内置零依赖）|
 | 3 | `<id>/REQUIREMENT.md` + `<id>/DESIGN.md` + `<id>/UI-DESIGN.md`（前端项目）+ `.specs/CONTEXT.md` | — | 任务模板查询 |
 | 4 | `<id>/TASK.md`（只读当前 task 块）+ `<id>/DESIGN.md` `## 0` 段 + `<id>/UI-DESIGN.md`（UI 任务）+ `.specs/CONTEXT.md` + `.specs/LESSONS.md` | `code-kit/reference/ui-anti-patterns.md`（UI 任务 · 75 行可全读）| — |
 | 5 | `<id>/REQUIREMENT.md` + `<id>/DESIGN.md` `## 0` 段 + `<id>/TASK.md` + 各 `*-SUMMARY.md` | `code-kit/reference/test-pyramid.md` 只查「适用矩阵」+ 需要的那几轮详情 | — |

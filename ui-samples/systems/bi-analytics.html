@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<!-- 用途：数据分析 BI 系统页面模板（筛选器栏 / 指标卡环比 / 漏斗与分组柱状 SVG / 留存热力表 / 数据明细） | 所属：code-kit ui-samples/systems | 用法：2a UI-DESIGN 阶段按系统类型挑选基线，复制改造 -->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>华信证券 · 数据洞察 BI 看板</title>
+<style>
+/* ============ 设计 Tokens：中性灰阶 + 单一品牌蓝（oklch 优先 / hex 兜底） ============ */
+:root {
+  --bg: #f3f4f6;            --bg: oklch(96.6% 0.005 260);
+  --bg-strong: #e9ebef;     --bg-strong: oklch(93.5% 0.007 260);
+  --surface: #ffffff;       --surface: oklch(100% 0 0);
+  --surface-2: #f8f9fb;     --surface-2: oklch(98.2% 0.003 260);
+  --border: #e3e6ec;        --border: oklch(91.6% 0.01 260);
+  --border-strong: #cdd3dd; --border-strong: oklch(87% 0.012 260);
+  --text-1: #1c2433;        --text-1: oklch(26% 0.02 262);
+  --text-2: #4a5468;        --text-2: oklch(43% 0.026 262);
+  --text-3: #7c8699;        --text-3: oklch(59% 0.02 262);
+  --brand: #2563eb;         --brand: oklch(54.6% 0.17 258);
+  --brand-strong: #1b4fc4;  --brand-strong: oklch(47% 0.16 258);
+  --brand-weak: #e8f0fd;    --brand-weak: oklch(95% 0.028 258);
+  --success: #0d7a4b;       --success: oklch(47% 0.11 160);
+  --warning: #96580c;       --warning: oklch(50% 0.11 70);
+  --danger: #b62b21;        --danger: oklch(48% 0.17 28);
+  --success-bg: #e3f4ec; --warning-bg: #fdf0dc; --danger-bg: #fceae7;
+  --radius: 10px; --radius-sm: 6px;
+  --shadow: 0 1px 2px rgba(28,36,51,.05), 0 6px 18px rgba(28,36,51,.07);
+  --font: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Consolas, "Courier New", monospace;
+}
+/* ============ 基础 ============ */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font: 14px/1.65 var(--font); background: var(--bg); color: var(--text-1); }
+a { color: inherit; text-decoration: none; }
+ul, ol { list-style: none; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 2px; }
+.vh { position: absolute; width: 1px; height: 1px; margin: -1px; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.up { color: var(--success); } .down { color: var(--danger); }
+/* ============ 布局：左侧边导航 + 顶栏 + 内容区 ============ */
+.layout { display: flex; min-height: 100vh; }
+.sidebar { width: 236px; flex: none; background: var(--surface); border-right: 1px solid var(--border); position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.brand { display: flex; gap: 10px; align-items: center; padding: 16px 16px 14px; border-bottom: 1px solid var(--border); }
+.brand__logo { width: 36px; height: 36px; border-radius: 10px; background: var(--brand); color: #fff; display: grid; place-items: center; font-weight: 700; }
+.brand__name { font-size: 15px; font-weight: 650; line-height: 1.3; } .brand__desc { font-size: 12px; color: var(--text-3); }
+.nav { padding: 10px 12px 16px; }
+.nav__group + .nav__group { margin-top: 14px; }
+.nav__title { font-size: 12px; color: var(--text-3); padding: 4px 10px 6px; }
+.nav__link { display: flex; align-items: center; gap: 10px; padding: 8px 10px; margin: 2px 0; border-radius: 8px; color: var(--text-2); position: relative; }
+.nav__link:hover { background: var(--bg-strong); color: var(--text-1); }
+.nav__link.is-active { background: var(--brand-weak); color: var(--brand-strong); font-weight: 600; }
+.nav__link.is-active::before { content: ""; position: absolute; left: -12px; top: 9px; bottom: 9px; width: 3px; border-radius: 2px; background: var(--brand); }
+.ico { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.nav__count { margin-left: auto; font-size: 11px; color: var(--text-3); }
+/* ---- 顶栏：面包屑 / 搜索 / 通知 / 头像 ---- */
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.topbar { height: 56px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 14px; padding: 0 20px; position: sticky; top: 0; z-index: 20; }
+.crumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-3); }
+.crumb b { color: var(--text-1); font-weight: 600; } .crumb i { color: var(--border-strong); font-style: normal; }
+.topbar__search { margin-left: auto; position: relative; }
+.topbar__search input { width: 236px; height: 34px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); padding: 0 54px 0 32px; }
+.topbar__search input:hover { border-color: var(--border-strong); }
+.topbar__search .ico { position: absolute; left: 10px; top: 9px; color: var(--text-3); }
+.topbar__search kbd { position: absolute; right: 8px; top: 8px; font: 11px var(--mono); color: var(--text-3); border: 1px solid var(--border); border-radius: 4px; padding: 0 5px; background: var(--surface); }
+.topbar__bell { position: relative; width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 8px; color: var(--text-2); background: none; cursor: pointer; }
+.topbar__bell:hover { background: var(--bg-strong); color: var(--text-1); }
+.topbar__bell i { position: absolute; top: 7px; right: 8px; width: 7px; height: 7px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 0 2px var(--surface); }
+.avatar { display: flex; align-items: center; gap: 8px; padding: 3px 10px 3px 4px; border-radius: 999px; border: 1px solid var(--border); background: none; cursor: pointer; }
+.avatar:hover { background: var(--bg-strong); }
+.avatar__face { width: 28px; height: 28px; border-radius: 50%; background: var(--brand-weak); color: var(--brand-strong); display: grid; place-items: center; font-size: 12px; font-weight: 600; }
+.avatar__name { font-size: 13px; color: var(--text-2); }
+/* ---- 内容区 ---- */
+.content { padding: 20px 24px 32px; display: flex; flex-direction: column; gap: 16px; max-width: 1440px; width: 100%; margin: 0 auto; }
+.page-head { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.page-head h1 { font-size: 20px; line-height: 1.3; } .page-head p { color: var(--text-3); font-size: 13px; margin-top: 2px; }
+.page-head__actions { margin-left: auto; display: flex; gap: 10px; }
+/* ============ 组件：按钮 / 卡片 / 徽章 ============ */
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); cursor: pointer; }
+.btn:hover { border-color: var(--border-strong); color: var(--text-1); background: var(--surface-2); }
+.btn--primary { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
+.btn--primary:hover { background: var(--brand-strong); border-color: var(--brand-strong); color: #fff; }
+.btn--sm { height: 28px; padding: 0 10px; font-size: 12px; border-radius: var(--radius-sm); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+.card__head { display: flex; align-items: center; gap: 10px; padding: 13px 18px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.card__head h2 { font-size: 15px; } .card__head .hint { font-size: 12px; color: var(--text-3); }
+.card__head .more { margin-left: auto; font-size: 13px; color: var(--brand); } .card__head .more:hover { color: var(--brand-strong); text-decoration: underline; }
+.card__body { padding: 16px 18px; }
+.badge { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.badge--success { color: var(--success); background: var(--success-bg); } .badge--processing { color: var(--brand-strong); background: var(--brand-weak); }
+.badge--warning { color: var(--warning); background: var(--warning-bg); } .badge--danger { color: var(--danger); background: var(--danger-bg); }
+.badge--neutral { color: var(--text-2); background: var(--bg-strong); }
+/* ============ 筛选器栏 ============ */
+.filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 12px; color: var(--text-3); }
+.field input, .field select { height: 34px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); padding: 0 10px; color: var(--text-2); min-width: 150px; }
+.field input:hover, .field select:hover { border-color: var(--border-strong); }
+.field--range { flex-direction: row; align-items: center; gap: 8px; flex-wrap: wrap; }
+.quick-chips { display: flex; gap: 6px; margin-left: auto; align-self: flex-end; }
+.chip { height: 34px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); font-size: 12px; cursor: pointer; }
+.chip:hover { border-color: var(--border-strong); color: var(--text-1); }
+.chip.is-active { background: var(--brand-weak); border-color: var(--brand); color: var(--brand-strong); font-weight: 600; }
+/* ============ 指标卡（含环比） ============ */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+.kpi { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+.kpi:hover { border-color: var(--border-strong); box-shadow: var(--shadow); }
+.kpi__label { font-size: 13px; color: var(--text-2); display: flex; align-items: center; gap: 6px; }
+.kpi__value { font-size: 24px; font-weight: 650; font-family: var(--mono); }
+.kpi__compare { font-size: 12px; color: var(--text-3); display: flex; gap: 6px; align-items: center; }
+.kpi__trend { display: inline-flex; gap: 3px; align-items: center; font-family: var(--mono); font-weight: 600; }
+.kpi__trend--up { color: var(--success); } .kpi__trend--down { color: var(--danger); }
+/* ============ 图表看板：漏斗 / 柱状 / 留存热力 ============ */
+.board { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+.chart { display: block; width: 100%; height: auto; }
+.chart text { font-size: 10px; fill: var(--text-2); font-family: var(--font); }
+.chart .axis { fill: var(--text-3); font-size: 9px; font-family: var(--mono); }
+.chart .gridline { stroke: var(--border); stroke-width: 1; }
+.chart .bar-cur { fill: var(--brand); } .chart .bar-prev { fill: #c6d3e8; }
+.chart .funnel { fill: var(--brand); }
+.chart .funnel-label { fill: #fff; font-size: 10.5px; font-weight: 600; }
+.chart .conv { fill: var(--text-3); font-size: 9.5px; }
+.legend { display: flex; gap: 14px; font-size: 12px; color: var(--text-3); margin-top: 8px; align-items: center; flex-wrap: wrap; }
+.legend .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; margin-right: 5px; vertical-align: -1px; }
+/* ---- 留存热力表格 ---- */
+.ret-wrap { overflow-x: auto; }
+table.ret { width: 100%; border-collapse: separate; border-spacing: 4px; font-size: 12.5px; min-width: 520px; }
+.ret th { font-weight: 500; color: var(--text-3); padding: 4px 6px; white-space: nowrap; text-align: center; }
+.ret td { text-align: center; padding: 7px 6px; border-radius: 6px; font-family: var(--mono); color: var(--text-1); white-space: nowrap; }
+.ret td.cohort { text-align: left; color: var(--text-3); font-size: 12px; }
+.ret .r1 { background: var(--brand-weak); } .ret .r2 { background: #cddffb; }
+.ret .r3 { background: #a6c6f8; } .ret .r4 { background: #70a2ef; color: #fff; }
+.ret .r5 { background: var(--brand); color: #fff; }
+.ret .na { color: var(--text-3); background: var(--surface-2); }
+/* ============ 数据明细表（横向滚动兜底） ============ */
+.table-wrap { overflow-x: auto; }
+table.grid { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; }
+.grid thead th { text-align: right; font-size: 12px; font-weight: 500; color: var(--text-3); padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; background: var(--surface); }
+.grid thead th:first-child, .grid thead th:nth-child(2), .grid thead th:nth-child(3), .grid thead th:nth-child(4) { text-align: left; }
+.grid tbody td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
+.grid tbody td:nth-child(-n+4) { text-align: left; }
+.grid tbody tr { transition: background .12s; }
+.grid tbody tr:hover { background: var(--surface-2); }
+.grid tbody tr:has(.row-check:checked) { background: var(--brand-weak); }
+.grid tbody tr:last-child td { border-bottom: 0; }
+.row-check { accent-color: var(--brand); }
+.batch-bar { display: none; align-items: center; gap: 10px; background: var(--brand-weak); border: 1px solid var(--brand); border-radius: 8px; padding: 7px 14px; font-size: 13px; color: var(--brand-strong); flex-wrap: wrap; margin-top: 12px; }
+.table-wrap:has(.row-check:checked) ~ .batch-bar { display: flex; }
+.batch-bar .btn { background: var(--surface); } .batch-bar .grow { margin-left: auto; font-size: 12px; opacity: .8; }
+/* ============ 标签页 / 分页 / 空态 ============ */
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); }
+.tab { border: 0; background: none; padding: 8px 12px; font-size: 13px; color: var(--text-2); cursor: pointer; border-radius: 8px 8px 0 0; position: relative; }
+.tab:hover { color: var(--text-1); background: var(--surface-2); }
+.tab.is-active { color: var(--brand-strong); font-weight: 600; }
+.tab.is-active::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 2px; background: var(--brand); border-radius: 2px; }
+.pager { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; color: var(--text-3); }
+.pager__info { margin-right: auto; }
+.pager button { min-width: 30px; height: 30px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); cursor: pointer; padding: 0 6px; }
+.pager button:hover:not(:disabled) { border-color: var(--brand); color: var(--brand-strong); }
+.pager button[aria-current="page"] { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
+.pager button:disabled { opacity: .45; cursor: not-allowed; } .pager .ellipsis { padding: 0 2px; }
+.empty { border: 1.5px dashed var(--border-strong); border-radius: 8px; padding: 30px 12px; text-align: center; color: var(--text-3); font-size: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 8px 0; }
+.empty .ico { width: 26px; height: 26px; color: var(--border-strong); }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand__logo" aria-hidden="true">数</div>
+      <div>
+        <div class="brand__name">数据洞察</div>
+        <div class="brand__desc">InsightBI 华信证券</div>
+      </div>
+    </div>
+    <nav class="nav" aria-label="主导航">
+      <div class="nav__group">
+        <div class="nav__title">看板</div>
+        <a class="nav__link is-active" href="#" aria-current="page"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 13.5V9M6.5 13.5V5M10.5 13.5V7.5M14 13.5V3"/></svg>增长分析</a>
+        <a class="nav__link" href="#"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.75" y="1.75" width="5" height="5" rx="1"/><rect x="9.25" y="1.75" width="5" height="5" rx="1"/><rect x="1.75" y="9.25" width="5" height="5" rx="1"/><rect x="9.25" y="9.25" width="5" height="5" rx="1"/></svg>经营概览</a>
+        <a class="nav__link" href="#"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5 2 8.5h4l-1 6 7-8H8l1.5-5z"/></svg>实时大屏</a>
+      </div>
+      <div class="nav__group">
+        <div class="nav__title">分析</div>
+        <a class="nav__link" href="#"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8a6 6 0 0 1 10.4-4.1M14 8a6 6 0 0 1-10.4 4.1"/><path d="M12.5 1.5v2.6H9.9M3.5 14.5v-2.6h2.6"/></svg>留存分析</a>
+        <a class="nav__link" href="#"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4.5l4-2.5 3.5 2 4-2v9l-4 2-3.5-2-4 2.5z"/></svg>漏斗分析</a>
+        <a class="nav__link" href="#"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="4" cy="4" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="6" cy="12" r="2"/><path d="M5.8 4.9l4.4.6M5 5.8l.6 4.2M10.8 7.4l-3.4 3.6"/></svg>用户分群</a>
+      </div>
+      <div class="nav__group">
+        <div class="nav__title">资产与系统</div>
+        <a class="nav__link" href="#"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 1.5H9l3 3v10H4.5z"/><path d="M6.5 8h3M6.5 10.5h3"/></svg>我的报表<span class="nav__count">6</span></a>
+        <a class="nav__link" href="#"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4.5h12M2 11.5h12"/><circle cx="6" cy="4.5" r="1.8"/><circle cx="11" cy="11.5" r="1.8"/></svg>数据源管理</a>
+      </div>
+    </nav>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <nav class="crumb" aria-label="面包屑"><span>数据平台</span><i>/</i><span>增长分析</span><i>/</i><b>报表看板</b></nav>
+      <div class="topbar__search">
+        <label class="vh" for="global-search">搜索指标、看板或报表</label>
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg>
+        <input id="global-search" type="search" placeholder="搜索指标 / 看板…">
+        <kbd>Ctrl K</kbd>
+      </div>
+      <button class="topbar__bell" type="button" aria-label="通知，1 条未读">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8a3.8 3.8 0 0 0-3.8 3.8v2.6L2.8 10.6h10.4L11.8 8.2V5.6A3.8 3.8 0 0 0 8 1.8Z"/><path d="M6.6 12.8a1.5 1.5 0 0 0 2.8 0"/></svg>
+        <i aria-hidden="true"></i>
+      </button>
+      <button class="avatar" type="button"><span class="avatar__face" aria-hidden="true">陈</span><span class="avatar__name">陈明宇 · 数据分析师</span></button>
+    </header>
+    <main class="content">
+      <div class="page-head">
+        <div>
+          <h1>增长分析看板</h1>
+          <p>数据延迟约 5 分钟 · 上次刷新 2024-09-14 15:32 · 负责人 陈明宇</p>
+        </div>
+        <div class="page-head__actions">
+          <button class="btn" type="button">刷新数据</button>
+          <button class="btn btn--primary" type="button">自定义报表</button>
+        </div>
+      </div>
+
+      <section class="card" aria-labelledby="filter-title">
+        <div class="card__head"><h2 id="filter-title">筛选器</h2><span class="hint">变更筛选条件后点击「查询」生效</span></div>
+        <div class="card__body">
+          <div class="filters">
+            <div class="field field--range">
+              <label for="d-start">日期范围</label>
+              <input id="d-start" class="num" type="date" value="2024-08-15">
+              <span aria-hidden="true" style="color:var(--text-3)">至</span>
+              <label class="vh" for="d-end">结束日期</label>
+              <input id="d-end" class="num" type="date" value="2024-09-14">
+            </div>
+            <div class="field">
+              <label for="f-channel">渠道</label>
+              <select id="f-channel"><option>全部渠道</option><option>App</option><option>Web</option><option>小程序</option><option>H5</option></select>
+            </div>
+            <div class="field">
+              <label for="f-version">版本</label>
+              <select id="f-version"><option>全部版本</option><option>v3.2.1</option><option>v3.2.0</option><option>v3.1.0</option></select>
+            </div>
+            <button class="btn btn--primary" type="button">查询</button>
+            <button class="btn" type="button">重置</button>
+            <div class="quick-chips">
+              <button class="chip" type="button">近 7 天</button>
+              <button class="chip is-active" type="button" aria-pressed="true">近 30 天</button>
+              <button class="chip" type="button">本季度</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="kpi-grid" aria-label="核心指标">
+        <div class="kpi">
+          <span class="kpi__label"><span class="badge badge--processing">DAU</span>日活跃用户</span>
+          <span class="kpi__value">284,391</span>
+          <span class="kpi__compare">环比昨日 <span class="kpi__trend kpi__trend--up">▲ +4.2%</span></span>
+        </div>
+        <div class="kpi">
+          <span class="kpi__label"><span class="badge badge--success">留存</span>次日留存率</span>
+          <span class="kpi__value">38.6%</span>
+          <span class="kpi__compare">环比上周 <span class="kpi__trend kpi__trend--down">▼ −0.8pt</span></span>
+        </div>
+        <div class="kpi">
+          <span class="kpi__label"><span class="badge badge--warning">转化</span>付费转化率</span>
+          <span class="kpi__value">4.87%</span>
+          <span class="kpi__compare">环比上周 <span class="kpi__trend kpi__trend--up">▲ +0.31pt</span></span>
+        </div>
+        <div class="kpi">
+          <span class="kpi__label"><span class="badge badge--danger">ARPU</span>人均付费</span>
+          <span class="kpi__value">¥12.84</span>
+          <span class="kpi__compare">环比上月 <span class="kpi__trend kpi__trend--down">▼ −1.2%</span></span>
+        </div>
+      </section>
+
+      <div class="board">
+        <section class="card" aria-labelledby="funnel-title">
+          <div class="card__head">
+            <h2 id="funnel-title">转化漏斗</h2>
+            <span class="hint">近 30 天 · 全渠道</span>
+          </div>
+          <div class="card__body">
+            <svg class="chart" viewBox="0 0 420 236" role="img" aria-label="转化漏斗：曝光 1284.6 万，点击 312.4 万，转化率 24.3%；注册 84.2 万，转化率 27%；首单 28.6 万，转化率 34%；复购 12.4 万，转化率 43.4%">
+              <polygon class="funnel" points="20,10 400,10 345,48 75,48" opacity="1"/>
+              <text class="funnel-label" x="28" y="34">曝光 1,284.6 万</text>
+              <text class="conv" x="408" y="42" text-anchor="end">24.3%</text>
+              <polygon class="funnel" points="80,60 340,60 295,98 125,98" opacity=".88"/>
+              <text class="funnel-label" x="88" y="84">点击 312.4 万</text>
+              <text class="conv" x="408" y="92" text-anchor="end">27.0%</text>
+              <polygon class="funnel" points="130,110 290,110 252,148 168,148" opacity=".76"/>
+              <text class="funnel-label" x="138" y="134">注册 84.2 万</text>
+              <text class="conv" x="408" y="142" text-anchor="end">34.0%</text>
+              <polygon class="funnel" points="172,160 248,160 224,198 196,198" opacity=".64"/>
+              <text class="funnel-label" x="12" y="184">首单 28.6 万</text>
+              <text class="conv" x="408" y="192" text-anchor="end">43.4%</text>
+              <polygon class="funnel" points="200,210 220,210 216,232 204,232" opacity=".52"/>
+              <text class="conv" x="232" y="226">复购 12.4 万</text>
+            </svg>
+            <p class="hint" style="margin-top:6px">右侧百分比为本环节相对上一环节的转化率</p>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="bar-title">
+          <div class="card__head">
+            <h2 id="bar-title">各渠道营收对比</h2>
+            <span class="hint">单位：万元 · 本期 vs 上期</span>
+          </div>
+          <div class="card__body">
+            <svg class="chart" viewBox="0 0 420 236" role="img" aria-label="分组柱状图：App 本期 178 万元、上期 162 万元；Web 96 对 104；小程序 142 对 118；H5 48 对 66；其他 30 对 36">
+              <line class="gridline" x1="34" y1="200" x2="410" y2="200"/>
+              <line class="gridline" x1="34" y1="153" x2="410" y2="153"/>
+              <line class="gridline" x1="34" y1="106" x2="410" y2="106"/>
+              <line class="gridline" x1="34" y1="59" x2="410" y2="59"/>
+              <text class="axis" x="30" y="203" text-anchor="end">0</text>
+              <text class="axis" x="30" y="156" text-anchor="end">50</text>
+              <text class="axis" x="30" y="109" text-anchor="end">100</text>
+              <text class="axis" x="30" y="62" text-anchor="end">150</text>
+              <text class="axis" x="30" y="15" text-anchor="end">200</text>
+              <rect class="bar-cur" x="52" y="31.4" width="20" height="168.6" rx="2"/>
+              <rect class="bar-prev" x="76" y="46.5" width="20" height="153.5" rx="2"/>
+              <rect class="bar-cur" x="126" y="109.1" width="20" height="90.9" rx="2"/>
+              <rect class="bar-prev" x="150" y="101.5" width="20" height="98.5" rx="2"/>
+              <rect class="bar-cur" x="200" y="65.8" width="20" height="134.2" rx="2"/>
+              <rect class="bar-prev" x="224" y="88.5" width="20" height="111.5" rx="2"/>
+              <rect class="bar-cur" x="274" y="154.8" width="20" height="45.2" rx="2"/>
+              <rect class="bar-prev" x="298" y="137.7" width="20" height="62.3" rx="2"/>
+              <rect class="bar-cur" x="348" y="171.7" width="20" height="28.3" rx="2"/>
+              <rect class="bar-prev" x="372" y="176.4" width="20" height="23.6" rx="2"/>
+              <text class="axis" x="74" y="216" text-anchor="middle">App</text>
+              <text class="axis" x="148" y="216" text-anchor="middle">Web</text>
+              <text class="axis" x="222" y="216" text-anchor="middle">小程序</text>
+              <text class="axis" x="296" y="216" text-anchor="middle">H5</text>
+              <text class="axis" x="370" y="216" text-anchor="middle">其他</text>
+            </svg>
+            <p class="legend">
+              <span><span class="sw" style="background:var(--brand)"></span>本期（09 月）</span>
+              <span><span class="sw" style="background:#c6d3e8"></span>上期（08 月）</span>
+              <span class="num" style="margin-left:auto">合计 ¥494 万 · 环比 +7.9%</span>
+            </p>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="ret-title">
+          <div class="card__head">
+            <h2 id="ret-title">留存热力</h2>
+            <span class="hint">按周队列 · 颜色越深留存越高</span>
+          </div>
+          <div class="card__body">
+            <div class="ret-wrap">
+              <table class="ret">
+                <caption class="vh">按周队列的留存率热力表</caption>
+                <thead>
+                  <tr><th scope="col">队列周</th><th scope="col">规模</th><th scope="col">D+1</th><th scope="col">D+3</th><th scope="col">D+7</th><th scope="col">D+14</th><th scope="col">D+30</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td class="cohort">08-04 当周</td><td>62,104</td><td class="r5">41.2%</td><td class="r4">28.6%</td><td class="r3">19.4%</td><td class="r2">13.1%</td><td class="r1">8.7%</td></tr>
+                  <tr><td class="cohort">08-11 当周</td><td>58,392</td><td class="r4">37.8%</td><td class="r3">26.2%</td><td class="r2">18.1%</td><td class="r1">12.4%</td><td class="r1">8.2%</td></tr>
+                  <tr><td class="cohort">08-18 当周</td><td>65,821</td><td class="r5">40.5%</td><td class="r4">27.9%</td><td class="r3">19.8%</td><td class="r2">13.6%</td><td class="na">—</td></tr>
+                  <tr><td class="cohort">08-25 当周</td><td>71,046</td><td class="r4">38.9%</td><td class="r3">26.8%</td><td class="r2">18.6%</td><td class="na">—</td><td class="na">—</td></tr>
+                  <tr><td class="cohort">09-01 当周</td><td>68,237</td><td class="r3">36.4%</td><td class="r2">24.1%</td><td class="na">—</td><td class="na">—</td><td class="na">—</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="hint" style="margin-top:8px">「—」表示队列尚未到达观察窗口，不做统计</p>
+          </div>
+        </section>
+      </div>
+
+      <section class="card" aria-labelledby="detail-title">
+        <div class="card__head">
+          <h2 id="detail-title">数据明细</h2>
+          <span class="hint">勾选行可导出或加入对比</span>
+          <a class="more" href="#">字段说明 →</a>
+        </div>
+        <div class="card__body" style="padding:12px 18px 16px" data-tabs>
+          <div class="tabs" role="tablist" aria-label="明细数据标签页">
+            <button class="tab is-active" type="button" role="tab" aria-selected="true" data-tab data-target="dt-rows">数据明细<span class="num">1,860</span></button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-tab data-target="dt-anomaly">指标异常<span class="num">0</span></button>
+          </div>
+          <div id="dt-rows" role="tabpanel" data-panel>
+            <div class="table-wrap" style="margin-top:12px">
+              <table class="grid">
+                <caption class="vh">按日期、渠道、版本维度拆解的明细数据表</caption>
+                <thead>
+                  <tr>
+                    <th scope="col" style="width:36px"><span class="vh">选择</span></th>
+                    <th scope="col">日期</th><th scope="col">渠道</th><th scope="col">版本</th><th scope="col">新增用户</th>
+                    <th scope="col">活跃用户</th><th scope="col">次日留存</th><th scope="col">付费转化</th><th scope="col">ARPU</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><input class="row-check" type="checkbox" id="r1" checked aria-label="选择 09-14 App 明细"></td>
+                    <td class="num">09-14</td><td>App</td><td class="num">v3.2.1</td>
+                    <td class="num">12,483</td><td class="num">184,921</td><td class="num">39.2%</td><td class="num up">4.91%</td><td class="num">¥13.02</td>
+                  </tr>
+                  <tr>
+                    <td><input class="row-check" type="checkbox" id="r2" aria-label="选择 09-14 Web 明细"></td>
+                    <td class="num">09-14</td><td>Web</td><td class="num">v3.2.1</td>
+                    <td class="num">3,204</td><td class="num">48,362</td><td class="num">31.8%</td><td class="num down">3.02%</td><td class="num">¥8.44</td>
+                  </tr>
+                  <tr>
+                    <td><input class="row-check" type="checkbox" id="r3" aria-label="选择 09-14 小程序明细"></td>
+                    <td class="num">09-14</td><td>小程序</td><td class="num">v3.2.0</td>
+                    <td class="num">5,891</td><td class="num">51,108</td><td class="num">41.5%</td><td class="num up">5.62%</td><td class="num">¥11.20</td>
+                  </tr>
+                  <tr>
+                    <td><input class="row-check" type="checkbox" id="r4" aria-label="选择 09-13 App 明细"></td>
+                    <td class="num">09-13</td><td>App</td><td class="num">v3.2.1</td>
+                    <td class="num">11,932</td><td class="num">179,406</td><td class="num">38.7%</td><td class="num">4.78%</td><td class="num">¥12.88</td>
+                  </tr>
+                  <tr>
+                    <td><input class="row-check" type="checkbox" id="r5" aria-label="选择 09-13 小程序明细"></td>
+                    <td class="num">09-13</td><td>小程序</td><td class="num">v3.2.0</td>
+                    <td class="num">5,427</td><td class="num">49,730</td><td class="num">40.9%</td><td class="num">5.48%</td><td class="num">¥11.05</td>
+                  </tr>
+                  <tr>
+                    <td><input class="row-check" type="checkbox" id="r6" aria-label="选择 09-12 App 明细"></td>
+                    <td class="num">09-12</td><td>App</td><td class="num">v3.2.1</td>
+                    <td class="num">11,205</td><td class="num">172,338</td><td class="num">37.6%</td><td class="num">4.66%</td><td class="num">¥12.41</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="batch-bar" role="toolbar" aria-label="明细批量操作">
+              <strong>已选择 1 行</strong>
+              <button class="btn btn--sm btn--primary" type="button">导出选中</button>
+              <button class="btn btn--sm" type="button">加入对比</button>
+              <button class="btn btn--sm" type="button">创建图表</button>
+              <span class="grow">导出上限 10,000 行，超出将自动分文件打包</span>
+            </div>
+            <nav class="pager" aria-label="明细分页" style="margin-top:12px">
+              <span class="pager__info">共 1,860 行 · 每页 20 行</span>
+              <button type="button" disabled>上一页</button>
+              <button type="button" aria-current="page">1</button>
+              <button type="button">2</button>
+              <button type="button">3</button>
+              <span class="ellipsis" aria-hidden="true">…</span>
+              <button type="button">93</button>
+              <button type="button">下一页</button>
+            </nav>
+          </div>
+          <div id="dt-anomaly" role="tabpanel" data-panel hidden>
+            <div class="empty">
+              <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5 2 8.5h4l-1 6 7-8H8l1.5-5z"/></svg>
+              <p>所选时间范围内未检测到指标异常<br>系统将持续监控，波动超过 3σ 时自动告警并记录</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+  /* 标签切换：[data-tabs] 作用域内，按钮 data-target 指向面板 id（原生 JS，无依赖） */
+  document.querySelectorAll('[data-tab]').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var scope = tab.closest('[data-tabs]');
+      scope.querySelectorAll('[data-tab]').forEach(function (t) {
+        var on = t === tab;
+        t.classList.toggle('is-active', on);
+        t.setAttribute('aria-selected', on);
+      });
+      scope.querySelectorAll('[data-panel]').forEach(function (p) {
+        p.hidden = p.id !== tab.getAttribute('data-target');
+      });
+    });
+  });
+</script>
+</body>
+</html>

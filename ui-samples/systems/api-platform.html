@@ -1,0 +1,350 @@
+<!-- 用途：API 开放平台系统页面模板 | 所属：code-kit/ui-samples/systems | 用法：2a UI-DESIGN 阶段按系统类型挑基线，复制改造 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>API 开放平台 · 云麓数据中台</title>
+<style>
+/* ===== 1. 设计令牌（hex 基线 + oklch 覆盖） ===== */
+:root {
+  --brand: #2563eb; --brand: oklch(54.6% 0.17 258);
+  --brand-strong: #1b4fc4; --brand-weak: #e9f0fb;
+  --ok: #147a3d; --ok-weak: #e5f3e9;
+  --warn: #8a5a00; --warn-weak: #fdf0d5;
+  --danger: #b3261e; --danger-weak: #fbe9e7;
+  --put: #9a5b00; --put-weak: #fdf0d5;
+  --del: #b3261e; --del-weak: #fbe9e7;
+  --get: #147a3d; --get-weak: #e5f3e9;
+  --post: #2563eb; --post-weak: #e9f0fb;
+  --bg: #f4f5f7; --surface: #ffffff; --surface-2: #f8f9fb;
+  --border: #e3e6ec; --border-strong: #c8ced8;
+  --text: #1c2433; --text-2: #4a5468; --text-3: #7c8699;
+  --sidebar-bg: #202631; --sidebar-text: #c7ced9; --sidebar-faint: #949dad; --sidebar-border: #2e3542;
+  --r-sm: 6px; --r-md: 10px; --r-lg: 14px;
+  --shadow-1: 0 1px 2px rgba(22,28,40,.07); --shadow-2: 0 8px 28px rgba(22,28,40,.10);
+  --font-ui: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+}
+/* ===== 2. 基础 ===== */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-ui); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; }
+a { color: var(--brand); text-decoration: none; }
+a:hover { text-decoration: underline; }
+button { font-family: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; }
+/* ===== 3. 三段式布局 ===== */
+.layout { display: grid; grid-template-columns: 216px 1fr; min-height: 100vh; }
+.sidebar { background: var(--sidebar-bg); color: var(--sidebar-text); padding: 18px 12px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.brand { display: flex; align-items: center; gap: 10px; padding: 4px 10px 16px; color: #fff; font-weight: 700; font-size: 15px; }
+.brand svg { width: 26px; height: 26px; color: var(--brand); background: #fff; border-radius: 7px; padding: 4px; }
+.nav-title { margin: 14px 10px 6px; font-size: 11.5px; letter-spacing: .08em; color: var(--sidebar-faint); }
+.nav-item { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 7px; color: var(--sidebar-text); font-size: 13.5px; margin-bottom: 2px; }
+.nav-item:hover { background: rgba(255,255,255,.06); color: #fff; text-decoration: none; }
+.nav-item.active { background: var(--brand); color: #fff; font-weight: 600; }
+.nav-item svg { width: 16px; height: 16px; flex: none; }
+.side-foot { margin-top: 20px; padding: 12px 10px 0; border-top: 1px solid var(--sidebar-border); font-size: 12px; color: var(--sidebar-faint); line-height: 1.7; }
+.main { display: flex; flex-direction: column; min-width: 0; }
+.topbar { display: flex; align-items: center; gap: 16px; height: 58px; padding: 0 28px; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+.crumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-3); }
+.crumb b { color: var(--text); font-weight: 600; }
+.topbar .spacer { flex: 1; }
+.search { position: relative; }
+.search input { width: 220px; padding: 7px 12px 7px 32px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; background: var(--surface-2); font-family: inherit; }
+.search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--text-3); }
+.icon-btn { position: relative; display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text-2); }
+.icon-btn:hover { border-color: var(--border-strong); color: var(--text); }
+.icon-btn .dot { position: absolute; top: 7px; right: 7px; width: 7px; height: 7px; border-radius: 50%; background: var(--danger); }
+.avatar { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--brand); color: #fff; font-size: 13.5px; font-weight: 700; }
+.content { padding: 24px 28px; min-width: 0; }
+/* ===== 4. 统计卡 ===== */
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--shadow-1); padding: 14px 16px; }
+.stat-card .k { font-size: 12.5px; color: var(--text-3); font-weight: 600; }
+.stat-card .v { font-size: 24px; font-weight: 700; letter-spacing: -.02em; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.stat-card .d { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+.stat-card .up { color: var(--ok); font-weight: 600; }
+.stat-card .down { color: var(--danger); font-weight: 600; }
+/* ===== 5. 面板通用 ===== */
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--shadow-1); margin-bottom: 16px; overflow: hidden; }
+.panel-head { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.panel-head h2 { font-size: 15px; font-weight: 700; }
+.panel-head .sub { font-size: 12.5px; color: var(--text-3); }
+.panel-head .spacer { flex: 1; }
+.btn { display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; border: 1px solid transparent; }
+.btn svg { width: 13px; height: 13px; }
+.btn-primary { background: var(--brand); color: #fff; }
+.btn-primary:hover { background: var(--brand-strong); }
+.btn-ghost { background: var(--surface); border-color: var(--border-strong); color: var(--text-2); }
+.btn-ghost:hover { border-color: var(--text-3); color: var(--text); }
+.btn-sm { padding: 5px 11px; font-size: 12.5px; }
+/* ===== 6. API 表 ===== */
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 880px; }
+thead th { text-align: left; padding: 10px 16px; font-size: 12px; font-weight: 600; color: var(--text-3); letter-spacing: .03em; background: var(--surface-2); border-bottom: 1px solid var(--border); white-space: nowrap; }
+tbody td { padding: 11px 16px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+tbody tr:last-child td { border-bottom: none; }
+.mth { display: inline-grid; place-items: center; min-width: 58px; padding: 2px 8px; border-radius: 6px; font-family: var(--font-mono); font-size: 11.5px; font-weight: 700; letter-spacing: .04em; }
+.mth-get { background: var(--get-weak); color: var(--get); }
+.mth-post { background: var(--post-weak); color: var(--post); }
+.mth-put { background: var(--put-weak); color: var(--put); }
+.mth-del { background: var(--del-weak); color: var(--del); }
+.api-name { font-weight: 600; }
+.api-path { font-family: var(--font-mono); font-size: 12.5px; color: var(--text-2); }
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+.chip svg { width: 10px; height: 10px; }
+.chip-ok { background: var(--ok-weak); color: var(--ok); }
+.chip-gray { background: var(--surface-2); color: var(--text-2); border: 1px solid var(--border); }
+.chip-warn { background: var(--warn-weak); color: var(--warn); }
+.chip-danger { background: var(--danger-weak); color: var(--danger); }
+.owner { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.uava { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #e3e7ee; color: #333c48; font-size: 11px; font-weight: 700; flex: none; }
+.uava.b { background: #5a6472; color: #fff; }
+/* ===== 7. API 明细（details） ===== */
+.api-detail { padding: 0 18px 16px; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+.api-detail > summary { cursor: pointer; list-style: none; padding: 9px 0 2px; font-size: 12.5px; color: var(--brand); font-weight: 600; }
+.api-detail > summary::-webkit-details-marker { display: none; }
+.api-detail > summary:hover { text-decoration: underline; }
+.doc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 8px; }
+.doc-col h4 { font-size: 12px; font-weight: 700; color: var(--text-2); margin-bottom: 6px; }
+.doc-code { border: 1px solid var(--border); border-radius: 8px; background: #1e2430; overflow: auto; }
+.doc-code pre { padding: 11px 13px; font-family: var(--font-mono); font-size: 11.5px; line-height: 1.75; color: #c9d3e0; }
+.doc-code .k { color: #7fb3ff; }
+.doc-code .s { color: #a5e8bf; }
+.doc-code .c { color: #6e7a8c; font-style: italic; }
+.doc-note { font-size: 11.5px; color: var(--text-3); margin-top: 6px; }
+/* ===== 8. 密钥管理 ===== */
+.key-list { padding: 6px 18px 16px; }
+.key-row { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.key-row:last-child { border-bottom: none; }
+.key-info { min-width: 0; }
+.key-name { font-size: 13.5px; font-weight: 600; }
+.key-val { font-family: var(--font-mono); font-size: 12.5px; color: var(--text-2); background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 3px 10px; margin-top: 4px; display: inline-block; }
+.key-val .msk { letter-spacing: .05em; color: var(--text-3); }
+.key-meta { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+.key-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+/* ===== 9. 响应式 ===== */
+@media (max-width: 1080px) { .stats { grid-template-columns: 1fr 1fr; } .doc-grid { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .sidebar { position: static; height: auto; } }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" aria-label="主导航">
+    <div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3z"/><path d="M4 7v10c0 1.7 3.6 3 8 3s8-1.3 8-3V7"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>云麓数据中台</div>
+    <p class="nav-title">开放平台</p>
+    <a class="nav-item active" href="#" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M13 3 4 14h6l-1 7 9-11h-6z"/></svg>API 管理</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>密钥管理</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M7 12v6M12 8v10M17 4v16"/></svg>调用统计</a>
+    <p class="nav-title">数据服务</p>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg>数据集</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2.5"/></svg>订阅审批</a>
+    <p class="nav-title">系统</p>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 4h4v4h4v4h-4v4h-4v-4H6V8h4z"/></svg>操作审计</a>
+    <div class="side-foot">v3.1.0 · 开放平台<br>网关区域：华东 / 华北</div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <nav class="crumb" aria-label="面包屑"><a href="#">开放平台</a><span>/</span><b>API 管理</b></nav>
+      <div class="spacer"></div>
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input type="search" placeholder="搜索 API、路径、负责人…" aria-label="全局搜索">
+      </div>
+      <button class="icon-btn" type="button" aria-label="通知，3 条未读"><span class="dot" aria-hidden="true"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></button>
+      <span class="avatar" aria-hidden="true">陈</span>
+    </header>
+    <main class="content">
+      <section class="stats" aria-label="平台概览">
+        <div class="stat-card">
+          <p class="k">已发布 API</p>
+          <p class="v">86</p>
+          <p class="d">本周新增 <span class="up">+4</span></p>
+        </div>
+        <div class="stat-card">
+          <p class="k">今日调用量</p>
+          <p class="v">214.6<span style="font-size:14px;font-weight:600;color:var(--text-3)"> 万</span></p>
+          <p class="d">较昨日 <span class="up">+12.4%</span></p>
+        </div>
+        <div class="stat-card">
+          <p class="k">活跃密钥</p>
+          <p class="v">132</p>
+          <p class="d">近 7 天有调用的密钥</p>
+        </div>
+        <div class="stat-card">
+          <p class="k">错误率</p>
+          <p class="v">0.42<span style="font-size:14px;font-weight:600;color:var(--text-3)">%</span></p>
+          <p class="d">较昨日 <span class="down">+0.08%</span> · 阈值 1%</p>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="API 列表">
+        <div class="panel-head">
+          <h2>API 列表</h2>
+          <span class="sub">共 86 个 · 点击「查看文档」展开参数与响应示例</span>
+          <span class="spacer"></span>
+          <button class="btn btn-ghost" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+            筛选
+          </button>
+          <button class="btn btn-primary" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            新建 API
+          </button>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col" style="width:70px">方法</th>
+                <th scope="col">API</th>
+                <th scope="col">限流</th>
+                <th scope="col">负责人</th>
+                <th scope="col">状态</th>
+                <th scope="col" style="width:120px">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="mth mth-get">GET</span></td>
+                <td><p class="api-name">订单明细查询</p><p class="api-path">/open/v2/orders/{order_id}</p></td>
+                <td><span class="chip chip-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>100 QPS</span></td>
+                <td><span class="owner"><span class="uava" aria-hidden="true">林</span>林晚晴</span></td>
+                <td><span class="chip chip-ok">已发布</span></td>
+                <td><button class="btn btn-ghost btn-sm" type="button">编辑</button></td>
+              </tr>
+              <tr class="api-detail-wrap"><td colspan="6" style="padding:0;border-bottom:1px solid var(--border)">
+                <details class="api-detail">
+                  <summary>查看文档 · 参数与响应示例</summary>
+                  <div class="doc-grid">
+                    <div class="doc-col">
+                      <h4>请求参数</h4>
+                      <div class="doc-code"><pre><span class="c"># Header</span>
+Authorization: Bearer &lt;access_token&gt;
+
+<span class="c"># Path 参数</span>
+order_id  <span class="k">string</span>  <span class="k">必填</span>  订单号，如 OD-20250618-0042
+with_items <span class="k">boolean</span> <span class="k">可选</span> 是否返回行项目，默认 false</pre></div>
+                    </div>
+                    <div class="doc-col">
+                      <h4>响应示例（200）</h4>
+                      <div class="doc-code"><pre>{
+  <span class="k">"code"</span>: 0,
+  <span class="k">"data"</span>: {
+    <span class="k">"order_id"</span>: <span class="s">"OD-20250618-0042"</span>,
+    <span class="k">"status"</span>: <span class="s">"PAID"</span>,
+    <span class="k">"amount"</span>: 1286.00,
+    <span class="k">"paid_at"</span>: <span class="s">"2025-06-18 10:32:11"</span>
+  }
+}</pre></div>
+                    </div>
+                  </div>
+                  <p class="doc-note">错误码：40001 参数缺失 · 40003 权限不足 · 42901 触发限流。沙箱环境：https://sandbox-api.yunlu.example</p>
+                </details>
+              </td></tr>
+              <tr>
+                <td><span class="mth mth-post">POST</span></td>
+                <td><p class="api-name">创建订阅推送</p><p class="api-path">/open/v2/subscriptions</p></td>
+                <td><span class="chip chip-warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 8v5M12 16h.01"/><circle cx="12" cy="12" r="9"/></svg>20 QPS</span></td>
+                <td><span class="owner"><span class="uava b" aria-hidden="true">陈</span>陈明宇</span></td>
+                <td><span class="chip chip-ok">已发布</span></td>
+                <td><button class="btn btn-ghost btn-sm" type="button">编辑</button></td>
+              </tr>
+              <tr>
+                <td><span class="mth mth-put">PUT</span></td>
+                <td><p class="api-name">更新订阅推送</p><p class="api-path">/open/v2/subscriptions/{sub_id}</p></td>
+                <td><span class="chip chip-warn">20 QPS</span></td>
+                <td><span class="owner"><span class="uava b" aria-hidden="true">陈</span>陈明宇</span></td>
+                <td><span class="chip chip-ok">已发布</span></td>
+                <td><button class="btn btn-ghost btn-sm" type="button">编辑</button></td>
+              </tr>
+              <tr>
+                <td><span class="mth mth-del">DELETE</span></td>
+                <td><p class="api-name">删除订阅推送</p><p class="api-path">/open/v2/subscriptions/{sub_id}</p></td>
+                <td><span class="chip chip-warn">10 QPS</span></td>
+                <td><span class="owner"><span class="uava b" aria-hidden="true">陈</span>陈明宇</span></td>
+                <td><span class="chip chip-danger">灰度中</span></td>
+                <td><button class="btn btn-ghost btn-sm" type="button">编辑</button></td>
+              </tr>
+              <tr>
+                <td><span class="mth mth-get">GET</span></td>
+                <td><p class="api-name">门店销售汇总</p><p class="api-path">/open/v2/shops/{shop_id}/sales-daily</p></td>
+                <td><span class="chip chip-ok">50 QPS</span></td>
+                <td><span class="owner"><span class="uava" aria-hidden="true">苏</span>苏婉宁</span></td>
+                <td><span class="chip chip-gray">已下线</span></td>
+                <td><button class="btn btn-ghost btn-sm" type="button">编辑</button></td>
+              </tr>
+              <tr>
+                <td><span class="mth mth-post">POST</span></td>
+                <td><p class="api-name">数据导出申请</p><p class="api-path">/open/v2/exports</p></td>
+                <td><span class="chip chip-ok">5 QPM</span></td>
+                <td><span class="owner"><span class="uava" aria-hidden="true">苏</span>苏婉宁</span></td>
+                <td><span class="chip chip-ok">已发布</span></td>
+                <td><button class="btn btn-ghost btn-sm" type="button">编辑</button></td>
+              </tr>
+              <tr>
+                <td><span class="mth mth-get">GET</span></td>
+                <td><p class="api-name">导出任务状态查询</p><p class="api-path">/open/v2/exports/{export_id}</p></td>
+                <td><span class="chip chip-ok">60 QPS</span></td>
+                <td><span class="owner"><span class="uava b" aria-hidden="true">周</span>周子昂</span></td>
+                <td><span class="chip chip-ok">已发布</span></td>
+                <td><button class="btn btn-ghost btn-sm" type="button">编辑</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="密钥管理">
+        <div class="panel-head">
+          <h2>密钥管理</h2>
+          <span class="sub">AccessKey 仅创建时完整展示一次 · 泄露请立即禁用并轮换</span>
+          <span class="spacer"></span>
+          <button class="btn btn-primary" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            创建密钥
+          </button>
+        </div>
+        <div class="key-list">
+          <div class="key-row">
+            <div class="key-info">
+              <p class="key-name">订单中台 · 生产 <span class="chip chip-ok" style="margin-left:6px">启用中</span></p>
+              <p class="key-val">AK <span class="msk">LTAI5tK7q2·••••••••••</span>7F3c</p>
+              <p class="key-meta">创建于 2025-03-02 · 负责人 林晚晴 · 上次轮换 42 天前</p>
+            </div>
+            <div class="key-actions">
+              <span class="chip chip-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>限流 200 QPS</span>
+              <button class="btn btn-ghost btn-sm" type="button">轮换</button>
+              <button class="btn btn-ghost btn-sm" type="button">禁用</button>
+            </div>
+          </div>
+          <div class="key-row">
+            <div class="key-info">
+              <p class="key-name">BI 报表 · 只读 <span class="chip chip-ok" style="margin-left:6px">启用中</span></p>
+              <p class="key-val">AK <span class="msk">LTAI5tM9d4·••••••••••</span>A8e1</p>
+              <p class="key-meta">创建于 2025-01-15 · 负责人 苏婉宁 · 上次轮换 118 天前</p>
+            </div>
+            <div class="key-actions">
+              <span class="chip chip-warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 8v5M12 16h.01"/><circle cx="12" cy="12" r="9"/></svg>限流 20 QPS</span>
+              <button class="btn btn-ghost btn-sm" type="button">轮换</button>
+              <button class="btn btn-ghost btn-sm" type="button">禁用</button>
+            </div>
+          </div>
+          <div class="key-row">
+            <div class="key-info">
+              <p class="key-name">联调沙箱 · 已过期 <span class="chip chip-danger" style="margin-left:6px">已禁用</span></p>
+              <p class="key-val">AK <span class="msk">LTAI5tQ1z8·••••••••••</span>D0b9</p>
+              <p class="key-meta">创建于 2024-11-08 · 负责人 何俊驰 · 2025-05-31 主动禁用</p>
+            </div>
+            <div class="key-actions">
+              <span class="chip chip-gray">无限流</span>
+              <button class="btn btn-ghost btn-sm" type="button">删除</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+</body>
+</html>

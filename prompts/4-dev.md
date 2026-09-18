@@ -139,8 +139,6 @@ TASK.md 未经过专家团门禁审核。本次先回到 3-task 补齐门禁，�
 6. **React 三条硬规则马上写入计划**（仅 React 任务）：禁 `const styles` / 跨文件用 `Object.assign(window, ...)` / 禁 `scrollIntoView`（frontend-rules 第 1.1–1.3）
 7. 实现完成后再扫一遍 anti-patterns + frontend-rules 第 10 节交付清单（self-review），写入 SUMMARY.md
 
-> 装了 [impeccable](https://impeccable.style) 的项目可以用 `npx impeccable detect <files>` 自动化此扫描，仍需在 SUMMARY 里贴输出。
-
 ### 1.7 数据库 Schema 任务额外检查（涉及表 / 字段变更必跑 · 对应 R4.5）
 
 > 这是 AI 开发最高频的事故源——改了 ORM model 没生迁移，跑起来报"表/字段不存在"。本段强制堵住。
@@ -364,28 +362,11 @@ grep -rn "from.*old-helpers\|import.*old-helpers" src/ tests/
 按 `<verify>` 命令执行，**贴出真实输出**到 SUMMARY.md。
 只有 verify 通过才能进入下一步。
 
-### 4. 提交前 self-review（书本驱动 6 维 · 装了 brooks-lint 优先）
+### 4. 提交前 self-review（书本驱动 6 维 · 内置快查）
 
 > 这是把 6-review 阶段的代码质量轮**前置一部分**到 dev 自查，避免 review 阶段才发现明显问题。
 
 **触发条件**：本任务有任何**生产代码改动**（非纯文档 / 纯配置 / 纯测试）。
-
-##### 路径 A · 装了 brooks-lint（首选）
-
-提交前调用：
-
-```
-/brooks-review            # 基于本次未提交 diff 跑诊断
-```
-
-如果发现：
-- 🔴 Critical → **必须修后再提交**，不允许带病提交
-- 🟡 Major → 修或在 SUMMARY.md 写明「已知接受 + 理由」
-- 🟢 Minor → 记入 SUMMARY.md 的「已知小问题」段，可不修
-
-把 brooks-review 输出贴入 `<task-id>-SUMMARY.md` 的「6 维自查」段。
-
-##### 路径 B · 未装 brooks-lint（内置快查）
 
 按 6 维快速过一遍自己的 diff（每条 ≤ 30 秒）：
 
@@ -396,7 +377,12 @@ grep -rn "from.*old-helpers\|import.*old-helpers" src/ tests/
 - **R5 依赖混乱**：`from xxx import yyy` 反向（业务层 import 基础设施实现） → 倒置
 - **R6 领域扭曲**：变量名是技术词（data / info / item）而非领域词（order / driver） → 重命名
 
-发现问题先修，**不允许提交时心想"review 阶段再说"**。
+发现分级处理：
+- 🔴 Critical（越界 / 带病逻辑）→ **必须修后再提交**
+- 🟡 Major → 修或在 SUMMARY.md 写明「已知接受 + 理由」
+- 🟢 Minor → 记入 SUMMARY.md 的「已知小问题」段，可不修
+
+结果写入 `<task-id>-SUMMARY.md` 的「6 维自查」段。**不允许提交时心想"review 阶段再说"**。
 
 ### 5. 提交前 diff 边界 verify（强制 · 对应 R6.5 / B3 老项目护栏）
 
@@ -473,7 +459,7 @@ git status --short                  # 含 untracked
 ### 6. 写 SUMMARY
 
 使用 `@code-kit/templates/SUMMARY.md` 模板，填到 `.specs/<change-id>/<task-id>-SUMMARY.md`。
-内容：做了什么 / 改了哪些文件 / verify 输出 / **6 维自查输出**（步骤 4 的 brooks-review 或内置回退结果）/ 是否触发新 fix-plan。
+内容：做了什么 / 改了哪些文件 / verify 输出 / **6 维自查输出**（步骤 4 的 6 维快查结果）/ 是否触发新 fix-plan。
 
 ### 7. 标记完成
 
@@ -527,7 +513,7 @@ PROGRESS 是临时文件，不归档。
 - [ ] **🛡️ 自动化门禁已检查**（步骤 0）：`<auto>` 字段已读，`false` 时已暂停等确认，缺少时已回 3-task
 - [ ] verify 命令真的跑了，且输出已贴出
 - [ ] 测试与代码同次或紧邻提交
-- [ ] **6 维 self-review 跑了**（生产代码改动必跑：`/brooks-review` 或内置 6 维快查），🔴 已修，🟡 已记，🟢 可省
+- [ ] **6 维 self-review 跑了**（生产代码改动必跑：内置 6 维快查），🔴 已修，🟡 已记，🟢 可省
 - [ ] **涉及 schema 变更的任务已生成迁移文件**（R4.5 / 1.7），且含 up + down；检测到凭据已反问用户、未检测到凭据已在 SUMMARY 里提醒手动跑
 - [ ] **前端任务走了 1.6**（命中时）：读了 UI-DESIGN.md + frontend-engineer-rules.md；交付前逐项过了 frontend-rules 第 10 节交付清单（console 无错 / 状态完备 / 无硬编码颜色 / 无 `const styles` / 无 `scrollIntoView`）
 - [ ] **沿用既有抽象 grep 跑了**（R6.4 / 1.4），结果贴入 SUMMARY；需要能力都已查过项目里有无

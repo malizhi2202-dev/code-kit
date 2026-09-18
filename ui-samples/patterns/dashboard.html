@@ -1,0 +1,438 @@
+<!-- 用途：仪表盘模式 | 所属：code-kit ui-samples/patterns | 用法：2a UI-DESIGN 阶段基线样例，复制改造 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>运营看板 · 云链数据中枢</title>
+<style>
+/* ===== 1. 设计令牌（hex 基线） ===== */
+/* 唯一品牌蓝 */
+/* 品牌蓝悬停加深 */
+/* 品牌蓝弱底色 */
+/* 环比上涨 */
+/* 环比下跌 / 通知角标 */
+:root { --brand: #1a56db; --brand-strong: #1447b5; --brand-weak: #edf2fd; --up: #1a7f37; --down: #cf222e; --bg: #f4f5f7; --surface: #ffffff; --border: #d9dee5; --text: #1f2530; --text-muted: #57606e; --text-faint: #666f7c; --sidebar-bg: #202631; --sidebar-border: #2e3542; --sidebar-text: #c7ced9; --sidebar-faint: #949dad; --grid-line: #e5e9ef; --seg-2: #737d8c; --seg-3: #b9c1cc; --ring: #1a56db; --radius: 10px; --shadow: 0 1px 2px rgba(20, 28, 45, .05), 0 6px 16px rgba(20, 28, 45, .07); }
+/* ===== 2. oklch 感知色覆盖（支持的浏览器生效） ===== */
+@supports (color: oklch(0 0 0)) {
+:root { --brand: oklch(0.5 0.19 262); --brand-strong: oklch(0.44 0.18 263); --brand-weak: oklch(0.955 0.02 262); --up: oklch(0.52 0.12 150); --down: oklch(0.55 0.19 27); --bg: oklch(0.965 0.003 255); --surface: oklch(1 0 0); --border: oklch(0.885 0.008 255); --text: oklch(0.28 0.02 262); --text-muted: oklch(0.46 0.02 262); --text-faint: oklch(0.52 0.02 262); --sidebar-bg: oklch(0.235 0.015 262); --sidebar-border: oklch(0.32 0.015 262); --sidebar-text: oklch(0.83 0.012 262); --sidebar-faint: oklch(0.66 0.015 262); --grid-line: oklch(0.92 0.006 255); --seg-2: oklch(0.58 0.015 262); --seg-3: oklch(0.8 0.01 262); --ring: oklch(0.5 0.19 262); }
+}
+/* ===== 3. 重置与基础 ===== */
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; font-size: 14px; line-height: 1.6; color: var(--text); background: var(--bg); }
+a { color: var(--brand); text-decoration: none; }
+a:hover { text-decoration: underline; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+h1, h2, p, ul, ol { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+svg { display: block; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: 4px; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.skip-link { position: absolute; left: 12px; top: -48px; z-index: 99; padding: 8px 14px; border-radius: 6px; background: var(--brand); color: #fff; font-weight: 600; }
+.skip-link:focus { top: 12px; text-decoration: none; }
+/* ===== 4. 三段式骨架 ===== */
+.layout { display: grid; grid-template-columns: 232px 1fr; min-height: 100vh; }
+.frame { display: flex; flex-direction: column; min-width: 0; }
+/* ===== 5. 左侧边导航 ===== */
+.sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; background: var(--sidebar-bg); border-right: 1px solid var(--sidebar-border); }
+.brand { display: flex; align-items: center; gap: 10px; padding: 18px 18px 14px; color: #fff; font-weight: 700; font-size: 15px; }
+.brand-mark { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: var(--brand); color: #fff; flex: none; }
+.side-nav { padding: 4px 12px 16px; }
+.nav-title { margin: 18px 8px 6px; font-size: 12px; letter-spacing: .08em; color: var(--sidebar-faint); }
+.nav-item { display: block; padding: 8px 12px; margin-bottom: 2px; border-radius: 7px; color: var(--sidebar-text); font-size: 13.5px; }
+.nav-item:hover { background: rgba(255, 255, 255, .07); color: #fff; text-decoration: none; }
+.nav-item.is-active { background: var(--brand); color: #fff; font-weight: 600; }
+.side-foot { margin-top: auto; padding: 14px 18px; border-top: 1px solid var(--sidebar-border); color: var(--sidebar-faint); font-size: 12px; line-height: 1.7; }
+/* ===== 6. 顶栏 ===== */
+.topbar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 16px; height: 58px; padding: 0 24px; background: var(--surface); border-bottom: 1px solid var(--border); }
+.crumb ol { display: flex; align-items: center; font-size: 13px; }
+.crumb li + li::before { content: "/"; margin: 0 8px; color: var(--text-faint); }
+.crumb a { color: var(--text-muted); }
+.crumb [aria-current] { color: var(--text); font-weight: 600; }
+.top-actions { display: flex; align-items: center; gap: 14px; margin-left: auto; }
+.search { position: relative; }
+.search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-faint); }
+.search input { width: 250px; padding: 7px 12px 7px 34px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; }
+.search input::placeholder { color: var(--text-faint); }
+.search input:hover { border-color: #c3cad4; }
+.search input:focus-visible { outline-offset: 1px; }
+.icon-btn { position: relative; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 8px; color: var(--text-muted); border: 1px solid transparent; }
+.icon-btn:hover { background: var(--bg); color: var(--text); }
+.badge { position: absolute; top: 2px; right: 2px; display: grid; place-items: center; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: var(--down); color: #fff; font-size: 10.5px; font-weight: 700; line-height: 1; }
+.user { display: flex; align-items: center; gap: 8px; padding-left: 14px; border-left: 1px solid var(--border); }
+.user-name { font-size: 13px; font-weight: 600; }
+/* ===== 7. 内容区与页头 ===== */
+.content { padding: 22px 24px 32px; }
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+.page-head h1 { font-size: 20px; line-height: 1.35; }
+.page-sub { margin-top: 2px; color: var(--text-muted); font-size: 12.5px; }
+.page-actions { display: flex; gap: 10px; }
+.btn { padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 13px; font-weight: 500; }
+.btn:hover { border-color: var(--brand); color: var(--brand); }
+.btn-primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.btn-primary:hover { background: var(--brand-strong); border-color: var(--brand-strong); color: #fff; }
+/* ===== 8. KPI 指标卡 ===== */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 14px; }
+.kpi-card { padding: 16px 18px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); }
+.kpi-card:hover { border-color: #c3cad4; }
+.kpi-title { font-size: 12.5px; color: var(--text-muted); }
+.kpi-value { margin-top: 6px; font-size: 26px; font-weight: 700; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.kpi-meta { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 12.5px; }
+.delta { display: inline-flex; align-items: center; gap: 3px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.delta svg { width: 10px; height: 10px; }
+.delta-up { color: var(--up); }
+.delta-down { color: var(--down); }
+.delta-down svg { transform: rotate(180deg); }
+.kpi-compare { color: var(--text-faint); }
+/* ===== 9. 卡片通用与折线图 ===== */
+.charts-grid { display: grid; grid-template-columns: 1.9fr 1fr; gap: 14px; margin-bottom: 14px; }
+.card { padding: 16px 18px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); }
+.card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.card-head h2 { font-size: 15px; }
+.tag { padding: 2px 8px; border-radius: 999px; background: var(--bg); border: 1px solid var(--border); color: var(--text-muted); font-size: 12px; }
+.line-chart { width: 100%; height: auto; }
+.grid line { stroke: var(--grid-line); stroke-width: 1; }
+.axis text { fill: var(--text-faint); font-size: 11px; }
+.axis-y text { text-anchor: end; }
+.axis-x text { text-anchor: middle; }
+.trend { fill: none; stroke: var(--brand); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.trend-area { fill: var(--brand); fill-opacity: .07; stroke: none; }
+.dots circle { fill: var(--surface); stroke: var(--brand); stroke-width: 2; }
+.dots circle:hover { r: 6; }
+/* ===== 10. 环形图与图例 ===== */
+.donut-wrap { display: flex; align-items: center; gap: 22px; }
+.donut { width: 168px; height: 168px; flex: none; }
+.donut-track { fill: none; stroke: var(--grid-line); stroke-width: 22; }
+.seg { fill: none; stroke-width: 22; }
+.seg-1 { stroke: var(--brand); }
+.seg-2 { stroke: var(--seg-2); }
+.seg-3 { stroke: var(--seg-3); }
+.donut-num { fill: var(--text); font-size: 21px; font-weight: 700; text-anchor: middle; }
+.donut-cap { fill: var(--text-muted); font-size: 11px; text-anchor: middle; }
+.legend { flex: 1; display: grid; gap: 12px; }
+.legend li { display: flex; align-items: center; gap: 9px; font-size: 13px; }
+.swatch { width: 11px; height: 11px; border-radius: 3px; flex: none; }
+.swatch-1 { background: var(--brand); }
+.swatch-2 { background: var(--seg-2); }
+.swatch-3 { background: var(--seg-3); }
+.legend-count { color: var(--text-faint); font-size: 12px; }
+.legend-val { margin-left: auto; font-weight: 700; font-variant-numeric: tabular-nums; }
+/* ===== 11. 最近动态 ===== */
+.bottom-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 14px; }
+.link { font-size: 12.5px; }
+.activity { display: grid; gap: 4px; }
+.activity li { display: flex; align-items: flex-start; gap: 12px; padding: 9px 6px; border-radius: 8px; }
+.activity li:hover { background: var(--bg); }
+.avatar { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 50%; background: #e3e7ee; color: #333c48; font-size: 13px; font-weight: 700; }
+.avatar-2 { background: #5a6472; color: #fff; }
+.avatar-3 { background: #c9d1dc; color: #242c38; }
+.avatar-sm { width: 30px; height: 30px; font-size: 12.5px; background: var(--brand); color: #fff; }
+.act-body { min-width: 0; }
+.act-text { font-size: 13px; }
+.act-text b { font-weight: 600; }
+.act-time { margin-top: 1px; font-size: 12px; color: var(--text-faint); }
+/* ===== 12. 快捷操作 ===== */
+.quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.qa-btn { display: grid; justify-items: center; gap: 8px; padding: 18px 10px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface); font-size: 13px; font-weight: 500; color: var(--text); }
+.qa-btn svg { width: 22px; height: 22px; color: var(--text-muted); }
+.qa-btn:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-weak); }
+.qa-btn:hover svg { color: var(--brand); }
+.quick-tip { margin-top: 12px; font-size: 12px; color: var(--text-faint); }
+/* ===== 13. 响应式降级 ===== */
+@media (max-width: 1120px) {
+.kpi-grid { grid-template-columns: repeat(2, 1fr); }
+.charts-grid, .bottom-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 860px) {
+.layout { grid-template-columns: 1fr; }
+.sidebar { position: static; height: auto; }
+.side-nav { display: flex; flex-wrap: wrap; gap: 4px; padding-bottom: 12px; }
+.nav-title { width: 100%; margin: 10px 8px 2px; }
+.topbar { flex-wrap: wrap; height: auto; padding: 10px 16px; }
+.search input { width: 180px; }
+.content { padding: 16px; }
+}</style>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到主要内容</a>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">云</span>云链数据中枢</div>
+    <nav class="side-nav" aria-label="主导航">
+      <div class="nav-group">
+        <p class="nav-title">概览</p>
+        <a class="nav-item is-active" href="#" aria-current="page">数据看板</a>
+        <a class="nav-item" href="#">实时监控</a>
+      </div>
+      <div class="nav-group">
+        <p class="nav-title">运营管理</p>
+        <a class="nav-item" href="#">工单管理</a>
+        <a class="nav-item" href="#">客户管理</a>
+        <a class="nav-item" href="#">报表中心</a>
+      </div>
+      <div class="nav-group">
+        <p class="nav-title">系统设置</p>
+        <a class="nav-item" href="#">成员与权限</a>
+        <a class="nav-item" href="#">操作日志</a>
+      </div>
+    </nav>
+    <p class="side-foot">v2.4.1 · 数据中心 A 区<br>服务状态：正常</p>
+  </aside>
+  <div class="frame">
+    <header class="topbar">
+      <nav class="crumb" aria-label="面包屑">
+        <ol>
+          <li><a href="#">数据中枢</a></li>
+          <li aria-current="page">运营看板</li>
+        </ol>
+      </nav>
+      <div class="top-actions">
+        <div class="search">
+          <label class="visually-hidden" for="global-search">搜索工单、客户或成员</label>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="6.5"></circle>
+            <path d="m16.2 16.2 4 4"></path>
+          </svg>
+          <input id="global-search" type="search" placeholder="搜索工单、客户或成员…">
+        </div>
+        <button class="icon-btn" type="button" aria-label="通知，3 条未读">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 9.5a6 6 0 1 0-12 0c0 4.2-1.6 5.5-1.6 5.5h15.2S18 13.7 18 9.5"></path>
+            <path d="M10.2 18.5a2 2 0 0 0 3.6 0"></path>
+          </svg>
+          <span class="badge" aria-hidden="true">3</span>
+        </button>
+        <div class="user">
+          <span class="avatar avatar-sm" aria-hidden="true">陈</span>
+          <span class="user-name">陈明宇</span>
+        </div>
+      </div>
+    </header>
+    <main class="content" id="main-content" tabindex="-1">
+      <div class="page-head">
+        <div>
+          <h1>运营看板</h1>
+          <p class="page-sub">数据更新于 2025-06-15 09:42 · 每 10 分钟自动刷新</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn" type="button">本周</button>
+          <button class="btn btn-primary" type="button">下载周报</button>
+        </div>
+      </div>
+
+      <section class="kpi-grid" aria-label="本周核心指标">
+        <article class="kpi-card">
+          <p class="kpi-title">总营收（本周）</p>
+          <p class="kpi-value">¥1,284,560</p>
+          <p class="kpi-meta">
+            <span class="delta delta-up"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2.2 10.2 9.4H1.8Z" fill="currentColor"></path></svg>12.3%</span>
+            <span class="kpi-compare">环比上周</span>
+          </p>
+        </article>
+        <article class="kpi-card">
+          <p class="kpi-title">新增工单</p>
+          <p class="kpi-value">1,892</p>
+          <p class="kpi-meta">
+            <span class="delta delta-up"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2.2 10.2 9.4H1.8Z" fill="currentColor"></path></svg>8.6%</span>
+            <span class="kpi-compare">环比上周</span>
+          </p>
+        </article>
+        <article class="kpi-card">
+          <p class="kpi-title">活跃客户</p>
+          <p class="kpi-value">3,478</p>
+          <p class="kpi-meta">
+            <span class="delta delta-down"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2.2 10.2 9.4H1.8Z" fill="currentColor"></path></svg>2.1%</span>
+            <span class="kpi-compare">环比上周</span>
+          </p>
+        </article>
+        <article class="kpi-card">
+          <p class="kpi-title">服务满意度</p>
+          <p class="kpi-value">96.8%</p>
+          <p class="kpi-meta">
+            <span class="delta delta-up"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2.2 10.2 9.4H1.8Z" fill="currentColor"></path></svg>0.9%</span>
+            <span class="kpi-compare">环比上周</span>
+          </p>
+        </article>
+      </section>
+
+      <div class="charts-grid">
+        <section class="card" aria-labelledby="trend-title">
+          <div class="card-head">
+            <h2 id="trend-title">近 7 天营收趋势</h2>
+            <span class="tag">单位：万元</span>
+          </div>
+          <svg class="line-chart" viewBox="0 0 660 300" role="img" aria-labelledby="trend-title trend-desc">
+            <desc id="trend-desc">6 月 9 日至 6 月 15 日每日营收折线图：自 8.2 万元波动上行至 11.2 万元，周内最低为 6 月 10 日的 7.6 万元。</desc>
+            <g class="grid">
+              <line x1="60" y1="40" x2="620" y2="40"></line>
+              <line x1="60" y1="95" x2="620" y2="95"></line>
+              <line x1="60" y1="150" x2="620" y2="150"></line>
+              <line x1="60" y1="205" x2="620" y2="205"></line>
+              <line x1="60" y1="260" x2="620" y2="260"></line>
+            </g>
+            <g class="axis axis-y">
+              <text x="52" y="44">12万</text>
+              <text x="52" y="99">9万</text>
+              <text x="52" y="154">6万</text>
+              <text x="52" y="209">3万</text>
+              <text x="52" y="264">0</text>
+            </g>
+            <g class="axis axis-x">
+              <text x="70" y="288">06-09</text>
+              <text x="160" y="288">06-10</text>
+              <text x="250" y="288">06-11</text>
+              <text x="340" y="288">06-12</text>
+              <text x="430" y="288">06-13</text>
+              <text x="520" y="288">06-14</text>
+              <text x="610" y="288">06-15</text>
+            </g>
+            <polygon class="trend-area" points="70,110 160,121 250,93 340,99 430,69 520,82 610,55 610,260 70,260"></polygon>
+            <polyline class="trend" points="70,110 160,121 250,93 340,99 430,69 520,82 610,55"></polyline>
+            <g class="dots">
+              <circle cx="70" cy="110" r="4.5"><title>6月9日（周一）· 营收 8.2 万元</title></circle>
+              <circle cx="160" cy="121" r="4.5"><title>6月10日（周二）· 营收 7.6 万元</title></circle>
+              <circle cx="250" cy="93" r="4.5"><title>6月11日（周三）· 营收 9.1 万元</title></circle>
+              <circle cx="340" cy="99" r="4.5"><title>6月12日（周四）· 营收 8.8 万元</title></circle>
+              <circle cx="430" cy="69" r="4.5"><title>6月13日（周五）· 营收 10.4 万元</title></circle>
+              <circle cx="520" cy="82" r="4.5"><title>6月14日（周六）· 营收 9.7 万元</title></circle>
+              <circle cx="610" cy="55" r="4.5"><title>6月15日（周日）· 营收 11.2 万元</title></circle>
+            </g>
+          </svg>
+        </section>
+        <section class="card" aria-labelledby="source-title">
+          <div class="card-head">
+            <h2 id="source-title">工单来源分布</h2>
+            <span class="tag">本周</span>
+          </div>
+          <div class="donut-wrap">
+            <svg class="donut" viewBox="0 0 180 180" role="img" aria-labelledby="source-title donut-desc">
+              <desc id="donut-desc">本周 4,286 个工单的来源分布：线上自助 46%，电话支持 32%，现场服务 22%。</desc>
+              <circle class="donut-track" cx="90" cy="90" r="70"></circle>
+              <g transform="rotate(-90 90 90)">
+                <circle class="seg seg-1" cx="90" cy="90" r="70" stroke-dasharray="202.3 237.5" stroke-dashoffset="0"></circle>
+                <circle class="seg seg-2" cx="90" cy="90" r="70" stroke-dasharray="140.8 299" stroke-dashoffset="-202.3"></circle>
+                <circle class="seg seg-3" cx="90" cy="90" r="70" stroke-dasharray="96.7 343.1" stroke-dashoffset="-343.1"></circle>
+              </g>
+              <text class="donut-num" x="90" y="88">4,286</text>
+              <text class="donut-cap" x="90" y="108">本周工单总量</text>
+            </svg>
+            <ul class="legend">
+              <li>
+                <span class="swatch swatch-1" aria-hidden="true"></span>
+                <span>线上自助</span>
+                <span class="legend-count">1,972 单</span>
+                <span class="legend-val">46%</span>
+              </li>
+              <li>
+                <span class="swatch swatch-2" aria-hidden="true"></span>
+                <span>电话支持</span>
+                <span class="legend-count">1,372 单</span>
+                <span class="legend-val">32%</span>
+              </li>
+              <li>
+                <span class="swatch swatch-3" aria-hidden="true"></span>
+                <span>现场服务</span>
+                <span class="legend-count">942 单</span>
+                <span class="legend-val">22%</span>
+              </li>
+            </ul>
+          </div>
+        </section>
+      </div>
+
+      <div class="bottom-grid">
+        <section class="card" aria-labelledby="activity-title">
+          <div class="card-head">
+            <h2 id="activity-title">最近动态</h2>
+            <a class="link" href="#">查看全部</a>
+          </div>
+          <ul class="activity">
+            <li>
+              <span class="avatar" aria-hidden="true">林</span>
+              <div class="act-body">
+                <p class="act-text"><b>林晚晴</b> 创建了工单 <a href="#">#TW-20486</a>「东吴物流网关超时」</p>
+                <p class="act-time">5 分钟前</p>
+              </div>
+            </li>
+            <li>
+              <span class="avatar avatar-2" aria-hidden="true">周</span>
+              <div class="act-body">
+                <p class="act-text"><b>周子昂</b> 将工单 <a href="#">#TW-20471</a> 指派给 <b>吴倩</b></p>
+                <p class="act-time">26 分钟前</p>
+              </div>
+            </li>
+            <li>
+              <span class="avatar avatar-3" aria-hidden="true">苏</span>
+              <div class="act-body">
+                <p class="act-text"><b>苏映雪</b> 导出了《5 月客户对账单》</p>
+                <p class="act-time">1 小时前</p>
+              </div>
+            </li>
+            <li>
+              <span class="avatar avatar-2" aria-hidden="true">郑</span>
+              <div class="act-body">
+                <p class="act-text"><b>郑北辰</b> 更新了告警规则「网关 5xx 比率大于 1% 触发」</p>
+                <p class="act-time">3 小时前</p>
+              </div>
+            </li>
+            <li>
+              <span class="avatar" aria-hidden="true">吴</span>
+              <div class="act-body">
+                <p class="act-text"><b>吴倩</b> 完成了工单 <a href="#">#TW-20459</a> 的满意度回访</p>
+                <p class="act-time">昨天 18:20</p>
+              </div>
+            </li>
+            <li>
+              <span class="avatar avatar-3" aria-hidden="true">何</span>
+              <div class="act-body">
+                <p class="act-text"><b>何雨桐</b> 邀请 <b>沈亦舟</b> 加入「运维值班」小组</p>
+                <p class="act-time">昨天 14:05</p>
+              </div>
+            </li>
+          </ul>
+        </section>
+        <section class="card" aria-labelledby="quick-title">
+          <div class="card-head">
+            <h2 id="quick-title">快捷操作</h2>
+            <span class="tag">常用</span>
+          </div>
+          <div class="quick-grid">
+            <button class="qa-btn" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3.5" y="3.5" width="17" height="17" rx="4"></rect>
+                <path d="M12 8.5v7M8.5 12h7"></path>
+              </svg>
+              <span>新建工单</span>
+            </button>
+            <button class="qa-btn" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 4v10m0 0 4-4m-4 4-4-4"></path>
+                <path d="M5 19h14"></path>
+              </svg>
+              <span>导出报表</span>
+            </button>
+            <button class="qa-btn" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="9.5" cy="8.5" r="3.5"></circle>
+                <path d="M3.5 19.5c.7-3.1 3-4.7 6-4.7s5.3 1.6 6 4.7"></path>
+                <path d="M18.5 8v6M15.5 11h6"></path>
+              </svg>
+              <span>邀请成员</span>
+            </button>
+            <button class="qa-btn" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 4.5 3 19h18L12 4.5z"></path>
+                <path d="M12 10v4.5"></path>
+                <path d="M12 17.2h.01"></path>
+              </svg>
+              <span>查看告警</span>
+            </button>
+          </div>
+          <p class="quick-tip">提示：快捷操作按角色动态展示，可在「成员与权限」中调整。</p>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

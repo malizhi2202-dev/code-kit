@@ -1,0 +1,460 @@
+<!-- 用途：客服工单系统页面模板 | 所属：code-kit ui-samples/systems | 用法：2a UI-DESIGN 阶段按系统类型挑基线，复制改造 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>客服工单系统 · 工单队列 - 云澈控制台</title>
+<style>
+/* ===== 设计令牌（hex 兜底，支持 oklch 时覆盖） ===== */
+:root{
+  --bg:#f4f5f7; --surface:#ffffff; --surface-2:#fafbfc;
+  --border:#e4e7ec; --border-strong:#cdd3dd;
+  --text:#1c2433; --text-2:#414c5f; --text-3:#5d6b7e;
+  --brand:#1f5fe0; --brand-strong:#1a4dc0; --brand-weak:#edf3fe;
+  --ok:#147a3c; --ok-weak:#e7f5ec;
+  --warn:#8a5a00; --warn-weak:#fdf2dd;
+  --danger:#b3261e; --danger-weak:#fdecea;
+  --radius:10px; --radius-sm:8px;
+  --shadow-sm:0 1px 2px rgba(16,24,40,.06);
+  --font:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Consolas,"Courier New",monospace;
+}
+@supports (color:oklch(50% .18 262)){
+  :root{
+    --bg:oklch(97% .004 255); --surface:oklch(100% 0 0); --surface-2:oklch(98.4% .003 255);
+    --border:oklch(90.5% .007 255); --border-strong:oklch(83% .01 255);
+    --text:oklch(26% .02 260); --text-2:oklch(44% .02 258); --text-3:oklch(55% .02 255);
+    --brand:oklch(51% .19 262); --brand-strong:oklch(45% .19 264); --brand-weak:oklch(95.5% .025 262);
+    --ok:oklch(45% .12 152); --ok-weak:oklch(95.5% .035 152);
+    --warn:oklch(52% .1 85); --warn-weak:oklch(96% .045 90);
+    --danger:oklch(48% .17 27); --danger-weak:oklch(96% .025 27);
+  }
+}
+/* ===== 基础与可访问性 ===== */
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);font-size:14px;line-height:1.6;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+ul,ol{list-style:none}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:4px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.skip{position:fixed;left:12px;top:-48px;z-index:99;padding:8px 14px;background:var(--brand);color:#fff;border-radius:8px;transition:top .15s}
+.skip:focus{top:12px}
+/* ===== 三段式布局 ===== */
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh}
+.sidebar{display:flex;flex-direction:column;background:var(--surface);border-right:1px solid var(--border);position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;padding:18px 20px 14px;border-bottom:1px solid var(--border)}
+.brand-mark{width:34px;height:34px;border-radius:9px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700;font-size:15px}
+.brand-name{font-size:15px;font-weight:700;line-height:1.3}
+.brand-sub{font-size:11px;color:var(--text-3)}
+.nav{flex:1;overflow-y:auto;padding:12px 12px 20px}
+.nav-group{margin-bottom:14px}
+.nav-title{font-size:11px;font-weight:600;color:var(--text-3);letter-spacing:.08em;padding:6px 10px}
+.nav-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:2px;border-radius:8px;font-size:13.5px;color:var(--text-2)}
+.nav-item:hover{background:var(--surface-2);color:var(--text)}
+.nav-item.is-active{background:var(--brand-weak);color:var(--brand-strong);font-weight:600}
+.nav-count{font-size:11px;font-weight:600;color:var(--brand-strong);background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:0 7px;line-height:17px}
+.sidebar-foot{border-top:1px solid var(--border);padding:12px 18px;font-size:12px;color:var(--text-3);line-height:1.8}
+.sidebar-foot strong{color:var(--text-2);font-weight:600}
+/* ===== 顶栏 ===== */
+.main{display:flex;flex-direction:column;min-width:0}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 24px;height:58px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.crumbs ol{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-3)}
+.crumbs li+li::before{content:"/";margin-right:6px;color:var(--border-strong)}
+.crumbs a:hover{color:var(--brand-strong);text-decoration:underline}
+.crumbs [aria-current="page"]{color:var(--text);font-weight:600}
+.topbar-right{display:flex;align-items:center;gap:14px}
+.search{display:flex;align-items:center;gap:8px;border:1px solid var(--border-strong);border-radius:8px;padding:0 10px;height:34px;width:250px;background:var(--surface-2);color:var(--text-3)}
+.search:focus-within{border-color:var(--brand);background:var(--surface)}
+.search input{border:none;outline:none;background:transparent;width:100%;font-size:13px;color:var(--text)}
+.search input::placeholder{color:var(--text-3)}
+.bell{position:relative;width:34px;height:34px;display:grid;place-items:center;border-radius:8px;color:var(--text-2)}
+.bell:hover{background:var(--surface-2);color:var(--text)}
+.bell-dot{position:absolute;top:3px;right:3px;min-width:15px;height:15px;padding:0 3px;border-radius:999px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;line-height:15px;text-align:center;border:2px solid var(--surface)}
+.user{display:flex;align-items:center;gap:9px}
+.avatar{width:33px;height:33px;border-radius:50%;background:var(--brand-weak);color:var(--brand-strong);display:grid;place-items:center;font-size:13px;font-weight:700}
+.user-name{font-size:13px;font-weight:600;line-height:1.3}
+.user-sub{font-size:11px;color:var(--text-3)}
+/* ===== 内容区通用 ===== */
+.content{padding:20px 24px 32px;display:flex;flex-direction:column;gap:14px}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.page-head h1{font-size:20px;font-weight:700;letter-spacing:-.01em}
+.page-desc{font-size:13px;color:var(--text-3);margin-top:2px}
+.page-actions{display:flex;gap:10px}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text-2);border-radius:8px;padding:7px 14px;font-size:13px;font-weight:500}
+.btn:hover{border-color:var(--text-3);color:var(--text)}
+.btn-primary{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+.btn-primary:hover{background:var(--brand-strong);border-color:var(--brand-strong);color:#fff}
+.btn-danger-ghost{color:var(--danger);border-color:#eccfcd}
+.btn-danger-ghost:hover{border-color:var(--danger);color:var(--danger)}
+/* ===== SLA 指标卡 ===== */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow-sm)}
+.kpi-label{font-size:12.5px;color:var(--text-3);margin-bottom:6px}
+.kpi-value{font-size:29px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.25}
+.kpi-unit{font-size:15px;font-weight:600;margin-left:2px}
+.kpi-delta{font-size:12.5px;font-weight:600;margin-top:4px}
+.kpi-delta.up{color:var(--ok)} .kpi-delta.down{color:var(--danger)}
+.kpi-sub{font-size:12px;color:var(--text-3);margin-top:2px}
+/* ===== 工作区：列表 + 详情 ===== */
+.workspace{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm)}
+/* --- 标签页（radio 纯 CSS 切换） --- */
+.tab-radio{position:absolute;opacity:0;pointer-events:none}
+.tab-list{display:flex;gap:2px;border-bottom:1px solid var(--border);padding:0 12px;overflow-x:auto}
+.tab-list label{padding:11px 12px;font-size:13.5px;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;display:inline-flex;gap:7px;align-items:center;white-space:nowrap}
+.tab-list label:hover{color:var(--text)}
+.tab-count{font-size:11px;color:var(--text-3);background:var(--bg);border-radius:999px;padding:0 7px;line-height:18px;font-variant-numeric:tabular-nums}
+#tab-wait:checked~.tab-list [for="tab-wait"],#tab-doing:checked~.tab-list [for="tab-doing"],
+#tab-confirm:checked~.tab-list [for="tab-confirm"],#tab-close:checked~.tab-list [for="tab-close"]{color:var(--brand-strong);font-weight:600;border-bottom-color:var(--brand)}
+#tab-wait:checked~.tab-list [for="tab-wait"] .tab-count,#tab-doing:checked~.tab-list [for="tab-doing"] .tab-count,
+#tab-confirm:checked~.tab-list [for="tab-confirm"] .tab-count,#tab-close:checked~.tab-list [for="tab-close"] .tab-count{background:var(--brand-weak);color:var(--brand-strong)}
+#tab-wait:focus-visible~.tab-list [for="tab-wait"],#tab-doing:focus-visible~.tab-list [for="tab-doing"],
+#tab-confirm:focus-visible~.tab-list [for="tab-confirm"],#tab-close:focus-visible~.tab-list [for="tab-close"]{outline:2px solid var(--brand);outline-offset:-2px;border-radius:6px}
+.panel{display:none}
+#tab-wait:checked~.tab-panels #panel-wait,#tab-doing:checked~.tab-panels #panel-doing,
+#tab-confirm:checked~.tab-panels #panel-confirm,#tab-close:checked~.tab-panels #panel-close{display:block}
+/* --- 筛选工具条 / 表格 / 分页 / 空态 --- */
+.toolbar{display:flex;gap:14px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.field{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-3)}
+.field select{border:1px solid var(--border-strong);border-radius:6px;padding:5px 8px;background:var(--surface);font-size:12.5px;color:var(--text-2)}
+.field input[type="checkbox"]{accent-color:var(--brand);width:14px;height:14px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:940px}
+th{font-size:12px;font-weight:600;color:var(--text-3);text-align:left;background:var(--surface-2);padding:9px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{font-size:13px;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text-2);white-space:nowrap;vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--surface-2)}
+tr.is-selected{background:var(--brand-weak)} tr.is-selected:hover{background:#e2ecfc}
+.ticket-id{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--brand-strong)}
+.ticket-id:hover{text-decoration:underline}
+.td-title{white-space:normal;min-width:240px;font-weight:500;color:var(--text)}
+.prio{display:inline-flex;align-items:center;font-size:12px;font-weight:600;padding:1px 8px;border-radius:999px;line-height:20px}
+.prio::before{content:"";width:6px;height:6px;border-radius:50%;margin-right:5px;background:currentColor}
+.prio-urgent{color:#b3261e;background:#fdecea} .prio-high{color:#9a4a00;background:#fcede0}
+.prio-mid{color:#8a5a00;background:#fdf3d8} .prio-low{color:#1a4dc0;background:#ebf1fd}
+.ch{display:inline-flex;font-size:12px;color:var(--text-3);border:1px solid var(--border);border-radius:4px;padding:0 7px;line-height:20px;background:var(--surface)}
+.st{display:inline-flex;font-size:12px;font-weight:600;padding:1px 8px;border-radius:4px;line-height:20px}
+.st-warn{color:#8a5a00;background:#fdf2dd} .st-info{color:#175ec4;background:#e9f1fd}
+.st-ok{color:#147a3c;background:#e7f5ec} .st-danger{color:#b3261e;background:#fdecea}
+.sla{font-variant-numeric:tabular-nums} .sla-soon{color:#9a4a00;font-weight:700}
+.sla-over{color:#b3261e;font-weight:700} .sla-wait{color:var(--text-3)}
+.pager{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;flex-wrap:wrap}
+.pager-info{font-size:12.5px;color:var(--text-3)}
+.pager-btns{display:flex;gap:6px;align-items:center}
+.pg{min-width:30px;height:30px;padding:0 9px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:6px;font-size:12.5px;color:var(--text-2);background:var(--surface)}
+.pg:hover{border-color:var(--brand);color:var(--brand-strong)}
+.pg.is-cur{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+.pg-dis{pointer-events:none;color:#aeb6c2}
+.empty{padding:52px 20px;text-align:center}
+.empty-ico{width:52px;height:52px;margin:0 auto 14px;border-radius:50%;background:var(--surface-2);border:1px solid var(--border);display:grid;place-items:center;color:var(--text-3)}
+.empty h3{font-size:14.5px;margin-bottom:6px}
+.empty p{font-size:13px;color:var(--text-3);max-width:340px;margin:0 auto 16px;line-height:1.7}
+/* ===== 工单详情预览卡 ===== */
+.detail-card{position:sticky;top:74px}
+.detail-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.detail-head h2{font-size:14px;font-weight:700}
+.detail-title{padding:14px 16px 4px;font-size:15px;font-weight:600;line-height:1.55}
+.detail-meta{padding:0 16px 14px;display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;font-size:12.5px}
+.detail-meta dt{color:var(--text-3)} .detail-meta dd{color:var(--text-2);font-weight:500}
+.detail-meta .full{grid-column:1/-1}
+.sla-strip{margin:0 16px 14px;border:1px solid #f3dfb6;background:var(--warn-weak);border-radius:8px;padding:8px 12px;font-size:12.5px;color:#6d4a00;line-height:1.6}
+.sla-strip.sla-over{border-color:#f0c8c4;background:var(--danger-weak);color:#8f2019}
+.section-title{font-size:12px;font-weight:600;color:var(--text-3);letter-spacing:.06em;padding:12px 16px 8px}
+.dlg{display:flex;gap:10px;padding:0 16px;margin-bottom:12px}
+.dlg-ava{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;flex:none}
+.dlg-cust .dlg-ava{background:#e6ebf3;color:var(--text-2)} .dlg-agent .dlg-ava{background:var(--brand);color:#fff}
+.dlg-head{display:flex;gap:8px;align-items:baseline}
+.dlg-name{font-size:12.5px;font-weight:600} .dlg-time{font-size:11.5px;color:var(--text-3)}
+.dlg-body{font-size:13px;color:var(--text-2);background:var(--surface-2);border:1px solid var(--border);border-radius:2px 10px 10px 10px;padding:8px 12px;line-height:1.7}
+.dlg-agent .dlg-body{background:var(--brand-weak);border-color:#d7e4fb}
+.note{margin:2px 16px 14px;border-left:3px solid var(--warn);background:var(--warn-weak);border-radius:6px;padding:10px 12px;font-size:12.5px;color:#6d4a00;line-height:1.7}
+.detail-foot{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border)}
+.detail-foot .btn{flex:1;justify-content:center;padding:7px 8px;font-size:12.5px}
+/* ===== 响应式兜底 ===== */
+@media (max-width:1180px){ .workspace{grid-template-columns:1fr} .detail-card{position:static} }
+@media (max-width:900px){
+  .app{grid-template-columns:1fr} .sidebar{display:none} .search{width:160px}
+  .kpis{grid-template-columns:1fr} .topbar{flex-wrap:wrap;height:auto;padding:10px 16px}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">跳到主要内容</a>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">云</div>
+      <div><p class="brand-name">云澈控制台</p><p class="brand-sub">客服工单系统</p></div>
+    </div>
+    <nav class="nav" aria-label="客服系统主导航">
+      <div class="nav-group">
+        <p class="nav-title">工作台</p>
+        <a class="nav-item" href="#"><span>今日概览</span></a>
+        <a class="nav-item" href="#"><span>我的待办</span><span class="nav-count">5</span></a>
+      </div>
+      <div class="nav-group">
+        <p class="nav-title">客服中心</p>
+        <a class="nav-item is-active" href="#" aria-current="page"><span>工单队列</span><span class="nav-count">18</span></a>
+        <a class="nav-item" href="#"><span>我的工单</span></a>
+        <a class="nav-item" href="#"><span>快捷回复库</span></a>
+        <a class="nav-item" href="#"><span>排班与坐席</span></a>
+      </div>
+      <div class="nav-group">
+        <p class="nav-title">客户</p>
+        <a class="nav-item" href="#"><span>客户列表</span></a>
+        <a class="nav-item" href="#"><span>服务协议</span></a>
+      </div>
+      <div class="nav-group">
+        <p class="nav-title">知识与报表</p>
+        <a class="nav-item" href="#"><span>知识库文档</span></a>
+        <a class="nav-item" href="#"><span>SLA 达成报表</span></a>
+        <a class="nav-item" href="#"><span>满意度分析</span></a>
+      </div>
+    </nav>
+    <div class="sidebar-foot">
+      <p><strong>值班客服 · 林晚晴</strong></p>
+      <p>一线坐席 12 人在线</p>
+    </div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <nav class="crumbs" aria-label="面包屑">
+        <ol>
+          <li><a href="#">控制台</a></li>
+          <li><a href="#">客服中心</a></li>
+          <li aria-current="page">工单队列</li>
+        </ol>
+      </nav>
+      <div class="topbar-right">
+        <div class="search">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg>
+          <label class="sr-only" for="kw">搜索工单编号、标题或客户名称</label>
+          <input id="kw" type="search" placeholder="搜索工单编号 / 标题 / 客户">
+        </div>
+        <button class="bell" type="button" aria-label="通知中心，3 条未读">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          <span class="bell-dot">3</span>
+        </button>
+        <div class="user">
+          <div class="avatar" aria-hidden="true">沈</div>
+          <div><p class="user-name">沈亦舟</p><p class="user-sub">客服主管</p></div>
+        </div>
+      </div>
+    </header>
+    <main id="main" class="content">
+      <div class="page-head">
+        <div>
+          <h1>工单队列</h1>
+          <p class="page-desc">按 SLA 剩余时间自动排队，超时与临期工单置顶提醒。</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn" type="button">导出队列</button>
+          <button class="btn btn-primary" type="button">＋ 新建工单</button>
+        </div>
+      </div>
+      <section class="kpis" aria-label="服务水平指标">
+        <article class="kpi">
+          <p class="kpi-label">今日 SLA 达成率</p>
+          <p class="kpi-value">96.4<span class="kpi-unit">%</span></p>
+          <p class="kpi-delta up">▲ 1.2% 较昨日</p>
+          <p class="kpi-sub">达成 214 / 总计 222 张</p>
+        </article>
+        <article class="kpi">
+          <p class="kpi-label">平均首次响应</p>
+          <p class="kpi-value">2<span class="kpi-unit">分</span>18<span class="kpi-unit">秒</span></p>
+          <p class="kpi-delta up">▼ 36 秒 较上周</p>
+          <p class="kpi-sub">目标：5 分钟内响应</p>
+        </article>
+        <article class="kpi">
+          <p class="kpi-label">超时风险工单</p>
+          <p class="kpi-value">7<span class="kpi-unit">张</span></p>
+          <p class="kpi-delta down">▲ 3 张 较昨日</p>
+          <p class="kpi-sub">其中 2 张已升级二线处理</p>
+        </article>
+      </section>
+      <div class="workspace">
+        <section class="card" aria-labelledby="queue-h">
+          <h2 id="queue-h" class="sr-only">工单队列列表</h2>
+          <input class="tab-radio" type="radio" name="ticketTab" id="tab-wait" checked>
+          <input class="tab-radio" type="radio" name="ticketTab" id="tab-doing">
+          <input class="tab-radio" type="radio" name="ticketTab" id="tab-confirm">
+          <input class="tab-radio" type="radio" name="ticketTab" id="tab-close">
+          <div class="tab-list" role="tablist" aria-label="工单状态筛选">
+            <label for="tab-wait">待分配 <span class="tab-count">18</span></label>
+            <label for="tab-doing">处理中 <span class="tab-count">26</span></label>
+            <label for="tab-confirm">待用户确认 <span class="tab-count">9</span></label>
+            <label for="tab-close">已关闭 <span class="tab-count">0</span></label>
+          </div>
+          <div class="tab-panels">
+            <div class="panel" id="panel-wait">
+              <div class="toolbar">
+                <div class="field">
+                  <label for="f-group">客户分组</label>
+                  <select id="f-group"><option>全部客户</option><option>重点客户</option><option>普通客户</option></select>
+                </div>
+                <div class="field">
+                  <label for="f-ch">渠道</label>
+                  <select id="f-ch"><option>全部渠道</option><option>电话</option><option>邮件</option><option>在线</option></select>
+                </div>
+                <div class="field">
+                  <input type="checkbox" id="f-over">
+                  <label for="f-over">仅看 SLA 临期与超时</label>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th scope="col">编号</th><th scope="col">标题</th><th scope="col">优先级</th><th scope="col">客户</th><th scope="col">渠道</th><th scope="col">SLA 剩余</th><th scope="col">负责人</th><th scope="col">状态</th></tr></thead>
+                  <tbody>
+                    <tr class="is-selected" aria-label="当前预览工单">
+                      <td><a class="ticket-id" href="#">GD-20486</a></td><td class="td-title">支付回调偶发失败，订单状态卡在「待支付」</td><td><span class="prio prio-urgent">紧急</span></td><td>上海橙湾网络科技</td><td><span class="ch">在线</span></td><td><span class="sla sla-over">已超时 22 分钟</span></td><td>未分配</td><td><span class="st st-warn">待分配</span></td>
+                    </tr>
+                    <tr>
+                      <td><a class="ticket-id" href="#">GD-20479</a></td><td class="td-title">增值税发票抬头修改后仍打印旧信息</td><td><span class="prio prio-high">高</span></td><td>杭州映雪服饰</td><td><span class="ch">邮件</span></td><td><span class="sla sla-soon">剩余 18 分钟</span></td><td>未分配</td><td><span class="st st-warn">待分配</span></td>
+                    </tr>
+                    <tr>
+                      <td><a class="ticket-id" href="#">GD-20475</a></td><td class="td-title">企业版坐席无法登录移动端 App</td><td><span class="prio prio-high">高</span></td><td>深圳蓝鲸智联</td><td><span class="ch">电话</span></td><td><span class="sla sla-soon">剩余 1 小时 05 分</span></td><td>未分配</td><td><span class="st st-warn">待分配</span></td>
+                    </tr>
+                    <tr>
+                      <td><a class="ticket-id" href="#">GD-20468</a></td><td class="td-title">数据看板导出 Excel 缺少近一周数据</td><td><span class="prio prio-mid">中</span></td><td>成都青野文旅</td><td><span class="ch">在线</span></td><td><span class="sla">剩余 3 小时 40 分</span></td><td>未分配</td><td><span class="st st-warn">待分配</span></td>
+                    </tr>
+                    <tr>
+                      <td><a class="ticket-id" href="#">GD-20463</a></td><td class="td-title">子账号权限批量导入一直失败</td><td><span class="prio prio-mid">中</span></td><td>北京中科领航</td><td><span class="ch">邮件</span></td><td><span class="sla">剩余 5 小时 12 分</span></td><td>未分配</td><td><span class="st st-warn">待分配</span></td>
+                    </tr>
+                    <tr>
+                      <td><a class="ticket-id" href="#">GD-20459</a></td><td class="td-title">申请增加测试环境的短信发送配额</td><td><span class="prio prio-low">低</span></td><td>广州瑞丰物流</td><td><span class="ch">在线</span></td><td><span class="sla">剩余 21 小时</span></td><td>未分配</td><td><span class="st st-warn">待分配</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="pager">
+                <p class="pager-info">共 18 条工单 · 每页 10 条</p>
+                <nav class="pager-btns" aria-label="工单分页">
+                  <a class="pg pg-dis" href="#" aria-disabled="true">上一页</a>
+                  <a class="pg is-cur" href="#" aria-current="page">1</a>
+                  <a class="pg" href="#">2</a>
+                  <a class="pg" href="#">下一页</a>
+                </nav>
+              </div>
+            </div>
+            <div class="panel" id="panel-doing">
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th scope="col">编号</th><th scope="col">标题</th><th scope="col">优先级</th><th scope="col">客户</th><th scope="col">渠道</th><th scope="col">SLA 剩余</th><th scope="col">负责人</th><th scope="col">状态</th></tr></thead>
+                  <tbody>
+                    <tr>
+                      <td><a class="ticket-id" href="#">GD-20481</a></td><td class="td-title">线上商城结算页高峰期偶发白屏</td><td><span class="prio prio-urgent">紧急</span></td><td>上海橙湾网络科技</td><td><span class="ch">在线</span></td><td><span class="sla sla-soon">剩余 42 分钟</span></td><td>林晚晴</td><td><span class="st st-info">处理中</span></td>
+                    </tr>
+                    <tr>
+                      <td><a class="ticket-id" href="#">GD-20452</a></td><td class="td-title">Webhook 重推机制重复推送订单事件</td><td><span class="prio prio-high">高</span></td><td>武汉云枢信息</td><td><span class="ch">邮件</span></td><td><span class="sla">剩余 2 小时 30 分</span></td><td>陈明宇</td><td><span class="st st-info">处理中</span></td>
+                    </tr>
+                    <tr>
+                      <td><a class="ticket-id" href="#">GD-20441</a></td><td class="td-title">批量打印面单时打印机无响应</td><td><span class="prio prio-mid">中</span></td><td>苏州河图精密</td><td><span class="ch">电话</span></td><td><span class="sla sla-soon">剩余 1 小时 12 分</span></td><td>周子昂</td><td><span class="st st-danger">已升级</span></td>
+                    </tr>
+                    <tr>
+                      <td><a class="ticket-id" href="#">GD-20435</a></td><td class="td-title">老账号登录需要重复验证两次</td><td><span class="prio prio-mid">中</span></td><td>杭州映雪服饰</td><td><span class="ch">在线</span></td><td><span class="sla">剩余 8 小时 05 分</span></td><td>苏念芜</td><td><span class="st st-info">处理中</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="pager">
+                <p class="pager-info">共 26 条工单 · 每页 10 条</p>
+                <nav class="pager-btns" aria-label="工单分页">
+                  <a class="pg pg-dis" href="#" aria-disabled="true">上一页</a>
+                  <a class="pg is-cur" href="#" aria-current="page">1</a>
+                  <a class="pg" href="#">2</a>
+                  <a class="pg" href="#">3</a>
+                  <a class="pg" href="#">下一页</a>
+                </nav>
+              </div>
+            </div>
+            <div class="panel" id="panel-confirm">
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th scope="col">编号</th><th scope="col">标题</th><th scope="col">优先级</th><th scope="col">客户</th><th scope="col">渠道</th><th scope="col">SLA 剩余</th><th scope="col">负责人</th><th scope="col">状态</th></tr></thead>
+                  <tbody>
+                    <tr>
+                      <td><a class="ticket-id" href="#">GD-20398</a></td><td class="td-title">对账单金额与实际扣款差 0.01 元</td><td><span class="prio prio-mid">中</span></td><td>深圳蓝鲸智联</td><td><span class="ch">邮件</span></td><td><span class="sla sla-wait">等待用户 16 小时</span></td><td>陈明宇</td><td><span class="st st-warn">待确认</span></td>
+                    </tr>
+                    <tr>
+                      <td><a class="ticket-id" href="#">GD-20377</a></td><td class="td-title">报表字段已按需求更新，请验证</td><td><span class="prio prio-low">低</span></td><td>成都青野文旅</td><td><span class="ch">在线</span></td><td><span class="sla sla-wait">等待用户 1 天 4 小时</span></td><td>林晚晴</td><td><span class="st st-warn">待确认</span></td>
+                    </tr>
+                    <tr>
+                      <td><a class="ticket-id" href="#">GD-20352</a></td><td class="td-title">短信通道切换完成，请协助测试</td><td><span class="prio prio-mid">中</span></td><td>广州瑞丰物流</td><td><span class="ch">电话</span></td><td><span class="sla sla-wait">等待用户 2 天</span></td><td>周子昂</td><td><span class="st st-warn">待确认</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="pager">
+                <p class="pager-info">共 9 条工单 · 每页 10 条</p>
+                <nav class="pager-btns" aria-label="工单分页">
+                  <a class="pg pg-dis" href="#" aria-disabled="true">上一页</a>
+                  <a class="pg is-cur" href="#" aria-current="page">1</a>
+                  <a class="pg" href="#">下一页</a>
+                </nav>
+              </div>
+            </div>
+            <div class="panel" id="panel-close">
+              <div class="empty">
+                <div class="empty-ico" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+                </div>
+                <h3>当前条件下没有已关闭的工单</h3>
+                <p>「近 7 天 · 全部渠道」范围内暂无已关闭工单记录，试着放宽时间范围或清空筛选条件。</p>
+                <button class="btn" type="button">清空筛选条件</button>
+              </div>
+            </div>
+          </div>
+        </section>
+        <aside class="card detail-card" aria-labelledby="detail-h">
+          <div class="detail-head">
+            <h2 id="detail-h">工单详情预览</h2>
+            <span class="prio prio-urgent">紧急</span>
+          </div>
+          <p class="detail-title">支付回调偶发失败，订单状态卡在「待支付」</p>
+          <dl class="detail-meta">
+            <div><dt>工单编号</dt><dd>GD-20486</dd></div>
+            <div><dt>渠道</dt><dd>在线</dd></div>
+            <div><dt>客户</dt><dd>上海橙湾网络科技</dd></div>
+            <div><dt>创建时间</dt><dd>今天 13:58</dd></div>
+            <div class="full"><dt>负责人</dt><dd>未分配（等待认领）</dd></div>
+          </dl>
+          <p class="sla-strip sla-over"><strong>SLA 已超时 22 分钟</strong>按「紧急」级别承诺 2 小时内响应，请立即认领或升级值班主管。</p>
+          <p class="section-title">对话记录 · 3 条</p>
+          <div class="dlg dlg-cust">
+            <div class="dlg-ava" aria-hidden="true">王</div>
+            <div>
+              <p class="dlg-head"><span class="dlg-name">王雅萍（客户）</span><span class="dlg-time">13:58</span></p>
+              <p class="dlg-body">你好，我们商城从中午开始陆续有用户反馈支付完成后订单还显示「待支付」，大概十单里有一单，微信和支付宝都有。</p>
+            </div>
+          </div>
+          <div class="dlg dlg-agent">
+            <div class="dlg-ava" aria-hidden="true">林</div>
+            <div>
+              <p class="dlg-head"><span class="dlg-name">林晚晴（客服）</span><span class="dlg-time">14:05</span></p>
+              <p class="dlg-body">收到，这个问题优先处理。麻烦提供两笔异常订单号和大概的支付时间点，我这边同步查一下回调日志。</p>
+            </div>
+          </div>
+          <div class="dlg dlg-cust">
+            <div class="dlg-ava" aria-hidden="true">王</div>
+            <div>
+              <p class="dlg-head"><span class="dlg-name">王雅萍（客户）</span><span class="dlg-time">14:12</span></p>
+              <p class="dlg-body">订单号 SO-77421 和 SO-77435，支付时间在 12:40 和 13:02，都是微信支付，App 端和收银台都能复现。</p>
+            </div>
+          </div>
+          <p class="section-title">内部备注</p>
+          <div class="note">回调日志显示两笔订单的 notify 请求均返回 504，疑似上游网关连接池耗尽，与 9 月 17 日变更单 CM-3321 相关，建议升级后端值班跟进。—— 林晚晴 14:18</div>
+          <div class="detail-foot">
+            <button class="btn btn-primary" type="button">认领工单</button>
+            <button class="btn" type="button">转派</button>
+            <button class="btn btn-danger-ghost" type="button">升级</button>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

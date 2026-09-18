@@ -47,7 +47,7 @@
 
 #### 2.1 代码质量诊断 · 6 维衰退风险
 
-以 [brooks-lint](https://github.com/hyhmrright/brooks-lint) 提出的 6 个生产代码衰退风险为诊断维度（源于 12 本经典软件工程书籍：《重构》/ 《Clean Architecture》/ 《DDD》/ 《Pragmatic Programmer》/ 《Philosophy of Software Design》 等）：
+以 6 个生产代码衰退风险为诊断维度（源于 12 本经典软件工程书籍：《重构》/ 《Clean Architecture》/ 《DDD》/ 《Pragmatic Programmer》/ 《Philosophy of Software Design》 等）：
 
 | 编号 | 衰退风险 | 诊断问题 | 主要源头 |
 |---|---|---|---|
@@ -59,24 +59,10 @@
 | R6 | Domain Model Distortion 领域扭曲 | 代码是否忠实反映业务领域？ | DDD / Refactoring |
 
 > **R3 边界（重要）**：这里的"知识重复"是**概念级**——"同一个业务规则 / 常量 / 决策被表达在多处"。
-> 字面级的重复代码块、未用导出 / 依赖、死代码等**不属于 R3 范畴**，交由 `@prompts/M-health.md` 步骤 2.5 的冗余扫描处理（jscpd / knip / vulture / staticcheck 等工具级扫描 · 全库级别 · 定期跑）。
+> 字面级的重复代码块、未用导出 / 依赖、死代码等**不属于 R3 范畴**，交由 `@prompts/M-health.md` 步骤 2.5 的冗余巡检处理（AI 抽样检测 · 全库级别 · 定期跑）。
 > 6-review 只盯本次 diff 的概念层级；字面级冗余是"仓库级长期债"，跨 PR 才能看清，因此不放在 PR review 里。
 
-##### 路径 A · 装了 brooks-lint（首选）
-
-在 Claude Code / Gemini CLI / Codex CLI 里调用：
-
-```
-/brooks-review            # 基于 diff 的 PR 级诊断
-```
-
-或针对大型变更（架构调整、跨模块重构）补跑一次：
-
-```
-/brooks-audit            # 架构审计，产 Mermaid 依赖图、标出循环依赖
-```
-
-**输出必须包含**该工具要求的四要素（也是 code-kit 下游认的格式）：
+AI 逐个维度诊断 diff，每个发现的输出格式（四要素）：
 
 ```
 ### 🔴/🟡/🟢 R<x> · <风险名>：<一句话结论>
@@ -86,18 +72,14 @@
 **Remedy（修补）**：<具体怎么改，贴 before/after 代码或接口调整>
 ```
 
-把 brooks-lint 输出原样贴入 `REVIEW.md` 的「代码质量审查 · 6 维衰退」段，不要改写丝毫。补充部分仅为指向 fix 任务。
-
-##### 路径 B · 未装 brooks-lint（内置回退）
-
-AI 自己逐个维度诊断 diff，输出上面同样的 4 要素格式，发现的每个问题都要：
+发现的每个问题都要：
 
 - 标出 **R1~R6 编号**
 - 指出具体 `<file>:<line>`
-- 引用上表中至少一本书作为 Source（不要“根据最佳实践”这种空话）
+- 引用上表中至少一本书作为 Source（不要"根据最佳实践"这种空话）
 - 按下方「严重度分级」段标 🔴 Critical / 🟡 Major / 🟢 Minor
 
-内置路径下**成果质量明显低于 brooks-lint**（根据该工具 benchmark：带书本引用的发现率 100% vs 约 16%）。如果项目质量要求高建议装上 brooks-lint。
+结果写入 `REVIEW.md` 的「代码质量审查 · 6 维衰退」段。
 
 #### 2.2 架构依赖检查（大型 change 触发）
 
@@ -107,12 +89,10 @@ AI 自己逐个维度诊断 diff，输出上面同样的 4 要素格式，发现
 - DESIGN.md 表示引入了新中间件 / 新服务
 - 跨 ≥ 5 个模块的重构
 
-装了 brooks-lint → `/brooks-audit`，拿到 Mermaid 依赖图，贴入 REVIEW.md。重点核：
+AI 自己用 grep + import 分析画一个简化 Mermaid 依赖图，贴入 REVIEW.md。重点核：
 - 是否出现**循环依赖**（图中虚线反向箭头）
 - 是否出现「业务层 → 低层」线路以外的反向依赖（如 `domain/` 依赖 `controller/`）
 - 是否出现跨边界依赖（如 `frontend/` 直接 import `backend/` 实现）
-
-未装 brooks-lint → AI 自己画个简化 Mermaid 依赖图，判同三点。
 
 ### 第三轮 · UI 视觉审查（仅前端项目）
 
@@ -139,8 +119,6 @@ AI 自己逐个维度诊断 diff，输出上面同样的 4 要素格式，发现
 
 每条命中**必须列出文件:行号**，标 🔴 Critical 并生成 fix 任务。
 
-> 装了 [impeccable](https://impeccable.style) → 跑 `npx impeccable detect <changed-files>` 自动化扫描，把输出贴进 REVIEW.md。
-
 #### 3.3 视觉北极星一致性
 
 回到 UI-DESIGN.md 第 1 节"美学北极星"，问一个问题：
@@ -165,20 +143,15 @@ AI 自己逐个维度诊断 diff，输出上面同样的 4 要素格式，发现
 
 **触发条件**：本次 change 是里程碑 / 季度大版本 / 重构项目，或 `.specs/CONTEXT.md` 「技术债」段多于 30 天未更新。
 
-```
-/brooks-debt              # 装了 brooks-lint 才能调
-```
+AI 按 **Pain × Spread** 双轴给现有技术债打分（Pain：不还时每次开发的额外成本；Spread：涉及多少模块），输出：
 
-输出会给出：
 - 各项债务的 **Pain × Spread 优先级**
 - Critical / Scheduled / Monitored 的还债路线图
 
-拿到输出后：
+拿到结果后：
 - 🔴 Critical · 本次必修 → 追加为 fix 任务
 - 🟡 Scheduled · 近 1~3 个迭代 → 追加为 backlog，记入 `.specs/CONTEXT.md` 的「技术债」段
 - 🟢 Monitored · 仅记录不处理 → LESSONS.md
-
-未装 brooks-lint → 跳过本段（内置不提供回退，债评估需要书本包装才不会“凭感觉”）。
 
 #### 4.2 跨模型 spot-check（强烈建议）
 
@@ -216,7 +189,6 @@ AI 自己逐个维度诊断 diff，输出上面同样的 4 要素格式，发现
 
 - [ ] 三轮主审查都做了（后端 / lib 项目只跳第三轮 UI，不能跳二轮）
 - [ ] 二轮 · 6 维诊断输出含 4 要素 + 书本引用 + R1~R6 编号
-- [ ] 装了 brooks-lint 优先用（`/brooks-review` + `/brooks-audit`），输出原样贴入报告
 - [ ] 第四轮按触发条件判完（命中触发必跑，未命中可跳但要在 REVIEW.md 写明"X 未命中"）
 - [ ] 每条发现都有严重度标签
 - [ ] 每个 Critical 都已生成 fix 任务

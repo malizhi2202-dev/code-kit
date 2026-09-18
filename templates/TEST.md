@@ -58,7 +58,7 @@
 
 ### 1.5 测试质量自检（6 维测试衰退风险）
 
-> 装了 [brooks-lint](https://github.com/hyhmrright/brooks-lint) → `/brooks-test` 输出原样贴入；未装 → AI 内置 T1~T6 快查。
+> AI 内置 T1~T6 快查结果，4 要素格式贴入「详细发现」段。
 
 **严重度统计**：
 
@@ -74,7 +74,7 @@
 **详细发现**：
 
 ```markdown
-<贴 brooks-test 输出 / 内置 T1~T6 快查结果，4 要素格式：>
+<贴 T1~T6 快查结果，4 要素格式：>
 
 ### 🔴 T<x> · <名字>：<结论>
 **Symptom**：<test-file:line>

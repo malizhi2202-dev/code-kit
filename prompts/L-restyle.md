@@ -133,8 +133,6 @@ Wave 3（串行，回归与基线）：
 ```bash
 npm test -- <Component>.test          # 单测必须仍过
 npm run e2e -- <Component> --updateSnapshot  # 视觉 snapshot 重置
-npx pa11y <url-of-component>          # a11y 不能退步
-npx impeccable detect <component-file> # 反 AI-slop（可选，如装了）
 ```
 
 ### 7. 显式风险声明（**必须输出，不允许跳过**）

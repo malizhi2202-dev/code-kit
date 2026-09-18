@@ -1,4 +1,4 @@
-# B-product — 产品 PR + 界面原型（单文件 HTML 模型）
+# P-product — 产品 PR + 界面原型（单文件 HTML 模型）
 
 > 写产品需求文档（PR）和产品原型时走本流程：**一份自包含 HTML 同时承载"产品设计文档 + 全界面原型"**，浏览器直接打开即读即演示，零外部依赖、零部署。
 > 模型范本：`@code-kit/reference/product-design-exemplar.html`（真实系统 logsearch 的完整范例）。结构模板：`@code-kit/templates/PRODUCT-DESIGN.md`。
@@ -46,7 +46,7 @@
 
 ## 制作流程
 
-1. **定域**：从 CHANGE.md / B-discovery 的 roadmap 拿产品定位；没有就先反问澄清（不越过 0-change 的澄清职责）
+1. **定域**：从 CHANGE.md / D-discovery 的 roadmap 拿产品定位；没有就先反问澄清（不越过 0-change 的澄清职责）
 2. **搭骨架**：按九段制建 HTML 骨架 + 目录导航 + tokens（可复制范本的 tokens 段起步，或从 `ui-samples/` 任一系统页提取 tokens）
 3. **填 1-5、7-9 章**：文档段先行，每段都要求可指回事实（已有代码/文档/用户原话；推测处标注"待确认"）
 4. **做第 6 章原型**：按界面清单逐页做同布局原型；通用页面模式（登录/表格/表单/看板…）从 `@code-kit/ui-samples/patterns/` 取基线改造；系统级页面（权限/对话/量化…）从 `@code-kit/ui-samples/systems/` 取对应基线
@@ -62,7 +62,7 @@
 ## 与主流程的衔接
 
 ```
-B-discovery（可选，调研清楚）→ B-product（本文档）→ 1-requirement（从本文档抽 AC）
+D-discovery（可选，调研清楚）→ P-product（本文档）→ 1-requirement（从本文档抽 AC）
                                     ↘ 2a-ui-design（tokens 从本文档 :root 继承并正式化）
 ```
 

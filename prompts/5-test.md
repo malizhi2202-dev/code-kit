@@ -77,7 +77,7 @@ UAT-1：<场景>
 
 > 覆盖率达标 ≠ 测试写得好。本步检查「测试本身」的衰退风险。
 
-以 [brooks-lint](https://github.com/hyhmrright/brooks-lint) 提出的 6 个测试衰退风险为诊断维度（源于《xUnit Test Patterns》/《The Art of Unit Testing》/《How Google Tests Software》/《Working Effectively with Legacy Code》四本书）：
+以 6 个测试衰退风险为诊断维度（源于《xUnit Test Patterns》/《The Art of Unit Testing》/《How Google Tests Software》/《Working Effectively with Legacy Code》四本书）：
 
 | 编号 | 衰退风险 | 诊断问题 |
 |---|---|---|
@@ -88,16 +88,6 @@ UAT-1：<场景>
 | T5 | Coverage Illusion 覆盖率幻觉 | 覆盖率高但 assertion 空 / 只验证不报错？ |
 | T6 | Architecture Mismatch 架构错配 | 测试层级是否与架构匹配（不该用 e2e 验证的点被拿 e2e 验）？ |
 
-##### 路径 A · 装了 brooks-lint（首选）
-
-```
-/brooks-test            # 测试套件质量审查
-```
-
-输出使用 4 要素格式（Symptom / Source / Consequence / Remedy），原样贴入 `TEST.md` 的「测试质量自检」段。
-
-##### 路径 B · 未装 brooks-lint（内置清单）
-
 逐个维度检查，命中任一项记下测试文件列表：
 
 - [ ] **T1**：测试名不是 Given/When/Then 结构，读不出场景 → 重命名
@@ -107,9 +97,11 @@ UAT-1：<场景>
 - [ ] **T5**：测试只调用了函数但没断言 · 仅有 `expect(x).toBeDefined()` 这种空断言 → 补真实断言
 - [ ] **T6**：能用单测验证的逻辑被拿 e2e 验证 / 应用层逻辑被拿集成测验证 → 下移一层
 
+发现格式沿用 4 要素（Symptom / Source / Consequence / Remedy），写入 `TEST.md` 的「测试质量自检」段。
+
 命中 ≥ 1 项 → 本轮技术债记事（记入 TEST.md 的「测试质量记事」段，按优先级排入 backlog 或当圈修复）。命中 ≥ 3 项 → 本次 release 前必修。
 
-> 工具与反模式详见 `test-pyramid.md` 第 1 节、6 维衰退详见 [brooks-lint · brooks-test skill](https://github.com/hyhmrright/brooks-lint)。
+> 测试分层与反模式详见 `test-pyramid.md` 第 1 节。
 
 ---
 

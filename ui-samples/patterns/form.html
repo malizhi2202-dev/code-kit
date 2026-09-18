@@ -1,0 +1,308 @@
+<!-- 用途：复杂表单模式 | 所属：code-kit ui-samples/patterns | 用法：2a UI-DESIGN 阶段基线样例，复制改造 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>新建数据源 · 云麓数据中台</title>
+<style>
+/* ===== 1. 设计令牌（hex 基线） ===== */
+:root {
+  --brand: #2563eb; --brand: oklch(54.6% 0.17 258);
+  --brand-strong: #1b4fc4; --brand-strong: oklch(47% 0.16 258);
+  --brand-weak: #e9f0fb; --brand-weak: oklch(95.5% 0.02 258);
+  --danger: #b3261e; --danger: oklch(50% 0.19 27);
+  --danger-weak: #fbe9e7; --danger-weak: oklch(95% 0.02 27);
+  --bg: #f4f5f7; --surface: #ffffff; --surface-2: #f8f9fb;
+  --border: #e3e6ec; --border-strong: #c8ced8;
+  --text: #1c2433; --text-2: #4a5468; --text-3: #7c8699;
+  --sidebar-bg: #202631; --sidebar-text: #c7ced9; --sidebar-faint: #949dad; --sidebar-border: #2e3542;
+  --r-sm: 6px; --r-md: 10px; --r-lg: 14px;
+  --shadow-1: 0 1px 2px rgba(22,28,40,.07); --shadow-2: 0 8px 28px rgba(22,28,40,.10);
+  --font-ui: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+}
+/* ===== 2. 基础 ===== */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-ui); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; }
+a { color: var(--brand); text-decoration: none; }
+a:hover { text-decoration: underline; }
+button { font-family: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; }
+/* ===== 3. 三段式布局 ===== */
+.layout { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+.sidebar { background: var(--sidebar-bg); color: var(--sidebar-text); padding: 18px 12px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.brand { display: flex; align-items: center; gap: 10px; padding: 4px 10px 16px; color: #fff; font-weight: 700; font-size: 15px; }
+.brand svg { width: 26px; height: 26px; color: var(--brand); background: #fff; border-radius: 7px; padding: 4px; }
+.nav-title { margin: 14px 10px 6px; font-size: 11.5px; letter-spacing: .08em; color: var(--sidebar-faint); }
+.nav-item { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 7px; color: var(--sidebar-text); font-size: 13.5px; margin-bottom: 2px; }
+.nav-item:hover { background: rgba(255,255,255,.06); color: #fff; text-decoration: none; }
+.nav-item.active { background: var(--brand); color: #fff; font-weight: 600; }
+.nav-item svg { width: 16px; height: 16px; flex: none; }
+.side-foot { margin-top: 20px; padding: 12px 10px 0; border-top: 1px solid var(--sidebar-border); font-size: 12px; color: var(--sidebar-faint); line-height: 1.7; }
+.main { display: flex; flex-direction: column; min-width: 0; }
+.topbar { display: flex; align-items: center; gap: 16px; height: 58px; padding: 0 28px; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+.crumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-3); }
+.crumb b { color: var(--text); font-weight: 600; }
+.topbar .spacer { flex: 1; }
+.search { position: relative; }
+.search input { width: 220px; padding: 7px 12px 7px 32px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; background: var(--surface-2); font-family: inherit; }
+.search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--text-3); }
+.icon-btn { position: relative; display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text-2); }
+.icon-btn:hover { border-color: var(--border-strong); color: var(--text); }
+.icon-btn .dot { position: absolute; top: 7px; right: 7px; width: 7px; height: 7px; border-radius: 50%; background: var(--danger); }
+.avatar { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--brand); color: #fff; font-size: 13.5px; font-weight: 700; }
+.content { padding: 24px 28px 90px; max-width: 860px; }
+/* ===== 4. 页头 ===== */
+.page-head { margin-bottom: 18px; }
+.page-head h1 { font-size: 20px; letter-spacing: -.01em; }
+.page-head p { margin-top: 4px; font-size: 13px; color: var(--text-3); }
+/* ===== 5. 分区卡片 ===== */
+.form-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--shadow-1); margin-bottom: 16px; }
+.form-section > summary { list-style: none; display: flex; align-items: center; gap: 12px; padding: 16px 20px; cursor: pointer; border-radius: var(--r-lg); }
+.form-section > summary::-webkit-details-marker { display: none; }
+.form-section > summary:hover { background: var(--surface-2); }
+.sec-no { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; background: var(--brand-weak); color: var(--brand); font-size: 13px; font-weight: 700; flex: none; }
+.sec-title { font-size: 15px; font-weight: 600; }
+.sec-desc { font-size: 12.5px; color: var(--text-3); margin-top: 1px; }
+.sec-body { padding: 4px 20px 20px; border-top: 1px solid var(--border); }
+/* ===== 6. 表单栅格与控件 ===== */
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; padding-top: 16px; }
+.grid .full { grid-column: 1 / -1; }
+.field label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; }
+.req { color: var(--danger); margin-right: 2px; }
+.hint { display: block; margin-top: 5px; font-size: 12px; color: var(--text-3); }
+.field input[type="text"], .field input[type="number"], .field input[type="date"], .field select, .field textarea {
+  width: 100%; padding: 8px 12px; border: 1px solid var(--border-strong); border-radius: 8px;
+  font-size: 13.5px; font-family: inherit; background: var(--surface); color: var(--text);
+  transition: border-color .15s, box-shadow .15s;
+}
+.field textarea { resize: vertical; min-height: 72px; }
+.field input:hover, .field select:hover, .field textarea:hover { border-color: var(--text-3); }
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-weak); }
+.field input[aria-invalid="true"] { border-color: var(--danger); background: var(--danger-weak); }
+.field input[aria-invalid="true"]:focus { box-shadow: 0 0 0 3px var(--danger-weak); }
+.field-err { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12.5px; color: var(--danger); font-weight: 500; }
+.field-err svg { width: 13px; height: 13px; flex: none; }
+/* ===== 7. 标签多选 ===== */
+.tagbox { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); min-height: 40px; }
+.tagbox:focus-within { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-weak); }
+.tag-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; background: var(--brand-weak); color: var(--brand); font-size: 12.5px; font-weight: 600; }
+.tag-pill button { display: grid; place-items: center; width: 15px; height: 15px; border: none; border-radius: 50%; background: transparent; color: inherit; font-size: 13px; line-height: 1; }
+.tag-pill button:hover { background: rgba(37,99,235,.2); }
+.tagbox input { flex: 1; min-width: 120px; border: none; outline: none; font-size: 13.5px; font-family: inherit; background: transparent; }
+/* ===== 8. 单选组 / 开关 ===== */
+.radio-group { display: flex; gap: 18px; flex-wrap: wrap; }
+.radio { display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; cursor: pointer; }
+.radio input { accent-color: var(--brand); width: 15px; height: 15px; }
+.switch-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 10px 0; }
+.switch-row + .switch-row { border-top: 1px solid var(--border); }
+.switch-label { font-size: 13.5px; font-weight: 600; }
+.switch-desc { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+.switch { position: relative; flex: none; width: 40px; height: 22px; }
+.switch input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.switch .track { position: absolute; inset: 0; border-radius: 999px; background: var(--border-strong); transition: background .15s; }
+.switch .track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .15s; box-shadow: var(--shadow-1); }
+.switch input:checked + .track { background: var(--brand); }
+.switch input:checked + .track::after { transform: translateX(18px); }
+.switch input:focus-visible + .track { outline: 2px solid var(--brand); outline-offset: 2px; }
+/* ===== 9. 文件上传 ===== */
+.upload { border: 1.5px dashed var(--border-strong); border-radius: var(--r-md); padding: 26px 16px; text-align: center; color: var(--text-3); background: var(--surface-2); transition: border-color .15s, background .15s; }
+.upload:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-weak); }
+.upload svg { width: 26px; height: 26px; margin-bottom: 8px; }
+.upload p { font-size: 13px; }
+.upload .hint { margin-top: 4px; }
+/* ===== 10. sticky 底部操作条 ===== */
+.actionbar { position: fixed; bottom: 0; left: 220px; right: 0; display: flex; align-items: center; gap: 12px; padding: 12px 28px; background: var(--surface); border-top: 1px solid var(--border); box-shadow: 0 -4px 16px rgba(22,28,40,.06); z-index: 20; }
+.actionbar .note { font-size: 12.5px; color: var(--text-3); margin-right: auto; }
+.btn { display: inline-flex; align-items: center; gap: 7px; padding: 8px 18px; border-radius: 8px; font-size: 13.5px; font-weight: 600; border: 1px solid transparent; transition: background .15s, border-color .15s; }
+.btn-primary { background: var(--brand); color: #fff; }
+.btn-primary:hover { background: var(--brand-strong); }
+.btn-ghost { background: var(--surface); border-color: var(--border-strong); color: var(--text-2); }
+.btn-ghost:hover { border-color: var(--text-3); color: var(--text); }
+.btn-link { border: none; background: none; color: var(--text-3); font-size: 13.5px; padding: 8px 6px; }
+.btn-link:hover { color: var(--text); text-decoration: underline; }
+/* ===== 11. 响应式降级 ===== */
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { position: static; height: auto; }
+  .actionbar { left: 0; }
+  .grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" aria-label="主导航">
+    <div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3z"/><path d="M4 7v10c0 1.7 3.6 3 8 3s8-1.3 8-3V7"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>云麓数据中台</div>
+    <p class="nav-title">数据接入</p>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><ellipse cx="12" cy="6" rx="7" ry="2.6"/><path d="M5 6v12c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6V6"/><path d="M5 12c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6"/></svg>数据源管理</a>
+    <a class="nav-item active" href="#" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>新建数据源</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h7"/></svg>接入任务</a>
+    <p class="nav-title">数据治理</p>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2.5"/></svg>质量规则</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg>元数据目录</a>
+    <p class="nav-title">系统</p>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.4 3.6-5 7-5s6.2 1.6 7 5"/></svg>成员与权限</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 4h4v4h4v4h-4v4h-4v-4H6V8h4z"/></svg>操作审计</a>
+    <div class="side-foot">v2.4.1 · 数据接入模块<br>管理员：陈明宇</div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <nav class="crumb" aria-label="面包屑"><a href="#">数据接入</a><span>/</span><a href="#">数据源管理</a><span>/</span><b>新建数据源</b></nav>
+      <div class="spacer"></div>
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input type="search" placeholder="搜索数据源、任务、字段…" aria-label="全局搜索">
+      </div>
+      <button class="icon-btn" type="button" aria-label="通知，3 条未读"><span class="dot" aria-hidden="true"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></button>
+      <span class="avatar" aria-hidden="true">陈</span>
+    </header>
+    <main class="content">
+      <div class="page-head">
+        <h1>新建数据源</h1>
+        <p>接入一个新的数据库、API 或文件作为数据源。带 <span class="req" aria-hidden="true">*</span> 为必填项，共 3 个分区、11 个配置项。</p>
+      </div>
+
+      <details class="form-section" open>
+        <summary>
+          <span class="sec-no" aria-hidden="true">1</span>
+          <span><span class="sec-title">基本信息</span><br><span class="sec-desc">名称、归属与业务标签，用于目录检索</span></span>
+        </summary>
+        <div class="sec-body">
+          <div class="grid">
+            <div class="field full">
+              <label for="fName"><span class="req" aria-hidden="true">*</span>数据源名称</label>
+              <input type="text" id="fName" name="name" placeholder="例：华东订单库（生产）" autocomplete="off">
+              <span class="hint">3-40 个字符，同一项目内不允许重名</span>
+            </div>
+            <div class="field">
+              <label for="fOwner"><span class="req" aria-hidden="true">*</span>负责人</label>
+              <select id="fOwner" name="owner">
+                <option value="" selected disabled>请选择负责人</option>
+                <option>陈明宇 · 数据平台组</option>
+                <option>林晚晴 · 订单业务组</option>
+                <option>周子昂 · 基础架构组</option>
+                <option>苏婉宁 · 数据平台组</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="fDate"><span class="req" aria-hidden="true">*</span>上线日期</label>
+              <input type="date" id="fDate" name="onlineDate" value="2025-06-01">
+            </div>
+            <div class="field full">
+              <label for="fTags" id="lblTags">业务标签<span style="font-weight:400;color:var(--text-3)">（回车添加，最多 5 个）</span></label>
+              <div class="tagbox" role="group" aria-labelledby="lblTags">
+                <span class="tag-pill">订单域<button type="button" aria-label="移除标签 订单域">×</button></span>
+                <span class="tag-pill">核心链路<button type="button" aria-label="移除标签 核心链路">×</button></span>
+                <span class="tag-pill">华东机房<button type="button" aria-label="移除标签 华东机房">×</button></span>
+                <input type="text" placeholder="输入后按回车…" aria-label="新增业务标签">
+              </div>
+              <span class="hint">用于数据目录的分类检索与权限继承</span>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="form-section" open>
+        <summary>
+          <span class="sec-no" aria-hidden="true">2</span>
+          <span><span class="sec-title">连接设置</span><br><span class="sec-desc">数据库类型与访问凭证，保存前将自动做连通性探测</span></span>
+        </summary>
+        <div class="sec-body">
+          <div class="grid">
+            <div class="field">
+              <label for="fType"><span class="req" aria-hidden="true">*</span>数据库类型</label>
+              <select id="fType" name="type">
+                <option selected>MySQL</option>
+                <option>PostgreSQL</option>
+                <option>Oracle</option>
+                <option>ClickHouse</option>
+                <option>HTTP API（JSON）</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="fVersion"><span class="req" aria-hidden="true">*</span>版本</label>
+              <input type="number" id="fVersion" name="version" min="5" max="8" step="1" value="8" inputmode="numeric">
+              <span class="hint">主版本号，决定方言与驱动</span>
+            </div>
+            <div class="field full">
+              <label for="fHost"><span class="req" aria-hidden="true">*</span>连接地址</label>
+              <input type="text" id="fHost" name="host" value="jdbc:mysql://10.20.8.31:3306/order_db?useSSL=false" aria-invalid="true" aria-describedby="hostErr" autocomplete="off">
+              <p class="field-err" id="hostErr" role="alert">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5M12 16h.01"/></svg>
+                连通性探测失败：10.20.8.31:3306 连接超时（建议检查白名单或改用 3307 端口）
+              </p>
+            </div>
+            <div class="field">
+              <label for="fUser"><span class="req" aria-hidden="true">*</span>用户名</label>
+              <input type="text" id="fUser" name="user" value="data_sync_ro" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="fPwd"><span class="req" aria-hidden="true">*</span>密码</label>
+              <input type="text" id="fPwd" name="pwd" value="••••••••••••" autocomplete="new-password">
+              <span class="hint">仅写入一次，后续不可查看</span>
+            </div>
+            <div class="field full">
+              <span class="switch-label" id="lblSsl" style="display:block;margin-bottom:8px">安全连接</span>
+              <div class="radio-group" role="radiogroup" aria-labelledby="lblSsl">
+                <label class="radio"><input type="radio" name="ssl" value="none" checked>不加密（内网）</label>
+                <label class="radio"><input type="radio" name="ssl" value="tls">TLS（推荐）</label>
+                <label class="radio"><input type="radio" name="ssl" value="mtls">双向 TLS</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="form-section" open>
+        <summary>
+          <span class="sec-no" aria-hidden="true">3</span>
+          <span><span class="sec-title">同步偏好</span><br><span class="sec-desc">调度节奏、字段映射说明与变更凭证</span></span>
+        </summary>
+        <div class="sec-body">
+          <div class="grid">
+            <div class="field full">
+              <label for="fDesc">用途说明</label>
+              <textarea id="fDesc" name="desc" placeholder="一句话说明这个数据源的用途、覆盖的业务范围与注意事项…">承接华东区域订单主库，为订单域看板与对账任务供数；大促期间由值班同学手动触发增量补数。</textarea>
+            </div>
+            <div class="field full">
+              <label for="fUpload" id="lblUpload">字段映射说明文档<span style="font-weight:400;color:var(--text-3)">（可选）</span></label>
+              <label class="upload" for="fUpload">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 16V4m0 0 4 4m-4-4L8 8"/><path d="M4 16v3a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 20 19v-3"/></svg>
+                <p>点击或拖拽文件到此处上传</p>
+                <span class="hint">支持 .md / .xlsx，不超过 10 MB</span>
+              </label>
+              <input type="file" id="fUpload" name="mappingDoc" style="position:absolute;width:1px;height:1px;opacity:0" tabindex="-1" aria-hidden="true">
+            </div>
+            <div class="field full">
+              <div class="switch-row">
+                <div><p class="switch-label">立即执行一次全量同步</p><p class="switch-desc">保存成功后马上拉取一次全量数据，失败不影响数据源状态</p></div>
+                <span class="switch"><input type="checkbox" role="switch" checked aria-label="立即执行一次全量同步"><span class="track" aria-hidden="true"></span></span>
+              </div>
+              <div class="switch-row">
+                <div><p class="switch-label">变更时通知负责人</p><p class="switch-desc">连接信息、调度节奏变更时向负责人发送企业微信通知</p></div>
+                <span class="switch"><input type="checkbox" role="switch" checked aria-label="变更时通知负责人"><span class="track" aria-hidden="true"></span></span>
+              </div>
+              <div class="switch-row">
+                <div><p class="switch-label">允许下游订阅</p><p class="switch-desc">开启后其他项目可申请订阅本数据源的增量流</p></div>
+                <span class="switch"><input type="checkbox" role="switch" aria-label="允许下游订阅"><span class="track" aria-hidden="true"></span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </details>
+    </main>
+  </div>
+</div>
+<div class="actionbar">
+  <span class="note">草稿已于 14:32 自动保存 · 11 项必填中 1 项校验未通过</span>
+  <button class="btn btn-primary" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="width:14px;height:14px"><path d="M5 12l5 5L20 7"/></svg>
+    保存并探测连接
+  </button>
+  <button class="btn btn-ghost" type="button">重置表单</button>
+  <button class="btn-link" type="button">取消</button>
+</div>
+</body>
+</html>

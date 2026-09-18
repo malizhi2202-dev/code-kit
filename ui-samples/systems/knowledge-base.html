@@ -1,0 +1,546 @@
+<!-- 用途：知识库系统页面模板 | 所属：code-kit ui-samples/systems | 用法：2a UI-DESIGN 阶段按系统类型挑选基线，复制改造 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>知识库 · 磐石帮助中心</title>
+<style>
+/* ===== 设计令牌：oklch 优先，hex 兜底 ===== */
+:root {
+  --bg: #f4f5f7; --surface: #ffffff; --border: #e3e6eb; --border-strong: #c8ced8;
+  --text-1: #1b2233; --text-2: #49505f; --text-3: #5c6575;
+  --brand: #2563eb; --brand-deep: #1d4ed8; --brand-weak: #e9f0fd;
+  --ok: #157347; --ok-bg: #e6f4ea; --warn: #8a5410; --warn-bg: #f9efd9;
+  --danger: #b42323; --danger-bg: #fbe8e8; --mark: #fff1bf; --radius: 8px;
+  --shadow: 0 1px 2px rgba(27, 34, 51, .06);
+  --mono: ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace;
+}
+@supports (color: oklch(0 0 0)) {
+  :root {
+    --bg: oklch(96.9% .004 250); --surface: oklch(100% 0 0); --border: oklch(91.9% .006 250); --border-strong: oklch(81.5% .012 250);
+    --text-1: oklch(24% .022 262); --text-2: oklch(43% .02 262); --text-3: oklch(51% .018 262);
+    --brand: oklch(54.6% .215 262.9); --brand-deep: oklch(48.8% .203 265.8); --brand-weak: oklch(95.2% .024 255);
+    --ok: oklch(47% .12 156); --ok-bg: oklch(95.5% .028 156); --warn: oklch(48% .09 75); --warn-bg: oklch(96% .032 85);
+    --danger: oklch(49% .18 27); --danger-bg: oklch(95.5% .03 25); --mark: oklch(95% .055 95);
+  }
+}
+/* ===== 基础 ===== */
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; font: 14px/1.65 system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; color: var(--text-1); background: var(--bg); }
+a { color: var(--brand); text-decoration: none; }
+a:hover { text-decoration: underline; }
+button { font: inherit; }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.vh { position: absolute; width: 1px; height: 1px; margin: -1px; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
+mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 2px; }
+/* ===== 三段式布局 ===== */
+.layout { display: grid; grid-template-columns: 222px minmax(0, 1fr); min-height: 100vh; }
+.frame { display: flex; flex-direction: column; min-width: 0; }
+/* ===== 侧边导航 ===== */
+.sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 16px 12px; position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto; }
+.logo { display: flex; align-items: center; gap: 10px; padding: 2px 8px 16px; }
+.logo-mark { width: 34px; height: 34px; border-radius: 9px; flex: none; background: var(--brand); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 16px; }
+.logo-text strong { display: block; font-size: 14px; }
+.logo-text span { font-size: 10.5px; color: var(--text-3); letter-spacing: .6px; }
+.nav-group { margin-bottom: 18px; }
+.nav-title { margin: 0 8px 6px; font-size: 11px; color: var(--text-3); letter-spacing: 2px; }
+.nav-item { display: block; padding: 7px 10px; margin: 1px 0; border-radius: 6px; color: var(--text-2); font-size: 13.5px; }
+.nav-item:hover { background: var(--bg); color: var(--text-1); text-decoration: none; }
+.nav-item.is-active { background: var(--brand-weak); color: var(--brand-deep); font-weight: 600; }
+/* ===== 顶栏 ===== */
+.topbar { display: flex; align-items: center; gap: 16px; height: 56px; padding: 0 24px; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+.crumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-3); min-width: 0; overflow: hidden; }
+.crumb a { color: var(--text-3); white-space: nowrap; }
+.crumb a:hover { color: var(--brand); }
+.crumb em { font-style: normal; color: var(--text-1); font-weight: 600; white-space: nowrap; }
+.top-actions { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.search { position: relative; }
+.search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-3); pointer-events: none; }
+.search input { width: 236px; height: 34px; padding: 0 12px 0 32px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); font: inherit; color: var(--text-1); }
+.search input:hover { border-color: var(--border-strong); }
+.bell { position: relative; width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text-2); cursor: pointer; }
+.bell:hover { border-color: var(--border-strong); color: var(--text-1); }
+.bell-dot { position: absolute; top: -6px; right: -7px; min-width: 17px; height: 17px; padding: 0 4px; background: var(--danger); color: #fff; border-radius: 999px; font-size: 10px; line-height: 17px; text-align: center; }
+.avatar { width: 34px; height: 34px; border-radius: 50%; border: 1px solid transparent; cursor: pointer; background: var(--brand-weak); color: var(--brand-deep); display: grid; place-items: center; font-weight: 600; }
+.avatar:hover { border-color: var(--brand); }
+/* ===== 内容与通用组件 ===== */
+.main { padding: 20px 24px 44px; display: flex; flex-direction: column; gap: 16px; }
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.page-head h1 { margin: 0; font-size: 20px; }
+.page-desc { margin: 4px 0 0; color: var(--text-3); font-size: 13px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.card-title { margin: 0; font-size: 15px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); color: var(--text-1); font-size: 13px; cursor: pointer; }
+.btn:hover { border-color: var(--text-3); background: var(--bg); }
+.btn-primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.btn-primary:hover { background: var(--brand-deep); border-color: var(--brand-deep); }
+.btn-sm { height: 28px; padding: 0 10px; font-size: 12px; }
+.btn-link { border: 0; background: none; color: var(--brand); padding: 2px 4px; height: auto; cursor: pointer; font-size: 13px; }
+.btn-link:hover { text-decoration: underline; }
+.btn-link.danger { color: var(--danger); }
+/* ===== 全文搜索框 ===== */
+.searchbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.searchbar .field { flex: 1; min-width: 260px; position: relative; }
+.searchbar .field svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-3); pointer-events: none; }
+.searchbar input[type="search"] { width: 100%; height: 42px; padding: 0 14px 0 36px; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--surface); font-size: 14px; color: var(--text-1); }
+.searchbar input[type="search"]:hover, .searchbar input[type="search"]:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-weak); }
+.search-hint { flex-basis: 100%; margin: 0; font-size: 12.5px; color: var(--text-3); }
+/* ===== 标签页 ===== */
+.tabs { display: flex; flex-direction: column; }
+.tablist { display: flex; gap: 2px; padding: 0 6px; border-bottom: 1px solid var(--border); overflow-x: auto; }
+.tab { appearance: none; border: 0; background: none; padding: 10px 14px; font-size: 13.5px; color: var(--text-2); cursor: pointer; position: relative; white-space: nowrap; }
+.tab:hover { color: var(--text-1); }
+.tab[aria-selected="true"] { color: var(--brand-deep); font-weight: 600; }
+.tab[aria-selected="true"]::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px; background: var(--brand); border-radius: 2px; }
+.panel { padding: 16px 0 0; display: flex; flex-direction: column; gap: 12px; }
+/* ===== 工具条 ===== */
+.toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.inline-field { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-2); }
+.inline-field select { height: 32px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--surface); color: var(--text-1); font: inherit; }
+.toolbar-total { font-size: 12px; color: var(--text-3); margin-left: auto; }
+/* ===== 分类树侧栏 ===== */
+.kb-layout { display: grid; grid-template-columns: 236px minmax(0, 1fr); gap: 16px; align-items: start; }
+.tree-card { padding: 6px 8px 12px; }
+.tree, .tree ul { list-style: none; margin: 0; padding: 0; }
+.tree ul { padding-left: 18px; border-left: 1px solid var(--border); margin-left: 10px; }
+.tree a { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; border-radius: 6px; color: var(--text-2); font-size: 13px; }
+.tree a:hover { background: var(--bg); color: var(--text-1); text-decoration: none; }
+.tree a.is-active { background: var(--brand-weak); color: var(--brand-deep); font-weight: 600; }
+.tree .cnt { font-size: 11.5px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.tree a.is-active .cnt { color: var(--brand-deep); }
+.tree-title { margin: 10px 10px 4px; font-size: 11px; color: var(--text-3); letter-spacing: 2px; }
+.tree-root { font-weight: 600; color: var(--text-1); font-size: 13.5px; }
+/* ===== 表格（横向滚动兜底） ===== */
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 940px; }
+thead th { text-align: left; font-weight: 600; color: var(--text-3); font-size: 12px; padding: 10px 12px; background: var(--bg); border-bottom: 1px solid var(--border); white-space: nowrap; }
+tbody td { padding: 11px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover td { background: rgba(37, 99, 235, .035); }
+.cell-main { font-weight: 600; }
+.cell-sub { display: block; font-size: 12px; color: var(--text-3); font-weight: 400; }
+.mono { font-family: var(--mono); font-size: 12px; }
+.nowrap { white-space: nowrap; }
+td.num { font-variant-numeric: tabular-nums; }
+/* ===== 标签 pill 与状态徽章 ===== */
+.tag { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 5px; font-size: 11.5px; background: var(--bg); color: var(--text-2); border: 1px solid var(--border); white-space: nowrap; }
+.tag:hover { border-color: var(--brand); color: var(--brand); }
+.badge { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 12px; line-height: 1; border: 1px solid transparent; white-space: nowrap; }
+.badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
+.badge-plain::before { display: none; }
+.badge-ok { background: var(--ok-bg); color: var(--ok); }
+.badge-run { background: var(--brand-weak); color: var(--brand-deep); }
+.badge-warn { background: var(--warn-bg); color: var(--warn); }
+.badge-danger { background: var(--danger-bg); color: var(--danger); }
+.badge-muted { background: var(--bg); color: var(--text-3); border-color: var(--border); }
+/* ===== 批量操作与分页 ===== */
+.batch-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 12px; border-radius: var(--radius); background: var(--brand-weak); border: 1px solid rgba(37, 99, 235, .25); font-size: 13px; }
+.batch-count { color: var(--text-2); margin-right: 4px; }
+.batch-count strong { color: var(--brand-deep); }
+.pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.pager-total { font-size: 12px; color: var(--text-3); }
+.pager-btns { display: flex; gap: 6px; align-items: center; }
+.page-btn { min-width: 30px; height: 30px; padding: 0 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text-2); font-size: 13px; cursor: pointer; }
+.page-btn:hover:not(:disabled):not(.is-current) { border-color: var(--brand); color: var(--brand); }
+.page-btn.is-current { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
+.page-btn:disabled { opacity: .45; cursor: not-allowed; }
+/* ===== 文档详情三栏 ===== */
+.doc-layout { display: grid; grid-template-columns: 176px minmax(0, 1fr) 248px; gap: 16px; align-items: start; }
+.toc-card { position: sticky; top: 72px; padding: 12px 8px; }
+.toc-title { margin: 0 10px 6px; font-size: 11px; color: var(--text-3); letter-spacing: 2px; }
+.toc, .toc ul { list-style: none; margin: 0; padding: 0; }
+.toc ul { padding-left: 14px; }
+.toc a { display: block; padding: 5px 10px; border-radius: 6px; font-size: 12.5px; color: var(--text-3); }
+.toc a:hover { color: var(--brand); background: var(--bg); text-decoration: none; }
+.toc a.is-active { color: var(--brand-deep); background: var(--brand-weak); font-weight: 600; }
+.doc { padding: 24px 28px 26px; max-width: 760px; }
+.doc-kicker { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.doc h2 { margin: 0 0 4px; font-size: 21px; line-height: 1.4; }
+.doc-meta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px solid var(--border); font-size: 12.5px; color: var(--text-3); }
+.doc-meta b { color: var(--text-2); font-weight: 600; }
+.doc h3 { margin: 22px 0 8px; font-size: 15.5px; padding-bottom: 6px; border-bottom: 1px dashed var(--border); }
+.doc p { margin: 0 0 10px; color: var(--text-2); }
+.doc ol, .doc ul { margin: 0 0 10px; padding-left: 22px; color: var(--text-2); }
+.doc li { margin: 4px 0; }
+.note { margin: 12px 0; padding: 10px 14px; border-radius: 8px; background: var(--brand-weak); border: 1px solid rgba(37, 99, 235, .25); color: var(--text-2); font-size: 13px; }
+.vote { display: flex; align-items: center; gap: 10px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.vote-q { font-size: 13px; color: var(--text-2); }
+.related { margin-top: 20px; }
+.related h3 { border-bottom: 0; margin: 0 0 8px; }
+.related ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.related a { font-size: 13px; display: flex; justify-content: space-between; gap: 8px; }
+.related .cnt { color: var(--text-3); font-size: 12px; flex: none; }
+/* ===== 热门榜 ===== */
+.rank-card { position: sticky; top: 72px; }
+.rank-list { list-style: none; margin: 0; padding: 8px 16px 14px; }
+.rank-list li { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; border-bottom: 1px dashed var(--border); }
+.rank-list li:last-child { border-bottom: 0; }
+.rank-num { flex: none; width: 20px; height: 20px; border-radius: 5px; margin-top: 1px; display: grid; place-items: center; font-size: 11.5px; font-weight: 700; background: var(--bg); color: var(--text-3); font-style: normal; }
+.rank-list li:nth-child(-n+3) .rank-num { background: var(--brand); color: #fff; }
+.rank-info a { font-size: 13px; font-weight: 500; }
+.rank-info span { display: block; font-size: 11.5px; color: var(--text-3); margin-top: 1px; }
+/* ===== 空态 ===== */
+.empty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 34px 16px; text-align: center; border: 1px dashed var(--border-strong); border-radius: var(--radius); background: var(--surface); }
+.empty-icon { width: 44px; height: 44px; border-radius: 50%; background: var(--bg); color: var(--text-3); display: grid; place-items: center; font-size: 18px; }
+.empty-title { margin: 4px 0 0; color: var(--text-1); font-weight: 600; font-size: 14px; }
+.empty p { margin: 0; color: var(--text-3); font-size: 13px; }
+@media (max-width: 1080px) { .doc-layout { grid-template-columns: minmax(0, 1fr); } .toc-card, .rank-card { display: none; } }
+@media (max-width: 960px) {
+  .layout { grid-template-columns: 60px minmax(0, 1fr); }
+  .logo-text, .tree-title { display: none; }
+  .nav-item { text-align: center; padding: 8px 2px; }
+  .kb-layout { grid-template-columns: 1fr; }
+  .search input { width: 140px; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="logo">
+      <span class="logo-mark" aria-hidden="true">磐</span>
+      <div class="logo-text"><strong>磐石帮助中心</strong><span>KNOWLEDGE BASE</span></div>
+    </div>
+    <nav aria-label="主导航">
+      <div class="nav-group">
+        <p class="nav-title">知识库</p>
+        <a class="nav-item is-active" href="#" aria-current="page">全部文档</a>
+        <a class="nav-item" href="#">我的投稿</a>
+        <a class="nav-item" href="#">草稿箱</a>
+      </div>
+      <div class="nav-group">
+        <p class="nav-title">协作</p>
+        <a class="nav-item" href="#">待我审核</a>
+        <a class="nav-item" href="#">收藏夹</a>
+      </div>
+      <div class="nav-group">
+        <p class="nav-title">运营</p>
+        <a class="nav-item" href="#">热门文档榜</a>
+        <a class="nav-item" href="#">标签管理</a>
+      </div>
+    </nav>
+  </aside>
+  <div class="frame">
+    <header class="topbar">
+      <nav class="crumb" aria-label="面包屑">
+        <a href="#">帮助中心</a><span>/</span><a href="#">知识库</a><span>/</span><em aria-current="page">全部文档</em>
+      </nav>
+      <div class="top-actions">
+        <div class="search">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="m10.5 10.5 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <label class="vh" for="top-search">搜索文档</label>
+          <input id="top-search" type="search" placeholder="搜索标题 / 正文 / 标签">
+        </div>
+        <button class="bell" type="button" aria-label="通知：2 条未读">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.8a3.7 3.7 0 0 0-3.7 3.7v2.4L3 11h10l-1.3-3.1V5.5A3.7 3.7 0 0 0 8 1.8Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M6.6 13.2a1.4 1.4 0 0 0 2.8 0" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          <span class="bell-dot" aria-hidden="true">2</span>
+        </button>
+        <button class="avatar" type="button" aria-label="账户菜单：林晚晴">林</button>
+      </div>
+    </header>
+    <main class="main">
+      <div class="page-head">
+        <div>
+          <h1>知识库</h1>
+          <p class="page-desc">产品、技术、流程与 FAQ 的团队知识沉淀 · 全文检索支持命中高亮 · 共 486 篇文档 · 本月新增 23 篇</p>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn" type="button">导入文档</button>
+          <button class="btn btn-primary" type="button">投稿新文档</button>
+        </div>
+      </div>
+      <div class="kb-layout">
+        <aside class="card tree-card" aria-label="分类树">
+          <p class="tree-title">分类目录</p>
+          <ul class="tree">
+            <li>
+              <a class="tree-root is-active" href="#"><span>产品文档</span><span class="cnt">128</span></a>
+              <ul>
+                <li><a href="#"><span>功能说明</span><span class="cnt">54</span></a></li>
+                <li><a href="#"><span>版本发布记录</span><span class="cnt">31</span></a></li>
+                <li><a href="#"><span>常见问题 FAQ</span><span class="cnt">43</span></a></li>
+              </ul>
+            </li>
+            <li>
+              <a class="tree-root" href="#"><span>技术文档</span><span class="cnt">206</span></a>
+              <ul>
+                <li><a href="#"><span>架构设计</span><span class="cnt">37</span></a></li>
+                <li><a href="#"><span>接口规范</span><span class="cnt">88</span></a></li>
+                <li><a href="#"><span>运维手册</span><span class="cnt">81</span></a></li>
+              </ul>
+            </li>
+            <li>
+              <a class="tree-root" href="#"><span>流程规范</span><span class="cnt">96</span></a>
+              <ul>
+                <li><a href="#"><span>发布流程</span><span class="cnt">22</span></a></li>
+                <li><a href="#"><span>值班与应急</span><span class="cnt">39</span></a></li>
+                <li><a href="#"><span>行政与报销</span><span class="cnt">35</span></a></li>
+              </ul>
+            </li>
+            <li><a class="tree-root" href="#"><span>新人上手</span><span class="cnt">56</span></a></li>
+          </ul>
+        </aside>
+        <div class="tabs" data-tabs>
+          <div class="tablist" role="tablist" aria-label="知识库视图">
+            <button class="tab" role="tab" id="tab-list" aria-controls="panel-list" aria-selected="true" type="button">文档列表</button>
+            <button class="tab" role="tab" id="tab-doc" aria-controls="panel-doc" aria-selected="false" tabindex="-1" type="button">文档详情预览</button>
+            <button class="tab" role="tab" id="tab-mine" aria-controls="panel-mine" aria-selected="false" tabindex="-1" type="button">我的投稿</button>
+          </div>
+          <section class="panel" id="panel-list" role="tabpanel" aria-labelledby="tab-list">
+            <form class="card" style="padding:14px 16px" role="search" aria-label="全文搜索">
+              <div class="searchbar">
+                <div class="field">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="m10.5 10.5 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  <label class="vh" for="kb-search">全文搜索框</label>
+                  <input id="kb-search" type="search" value="退款流程" placeholder="输入关键词，支持标题与正文全文检索">
+                </div>
+                <button class="btn btn-primary" type="submit">搜索</button>
+                <button class="btn" type="reset">清空</button>
+                <p class="search-hint">命中 <b>18</b> 篇文档，关键词在结果中以 <mark>高亮</mark> 形式标注；可叠加分类与标签进一步过滤。</p>
+              </div>
+            </form>
+            <div class="toolbar">
+              <div class="inline-field"><label for="f-cat">分类</label><select id="f-cat"><option>全部分类</option><option>产品文档</option><option>技术文档</option><option>流程规范</option></select></div>
+              <div class="inline-field"><label for="f-tag">标签</label><select id="f-tag"><option>全部标签</option><option>退款</option><option>订单</option><option>客服</option></select></div>
+              <button class="btn btn-sm" type="button">查询</button>
+              <span class="toolbar-total">按相关度排序 · 共 18 条结果</span>
+            </div>
+            <div class="batch-bar" role="toolbar" aria-label="批量操作">
+              <span class="batch-count">已选 <strong>2</strong> 篇</span>
+              <button class="btn btn-sm" type="button">批量移动分类</button>
+              <button class="btn btn-sm" type="button">批量导出 PDF</button>
+              <button class="btn btn-sm" type="button" style="color:var(--danger)">批量下架</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <caption class="vh">文档列表</caption>
+                <thead>
+                  <tr>
+                    <th scope="col" style="width:36px"><input type="checkbox" aria-label="全选本页文档"></th>
+                    <th scope="col">标题</th>
+                    <th scope="col">分类</th>
+                    <th scope="col">标签</th>
+                    <th scope="col">作者</th>
+                    <th scope="col">浏览量</th>
+                    <th scope="col">有用票数</th>
+                    <th scope="col">更新时间</th>
+                    <th scope="col">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><input type="checkbox" checked aria-label="选择「订单退款处理流程与常见问题」"></td>
+                    <td><span class="cell-main">订单<mark>退款</mark>处理流程与常见问题</span><span class="cell-sub">命中正文 6 处：「<mark>退款</mark>时效」「部分<mark>退款</mark>规则」…</span></td>
+                    <td>产品文档 / FAQ</td>
+                    <td class="nowrap"><span class="tag">退款</span> <span class="tag">订单</span></td>
+                    <td>林晚晴</td>
+                    <td class="num">12,408</td>
+                    <td class="num">486</td>
+                    <td class="nowrap">06-16 14:20</td>
+                    <td class="nowrap"><button class="btn-link" type="button">预览</button><button class="btn-link" type="button">编辑</button></td>
+                  </tr>
+                  <tr>
+                    <td><input type="checkbox" checked aria-label="选择「退款时效与到账说明」"></td>
+                    <td><span class="cell-main"><mark>退款</mark>时效与到账说明</span><span class="cell-sub">命中正文 3 处</span></td>
+                    <td>产品文档 / 功能说明</td>
+                    <td class="nowrap"><span class="tag">退款</span> <span class="tag">支付</span></td>
+                    <td>陈明宇</td>
+                    <td class="num">9,132</td>
+                    <td class="num">352</td>
+                    <td class="nowrap">06-12 10:05</td>
+                    <td class="nowrap"><button class="btn-link" type="button">预览</button><button class="btn-link" type="button">编辑</button></td>
+                  </tr>
+                  <tr>
+                    <td><input type="checkbox" aria-label="选择「部分退款规则与金额分摊」"></td>
+                    <td><span class="cell-main">部分<mark>退款</mark>规则与金额分摊</span><span class="cell-sub">命中正文 9 处</span></td>
+                    <td>技术文档 / 接口规范</td>
+                    <td class="nowrap"><span class="tag">退款</span> <span class="tag">结算</span></td>
+                    <td>周予安</td>
+                    <td class="num">5,877</td>
+                    <td class="num">241</td>
+                    <td class="nowrap">06-09 16:44</td>
+                    <td class="nowrap"><button class="btn-link" type="button">预览</button><button class="btn-link" type="button">编辑</button></td>
+                  </tr>
+                  <tr>
+                    <td><input type="checkbox" aria-label="选择「客服退款话术手册」"></td>
+                    <td><span class="cell-main">客服<mark>退款</mark>话术手册</span><span class="cell-sub">命中正文 2 处</span></td>
+                    <td>流程规范 / 值班与应急</td>
+                    <td class="nowrap"><span class="tag">退款</span> <span class="tag">客服</span></td>
+                    <td>苏若雪</td>
+                    <td class="num">4,201</td>
+                    <td class="num">198</td>
+                    <td class="nowrap">05-28 09:31</td>
+                    <td class="nowrap"><button class="btn-link" type="button">预览</button><button class="btn-link" type="button">编辑</button></td>
+                  </tr>
+                  <tr>
+                    <td><input type="checkbox" aria-label="选择「退款异常工单升级流程」"></td>
+                    <td><span class="cell-main"><mark>退款</mark>异常工单升级流程</span><span class="cell-sub">命中正文 4 处</span></td>
+                    <td>流程规范 / 发布流程</td>
+                    <td class="nowrap"><span class="tag">退款</span> <span class="tag">工单</span></td>
+                    <td>陆嘉树</td>
+                    <td class="num">3,560</td>
+                    <td class="num">167</td>
+                    <td class="nowrap">05-21 11:18</td>
+                    <td class="nowrap"><button class="btn-link" type="button">预览</button><button class="btn-link" type="button">编辑</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <nav class="pager" aria-label="文档分页">
+              <span class="pager-total">共 18 条 · 每页 10 条</span>
+              <div class="pager-btns">
+                <button class="page-btn" type="button">上一页</button>
+                <button class="page-btn is-current" type="button" aria-current="page">1</button>
+                <button class="page-btn" type="button">2</button>
+                <button class="page-btn" type="button">下一页</button>
+              </div>
+            </nav>
+          </section>
+          <section class="panel" id="panel-doc" role="tabpanel" aria-labelledby="tab-doc" hidden>
+            <div class="doc-layout">
+              <nav class="card toc-card" aria-label="文档目录">
+                <p class="toc-title">本文目录</p>
+                <ul class="toc">
+                  <li><a class="is-active" href="#" aria-current="page">一、适用场景</a></li>
+                  <li><a href="#">二、标准退款流程</a></li>
+                  <li><a href="#">三、时效与到账</a></li>
+                  <li><a href="#">四、常见问题</a></li>
+                  <li><a href="#">五、相关入口</a></li>
+                </ul>
+              </nav>
+              <article class="card doc">
+                <div class="doc-kicker">
+                  <span class="tag">产品文档 / FAQ</span>
+                  <span class="badge badge-ok">已发布</span>
+                  <span class="badge badge-muted badge-plain">审核通过 · 沈亦舟</span>
+                </div>
+                <h2>订单<mark>退款</mark>处理流程与常见问题</h2>
+                <div class="doc-meta">
+                  <span>作者 <b>林晚晴</b></span>
+                  <span>更新于 <b>2025-06-16 14:20</b></span>
+                  <span>浏览 <b>12,408</b></span>
+                  <span>有用 <b>486</b></span>
+                  <span class="tag">退款</span><span class="tag">订单</span>
+                </div>
+                <h3 id="s1">一、适用场景</h3>
+                <p>本文适用于客服、运营与技术支持同学处理用户发起的订单<mark>退款</mark>诉求，覆盖全额<mark>退款</mark>、部分<mark>退款</mark>与重复扣款冲正三类场景。</p>
+                <h3 id="s2">二、标准退款流程</h3>
+                <ol>
+                  <li>用户在「我的订单」提交<mark>退款</mark>申请，或由客服代为创建工单；</li>
+                  <li>系统校验订单状态与<mark>退款</mark>窗口（支付成功后 72 小时内）；</li>
+                  <li>风控复核高风险订单，需要时联系用户补充凭证；</li>
+                  <li>财务确认后原路退回，并推送短信与站内信通知。</li>
+                </ol>
+                <h3 id="s3">三、时效与到账</h3>
+                <p>原路退回按支付渠道有所不同：银行卡 1–3 个工作日、支付宝与微信 24 小时内、余额支付实时到账。</p>
+                <div class="note">提示：超过时效仍未到账时，请先在「<mark>退款</mark>查询」页核对渠道流水号，再升级至支付网关值班同学。</div>
+                <h3 id="s4">四、常见问题</h3>
+                <ul>
+                  <li>部分<mark>退款</mark>如何分摊优惠券？按支付金额占比分摊，券不退回。</li>
+                  <li>已开票订单退款后如何处理发票？由财务统一作废并重新开具差额发票。</li>
+                </ul>
+                <h3 id="s5">五、相关入口</h3>
+                <p>工单系统 → 退款队列；支付网关 → 渠道对账单；客服知识库 → 话术手册。</p>
+                <div class="vote">
+                  <span class="vote-q">这篇文档是否对你有帮助？</span>
+                  <button class="btn btn-sm" type="button">👍 有用（486）</button>
+                  <button class="btn btn-sm" type="button">👎 无用</button>
+                </div>
+                <div class="related">
+                  <h3>相关文档推荐</h3>
+                  <ul>
+                    <li><a href="#"><span><mark>退款</mark>时效与到账说明</span><span class="cnt">9,132 次浏览</span></a></li>
+                    <li><a href="#"><span>部分退款规则与金额分摊</span><span class="cnt">5,877 次浏览</span></a></li>
+                    <li><a href="#"><span>客服退款话术手册</span><span class="cnt">4,201 次浏览</span></a></li>
+                  </ul>
+                </div>
+              </article>
+              <aside class="card rank-card" aria-label="热门文档榜">
+                <div class="card-head"><h2 class="card-title">热门文档榜</h2><span class="badge badge-muted badge-plain">近 7 天</span></div>
+                <ol class="rank-list">
+                  <li><i class="rank-num" aria-hidden="true">1</i><div class="rank-info"><a href="#">生产环境发布检查清单</a><span>4,892 次浏览 · 陈明宇</span></div></li>
+                  <li><i class="rank-num" aria-hidden="true">2</i><div class="rank-info"><a href="#">新员工入职指引</a><span>3,977 次浏览 · 沈亦舟</span></div></li>
+                  <li><i class="rank-num" aria-hidden="true">3</i><div class="rank-info"><a href="#">数据库变更操作规范</a><span>3,456 次浏览 · 周予安</span></div></li>
+                  <li><i class="rank-num" aria-hidden="true">4</i><div class="rank-info"><a href="#">告警分级与响应手册</a><span>2,801 次浏览 · 苏若雪</span></div></li>
+                  <li><i class="rank-num" aria-hidden="true">5</i><div class="rank-info"><a href="#">接口鉴权接入指南</a><span>2,377 次浏览 · 陆嘉树</span></div></li>
+                </ol>
+              </aside>
+            </div>
+          </section>
+          <section class="panel" id="panel-mine" role="tabpanel" aria-labelledby="tab-mine" hidden>
+            <div class="table-wrap">
+              <table>
+                <caption class="vh">我的投稿列表</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">标题</th>
+                    <th scope="col">分类</th>
+                    <th scope="col">提交时间</th>
+                    <th scope="col">审核状态</th>
+                    <th scope="col">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="cell-main">告警静默规则编写指南</span><span class="cell-sub">第 2 次提交 · 修改了匹配语法示例</span></td>
+                    <td>技术文档 / 运维手册</td>
+                    <td class="nowrap">06-18 09:47</td>
+                    <td><span class="badge badge-run">审核中</span></td>
+                    <td class="nowrap"><button class="btn-link" type="button">查看</button><button class="btn-link" type="button">撤回</button></td>
+                  </tr>
+                  <tr>
+                    <td><span class="cell-main">值班交接 checklist</span><span class="cell-sub">审核意见：补充周末升级路径说明</span></td>
+                    <td>流程规范 / 值班与应急</td>
+                    <td class="nowrap">06-17 15:22</td>
+                    <td><span class="badge badge-warn">需修改</span></td>
+                    <td class="nowrap"><button class="btn-link" type="button">查看意见</button><button class="btn-link" type="button">重新编辑</button></td>
+                  </tr>
+                  <tr>
+                    <td><span class="cell-main">订单导出字段字典 v2</span></td>
+                    <td>技术文档 / 接口规范</td>
+                    <td class="nowrap">06-11 10:08</td>
+                    <td><span class="badge badge-ok">已发布</span></td>
+                    <td class="nowrap"><button class="btn-link" type="button">查看</button><button class="btn-link" type="button">编辑</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="empty">
+              <span class="empty-icon" aria-hidden="true">✎</span>
+              <p class="empty-title">没有待处理的驳回投稿</p>
+              <p>投稿将进入双人审核流程，通常在 1 个工作日内完成；驳回后会通过站内信附具体修改意见</p>
+            </div>
+            <nav class="pager" aria-label="投稿分页">
+              <span class="pager-total">共 3 篇投稿 · 累计已发布 27 篇</span>
+              <div class="pager-btns">
+                <button class="page-btn" type="button">上一页</button>
+                <button class="page-btn is-current" type="button" aria-current="page">1</button>
+                <button class="page-btn" type="button">下一页</button>
+              </div>
+            </nav>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script>
+  // 标签切换：同步 tab 高亮与面板显隐（支持嵌套分组互不干扰）
+  document.querySelectorAll('[data-tabs]').forEach(function (group) {
+    group.addEventListener('click', function (e) {
+      var tab = e.target.closest('[role="tab"]');
+      if (!tab) return;
+      e.stopPropagation();
+      tab.closest('[role="tablist"]').querySelectorAll('[role="tab"]').forEach(function (t) {
+        t.setAttribute('aria-selected', String(t === tab));
+      });
+      group.querySelectorAll(':scope > [role="tabpanel"]').forEach(function (p) {
+        p.hidden = p.id !== tab.getAttribute('aria-controls');
+      });
+    });
+  });
+</script>
+</body>
+</html>

@@ -123,7 +123,6 @@ input,select,textarea{font:inherit;color:inherit}
 /* ===== 表格 ===== */
 .table-scroll{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface)}
 table{width:100%;border-collapse:collapse;min-width:820px}
-caption{text-align:left}
 th,td{padding:12px 14px;text-align:left;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle}
 th{font-size:12px;font-weight:600;color:var(--text-3);background:var(--surface-2);white-space:nowrap}
 tbody tr:last-child td{border-bottom:none}
@@ -187,9 +186,6 @@ textarea.input{height:auto;min-height:76px;padding:8px 12px;resize:vertical}
 .input:focus,.select:focus,textarea.input:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-weak)}
 .input::placeholder,textarea.input::placeholder{color:var(--text-3)}
 .select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235d6b7e' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
-.radio-row{display:flex;gap:18px;align-items:center;padding-top:4px}
-.radio-row label{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--text-2);cursor:pointer}
-.radio-row input{accent-color:var(--brand);width:15px;height:15px}
 .input-prefix{display:flex;align-items:center;border:1px solid var(--border-strong);border-radius:var(--radius-sm);overflow:hidden}
 .input-prefix span{padding:0 10px;background:var(--surface-2);color:var(--text-3);font-size:12.5px;font-family:var(--mono)}
 .input-prefix input{border:none;outline:none;height:36px;flex:1}
@@ -243,11 +239,6 @@ textarea.input{height:auto;min-height:76px;padding:8px 12px;resize:vertical}
         <a class="nav-item" href="#"><span class="lbl">登录日志</span></a>
         <a class="nav-item" href="#"><span class="lbl">敏感操作告警</span><span class="nav-count">2</span></a>
       </div>
-      <div class="nav-group">
-        <p class="nav-title">系统设置</p>
-        <a class="nav-item" href="#"><span class="lbl">参数配置</span></a>
-        <a class="nav-item" href="#"><span class="lbl">许可管理</span></a>
-      </div>
     </nav>
     <div class="sidebar-foot">v2.4.0 · 权限中心</div>
   </aside>
@@ -279,10 +270,6 @@ textarea.input{height:auto;min-height:76px;padding:8px 12px;resize:vertical}
           <p>管理平台角色、权限矩阵与成员授权关系，变更实时生效</p>
         </div>
         <div class="actions">
-          <button class="btn" type="button">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8m0 0 3-3m-3 3L5 7M3 12h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            导出权限矩阵
-          </button>
           <button class="btn btn-primary" type="button" data-open="roleModal">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
             新建角色
@@ -403,11 +390,6 @@ textarea.input{height:auto;min-height:76px;padding:8px 12px;resize:vertical}
                   <td class="center"><label class="switch"><input type="checkbox" checked aria-label="项目管理员可访问仪表盘"><span class="track"></span></label></td>
                   <td class="center"><label class="switch"><input type="checkbox" checked aria-label="运维工程师可访问仪表盘"><span class="track"></span></label></td>
                   <td class="center"><label class="switch"><input type="checkbox" checked aria-label="审计员可访问仪表盘"><span class="track"></span></label></td></tr>
-                <tr><td class="cell-main"><b>告警中心</b><span>告警规则与通知</span></td>
-                  <td class="center"><label class="switch"><input type="checkbox" checked disabled aria-label="超级管理员可访问告警中心"><span class="track"></span></label></td>
-                  <td class="center"><label class="switch"><input type="checkbox" aria-label="项目管理员可访问告警中心"><span class="track"></span></label></td>
-                  <td class="center"><label class="switch"><input type="checkbox" checked aria-label="运维工程师可访问告警中心"><span class="track"></span></label></td>
-                  <td class="center"><label class="switch"><input type="checkbox" aria-label="审计员可访问告警中心"><span class="track"></span></label></td></tr>
                 <tr class="group-row"><td colspan="5">权限与组织</td></tr>
                 <tr><td class="cell-main"><b>用户与组织</b><span>成员、部门与岗位</span></td>
                   <td class="center"><label class="switch"><input type="checkbox" checked disabled aria-label="超级管理员可访问用户与组织"><span class="track"></span></label></td>
@@ -419,11 +401,6 @@ textarea.input{height:auto;min-height:76px;padding:8px 12px;resize:vertical}
                   <td class="center"><label class="switch"><input type="checkbox" aria-label="项目管理员可访问角色与权限"><span class="track"></span></label></td>
                   <td class="center"><label class="switch"><input type="checkbox" aria-label="运维工程师可访问角色与权限"><span class="track"></span></label></td>
                   <td class="center"><label class="switch"><input type="checkbox" aria-label="审计员可访问角色与权限"><span class="track"></span></label></td></tr>
-                <tr><td class="cell-main"><b>成员授权</b><span>角色与成员绑定</span></td>
-                  <td class="center"><label class="switch"><input type="checkbox" checked disabled aria-label="超级管理员可访问成员授权"><span class="track"></span></label></td>
-                  <td class="center"><label class="switch"><input type="checkbox" checked aria-label="项目管理员可访问成员授权"><span class="track"></span></label></td>
-                  <td class="center"><label class="switch"><input type="checkbox" aria-label="运维工程师可访问成员授权"><span class="track"></span></label></td>
-                  <td class="center"><label class="switch"><input type="checkbox" aria-label="审计员可访问成员授权"><span class="track"></span></label></td></tr>
                 <tr class="group-row"><td colspan="5">系统与安全</td></tr>
                 <tr><td class="cell-main"><b>审计日志</b><span>操作与登录记录</span></td>
                   <td class="center"><label class="switch"><input type="checkbox" checked disabled aria-label="超级管理员可访问审计日志"><span class="track"></span></label></td>
@@ -435,11 +412,6 @@ textarea.input{height:auto;min-height:76px;padding:8px 12px;resize:vertical}
                   <td class="center"><label class="switch"><input type="checkbox" aria-label="项目管理员可访问系统设置"><span class="track"></span></label></td>
                   <td class="center"><label class="switch"><input type="checkbox" aria-label="运维工程师可访问系统设置"><span class="track"></span></label></td>
                   <td class="center"><label class="switch"><input type="checkbox" aria-label="审计员可访问系统设置"><span class="track"></span></label></td></tr>
-                <tr><td class="cell-main"><b>API 密钥</b><span>接入凭证管理</span></td>
-                  <td class="center"><label class="switch"><input type="checkbox" checked disabled aria-label="超级管理员可访问 API 密钥"><span class="track"></span></label></td>
-                  <td class="center"><label class="switch"><input type="checkbox" aria-label="项目管理员可访问 API 密钥"><span class="track"></span></label></td>
-                  <td class="center"><label class="switch"><input type="checkbox" checked aria-label="运维工程师可访问 API 密钥"><span class="track"></span></label></td>
-                  <td class="center"><label class="switch"><input type="checkbox" aria-label="审计员可访问 API 密钥"><span class="track"></span></label></td></tr>
                 <tr><td class="cell-main"><b>数据导出</b><span>报表与数据下载</span></td>
                   <td class="center"><label class="switch"><input type="checkbox" checked disabled aria-label="超级管理员可访问数据导出"><span class="track"></span></label></td>
                   <td class="center"><label class="switch"><input type="checkbox" checked aria-label="项目管理员可访问数据导出"><span class="track"></span></label></td>
@@ -460,7 +432,6 @@ textarea.input{height:auto;min-height:76px;padding:8px 12px;resize:vertical}
             </div>
             <h3>暂无待审批的权限变更</h3>
             <p>角色新建、权限调整与成员授权的变更申请提交后，将在此处等待审批；也可在「审批流」中配置自动通过规则。</p>
-            <button class="btn btn-sm" type="button" data-open="roleModal">发起角色申请</button>
           </div>
         </div>
       </section>
@@ -471,7 +442,7 @@ textarea.input{height:auto;min-height:76px;padding:8px 12px;resize:vertical}
 <div class="overlay" id="memberDrawer" data-kind="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
   <aside class="drawer">
     <div class="drawer-head">
-      <div><h2 id="drawerTitle">成员绑定 · 项目管理员</h2><p>已绑定 3 名成员 · 修改后立即生效</p></div>
+      <div><h2 id="drawerTitle">成员绑定 · 项目管理员</h2><p>已绑定 2 名成员 · 修改后立即生效</p></div>
       <button class="close-btn" type="button" data-close aria-label="关闭抽屉">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 2l10 10M12 2 2 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       </button>
@@ -482,24 +453,18 @@ textarea.input{height:auto;min-height:76px;padding:8px 12px;resize:vertical}
         <input class="input" type="search" id="memberSearch" placeholder="搜索姓名、手机号或邮箱" aria-label="搜索成员">
       </div>
       <div class="member-group">
-        <h4>技术部 · 3 人</h4>
+        <h4>技术部 · 2 人</h4>
         <label class="member"><input type="checkbox" checked aria-label="绑定陈明宇"><span class="avatar" aria-hidden="true">陈</span><span class="meta"><b>陈明宇</b><span>chenmy@yunche.cn · 前端组</span></span><span class="badge badge-processing">在线</span></label>
         <label class="member"><input type="checkbox" checked aria-label="绑定顾泽航"><span class="avatar" aria-hidden="true">顾</span><span class="meta"><b>顾泽航</b><span>guzh@yunche.cn · 后端组</span></span><span class="badge badge-neutral">离线</span></label>
-        <label class="member"><input type="checkbox" checked aria-label="绑定何嘉树"><span class="avatar" aria-hidden="true">何</span><span class="meta"><b>何嘉树</b><span>hejs@yunche.cn · SRE 组</span></span><span class="badge badge-success">在线</span></label>
       </div>
       <div class="member-group">
         <h4>产品设计部 · 2 人</h4>
         <label class="member"><input type="checkbox" aria-label="绑定林晚晴"><span class="avatar" aria-hidden="true">林</span><span class="meta"><b>林晚晴</b><span>linwq@yunche.cn · 产品组</span></span><span class="badge badge-success">在线</span></label>
         <label class="member"><input type="checkbox" aria-label="绑定白书瑶"><span class="avatar" aria-hidden="true">白</span><span class="meta"><b>白书瑶</b><span>baisy@yunche.cn · 设计组</span></span><span class="badge badge-neutral">离线</span></label>
       </div>
-      <div class="member-group">
-        <h4>市场增长部 · 2 人</h4>
-        <label class="member"><input type="checkbox" aria-label="绑定苏婉宁"><span class="avatar" aria-hidden="true">苏</span><span class="meta"><b>苏婉宁</b><span>suwn@yunche.cn · 增长组</span></span><span class="badge badge-success">在线</span></label>
-        <label class="member"><input type="checkbox" checked aria-label="绑定江雨桐"><span class="avatar" aria-hidden="true">江</span><span class="meta"><b>江雨桐</b><span>jiangyt@yunche.cn · 内容组</span></span><span class="badge badge-neutral">离线</span></label>
-      </div>
     </div>
     <div class="drawer-foot">
-      <span class="hint">已选 4 人</span>
+      <span class="hint">已选 2 人</span>
       <button class="btn" type="button" data-close>取消</button>
       <button class="btn btn-primary" type="button" data-close>保存绑定</button>
     </div>
@@ -535,13 +500,6 @@ textarea.input{height:auto;min-height:76px;padding:8px 12px;resize:vertical}
           <option>复制现有角色：运维工程师</option>
         </select>
       </div>
-      <fieldset class="field" style="border:none">
-        <legend style="font-size:12.5px;font-weight:600;color:var(--text-2);padding:0">初始状态</legend>
-        <div class="radio-row">
-          <label><input type="radio" name="roleStatus" checked>创建后立即启用</label>
-          <label><input type="radio" name="roleStatus">创建后停用（先配置权限）</label>
-        </div>
-      </fieldset>
     </div>
     <div class="modal-foot">
       <span class="hint">变更将记入操作日志</span>

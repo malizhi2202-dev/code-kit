@@ -2,6 +2,12 @@
 name: <项目名>
 description: <一句话美学定位，例：温暖纸面编辑式 sanctuary，单一品牌色 / brutalist 黑白网格 / 玩具糖果色>
 
+# §0.1 基线样例引用（必填）——本设计基于哪个内置基线改造
+baseline:
+  pattern: "<ui-samples/patterns/ 里的基线文件名，如 login.html / dashboard.html / table-crud.html / form.html；纯营销页可写 none>"
+  system: "<ui-samples/systems/ 里的基线文件名（24 选 1，如 rbac-permission.html / agent-chat.html）；无对应系统类型可写 none>"
+  deviation: "<一句话：相对基线改了什么，如 '品牌蓝换为暖橙，侧边导航收窄为图标栏'>"
+
 # 所有颜色用 OKLCH。Hex 仅在已有遗留约束时允许，必须解释。
 colors:
   brand: "oklch(% chroma hue)"

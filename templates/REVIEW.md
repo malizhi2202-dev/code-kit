@@ -23,7 +23,7 @@
 
 ## 第二轮 · 代码质量审查（6 维衰退风险）
 
-> 装了 [brooks-lint](https://github.com/hyhmrright/brooks-lint) → `/brooks-review` + `/brooks-audit` 输出原样贴入；未装 → AI 内置 R1~R6 诊断。
+> AI 内置 R1~R6 诊断（4 要素格式），结果贴入下表与 2.2 段。
 
 ### 2.0 TEST.md 5 轮金字塔完整性
 
@@ -46,10 +46,10 @@
 | R5 | Dependency Disorder 依赖混乱 | 0 | 0 | 0 |
 | R6 | Domain Model Distortion 领域扭曲 | 0 | 0 | 0 |
 
-### 2.2 6 维诊断 · 详细发现（4 要素 · 来自 brooks-lint 输出 / 内置回退）
+### 2.2 6 维诊断 · 详细发现（4 要素 · AI 内置诊断）
 
 ```markdown
-<贴 brooks-review 输出原文 / 内置 6 维诊断结果，格式：>
+<贴 6 维诊断结果，格式：>
 
 ### 🔴 R<x> · <名字>：<结论>
 **Symptom**：<file:line 的具体问题>
@@ -59,10 +59,10 @@
 **生成 fix 任务**：T-FIX-NN
 ```
 
-### 2.3 架构依赖图（大型 change · 来自 /brooks-audit）
+### 2.3 架构依赖图（大型 change · AI 自绘）
 
 ```mermaid
-<贴 brooks-audit 输出 / 内置简化图>
+<AI 用 grep + import 分析画的简化 Mermaid 依赖图>
 ```
 
 **循环依赖**：有 / 无（如有列出）
@@ -78,7 +78,7 @@
 
 ## 第四轮 · 补充审查（按触发条件）
 
-### 4.1 技术债评估（来自 /brooks-debt，仅里程碑 / 重构）
+### 4.1 技术债评估（Pain × Spread，仅里程碑 / 重构）
 
 未触发 / 已跑（贴输出）
 

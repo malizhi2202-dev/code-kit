@@ -11,8 +11,8 @@
 
 | 意图 | 用户话语样例 | 路由到 |
 |---|---|---|
-| **调研/讨论/改进议题** | "项目调研" / "议题讨论" / "看看有啥改进" / "改进产品" / "怎么优化" / "别人怎么做" / "评估改进想法" / "迭代方向讨论" | `@code-kit/prompts/B-discovery.md`（发现循环） |
-| **写产品 PR + 原型** | "写产品文档" / "产品 PRD 和原型一起出" / "产品设计文档" / "出一份带原型的需求文档" | `@code-kit/prompts/B-product.md`（单文件 HTML 模型） |
+| **调研/讨论/改进议题** | "项目调研" / "议题讨论" / "看看有啥改进" / "改进产品" / "怎么优化" / "别人怎么做" / "评估改进想法" / "迭代方向讨论" | `@code-kit/prompts/D-discovery.md`（发现循环） |
+| **写产品 PR + 原型** | "写产品文档" / "产品 PRD 和原型一起出" / "产品设计文档" / "出一份带原型的需求文档" | `@code-kit/prompts/P-product.md`（单文件 HTML 模型） |
 | **五层对齐检查** | "对齐检查" / "文档和代码是不是偏了" / "拉齐一下" / "检查漂移" / "留痕补齐" | `@code-kit/prompts/S-align.md` |
 | **新想法/新功能** | "我有个想法" / "加个功能" / "改个 bug" / "有个变更要做" | `@code-kit/prompts/0-change.md` |
 | **写需求** | "写需求" / "整理需求" / "验收标准" / "AC" | `@code-kit/prompts/1-requirement.md` |
@@ -36,7 +36,7 @@
 
 | 检测信号 | 所处阶段 | 推荐下一步 |
 |---|---|---|
-| 无 `.specs/` 或无 CHANGE.md | 想法期 | 小改动直接 0-change 起步；调研类先 B-discovery；新产品先 B-product |
+| 无 `.specs/` 或无 CHANGE.md | 想法期 | 小改动直接 0-change 起步；调研类先 D-discovery；新产品先 P-product |
 | 有 CHANGE.md 无 REQUIREMENT.md | 需求期 | `1-requirement` |
 | 有 REQUIREMENT.md 无 DESIGN.md | 设计期 | `2-design`；前端项目随后 `2a-ui-design` |
 | 有 DESIGN.md 无 TASK.md | 拆解期 | `3-task` |

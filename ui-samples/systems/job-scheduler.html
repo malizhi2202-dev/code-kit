@@ -8,97 +8,47 @@
 <style>
 /* ===== 设计令牌：oklch 优先，hex 兜底 ===== */
 :root {
-  --bg: #f4f5f7;
-  --surface: #ffffff;
-  --border: #e3e6eb;
-  --border-strong: #c8ced8;
-  --text-1: #1b2233;
-  --text-2: #49505f;
-  --text-3: #5c6575;
-  --brand: #2563eb;
-  --brand-deep: #1d4ed8;
-  --brand-weak: #e9f0fd;
-  --ok: #157347;
-  --ok-bg: #e6f4ea;
-  --warn: #8a5410;
-  --warn-bg: #f9efd9;
-  --danger: #b42323;
-  --danger-bg: #fbe8e8;
-  --radius: 8px;
-  --shadow: 0 1px 2px rgba(27, 34, 51, 0.06);
+  --bg: #f4f5f7; --surface: #ffffff; --border: #e3e6eb; --border-strong: #c8ced8;
+  --text-1: #1b2233; --text-2: #49505f; --text-3: #5c6575;
+  --brand: #2563eb; --brand-deep: #1d4ed8; --brand-weak: #e9f0fd;
+  --ok: #157347; --ok-bg: #e6f4ea; --warn: #8a5410; --warn-bg: #f9efd9;
+  --danger: #b42323; --danger-bg: #fbe8e8; --radius: 8px;
+  --shadow: 0 1px 2px rgba(27, 34, 51, .06);
   --mono: ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace;
 }
 @supports (color: oklch(0 0 0)) {
   :root {
-    --bg: oklch(96.9% 0.004 250);
-    --surface: oklch(100% 0 0);
-    --border: oklch(91.9% 0.006 250);
-    --border-strong: oklch(81.5% 0.012 250);
-    --text-1: oklch(24% 0.022 262);
-    --text-2: oklch(43% 0.02 262);
-    --text-3: oklch(51% 0.018 262);
-    --brand: oklch(54.6% 0.215 262.9);
-    --brand-deep: oklch(48.8% 0.203 265.8);
-    --brand-weak: oklch(95.2% 0.024 255);
-    --ok: oklch(47% 0.12 156);
-    --ok-bg: oklch(95.5% 0.028 156);
-    --warn: oklch(48% 0.09 75);
-    --warn-bg: oklch(96% 0.032 85);
-    --danger: oklch(49% 0.18 27);
-    --danger-bg: oklch(95.5% 0.03 25);
+    --bg: oklch(96.9% .004 250); --surface: oklch(100% 0 0); --border: oklch(91.9% .006 250); --border-strong: oklch(81.5% .012 250);
+    --text-1: oklch(24% .022 262); --text-2: oklch(43% .02 262); --text-3: oklch(51% .018 262);
+    --brand: oklch(54.6% .215 262.9); --brand-deep: oklch(48.8% .203 265.8); --brand-weak: oklch(95.2% .024 255);
+    --ok: oklch(47% .12 156); --ok-bg: oklch(95.5% .028 156); --warn: oklch(48% .09 75); --warn-bg: oklch(96% .032 85);
+    --danger: oklch(49% .18 27); --danger-bg: oklch(95.5% .03 25);
   }
 }
-
 /* ===== 基础 ===== */
 *, *::before, *::after { box-sizing: border-box; }
-body {
-  margin: 0;
-  font: 14px/1.65 system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  color: var(--text-1);
-  background: var(--bg);
-}
+body { margin: 0; font: 14px/1.65 system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; color: var(--text-1); background: var(--bg); }
 a { color: var(--brand); text-decoration: none; }
 a:hover { text-decoration: underline; }
 button { font: inherit; }
 :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
-.vh {
-  position: absolute; width: 1px; height: 1px; margin: -1px;
-  clip-path: inset(50%); overflow: hidden; white-space: nowrap;
-}
-
+.vh { position: absolute; width: 1px; height: 1px; margin: -1px; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
 /* ===== 三段式布局 ===== */
 .layout { display: grid; grid-template-columns: 222px minmax(0, 1fr); min-height: 100vh; }
 .frame { display: flex; flex-direction: column; min-width: 0; }
-
 /* ===== 侧边导航 ===== */
-.sidebar {
-  background: var(--surface); border-right: 1px solid var(--border);
-  padding: 16px 12px; position: sticky; top: 0; align-self: start;
-  height: 100vh; overflow-y: auto;
-}
+.sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 16px 12px; position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto; }
 .logo { display: flex; align-items: center; gap: 10px; padding: 2px 8px 16px; }
-.logo-mark {
-  width: 34px; height: 34px; border-radius: 9px; flex: none;
-  background: var(--brand); color: #fff;
-  display: grid; place-items: center; font-weight: 700; font-size: 16px;
-}
+.logo-mark { width: 34px; height: 34px; border-radius: 9px; flex: none; background: var(--brand); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 16px; }
 .logo-text strong { display: block; font-size: 14px; }
-.logo-text span { font-size: 10.5px; color: var(--text-3); letter-spacing: 0.6px; }
+.logo-text span { font-size: 10.5px; color: var(--text-3); letter-spacing: .6px; }
 .nav-group { margin-bottom: 18px; }
 .nav-title { margin: 0 8px 6px; font-size: 11px; color: var(--text-3); letter-spacing: 2px; }
-.nav-item {
-  display: block; padding: 7px 10px; margin: 1px 0;
-  border-radius: 6px; color: var(--text-2); font-size: 13.5px;
-}
+.nav-item { display: block; padding: 7px 10px; margin: 1px 0; border-radius: 6px; color: var(--text-2); font-size: 13.5px; }
 .nav-item:hover { background: var(--bg); color: var(--text-1); text-decoration: none; }
 .nav-item.is-active { background: var(--brand-weak); color: var(--brand-deep); font-weight: 600; }
-
 /* ===== 顶栏 ===== */
-.topbar {
-  display: flex; align-items: center; gap: 16px; height: 56px; padding: 0 24px;
-  background: var(--surface); border-bottom: 1px solid var(--border);
-  position: sticky; top: 0; z-index: 10;
-}
+.topbar { display: flex; align-items: center; gap: 16px; height: 56px; padding: 0 24px; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
 .crumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-3); min-width: 0; overflow: hidden; }
 .crumb a { color: var(--text-3); white-space: nowrap; }
 .crumb a:hover { color: var(--brand); }
@@ -106,41 +56,20 @@ button { font: inherit; }
 .top-actions { margin-left: auto; display: flex; align-items: center; gap: 12px; }
 .search { position: relative; }
 .search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-3); pointer-events: none; }
-.search input {
-  width: 236px; height: 34px; padding: 0 12px 0 32px;
-  border: 1px solid var(--border); border-radius: 8px;
-  background: var(--bg); font: inherit; color: var(--text-1);
-}
+.search input { width: 236px; height: 34px; padding: 0 12px 0 32px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); font: inherit; color: var(--text-1); }
 .search input:hover { border-color: var(--border-strong); }
-.bell {
-  position: relative; width: 34px; height: 34px; display: grid; place-items: center;
-  border: 1px solid var(--border); border-radius: 8px;
-  background: var(--surface); color: var(--text-2); cursor: pointer;
-}
+.bell { position: relative; width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text-2); cursor: pointer; }
 .bell:hover { border-color: var(--border-strong); color: var(--text-1); }
-.bell-dot {
-  position: absolute; top: -6px; right: -7px; min-width: 17px; height: 17px; padding: 0 4px;
-  background: var(--danger); color: #fff; border-radius: 999px;
-  font-size: 10px; line-height: 17px; text-align: center;
-}
-.avatar {
-  width: 34px; height: 34px; border-radius: 50%; border: 1px solid transparent; cursor: pointer;
-  background: var(--brand-weak); color: var(--brand-deep);
-  display: grid; place-items: center; font-weight: 600;
-}
+.bell-dot { position: absolute; top: -6px; right: -7px; min-width: 17px; height: 17px; padding: 0 4px; background: var(--danger); color: #fff; border-radius: 999px; font-size: 10px; line-height: 17px; text-align: center; }
+.avatar { width: 34px; height: 34px; border-radius: 50%; border: 1px solid transparent; cursor: pointer; background: var(--brand-weak); color: var(--brand-deep); display: grid; place-items: center; font-weight: 600; }
 .avatar:hover { border-color: var(--brand); }
-
 /* ===== 内容区与按钮 ===== */
 .main { padding: 20px 24px 44px; display: flex; flex-direction: column; gap: 16px; }
 .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .page-head h1 { margin: 0; font-size: 20px; }
 .page-desc { margin: 4px 0 0; color: var(--text-3); font-size: 13px; }
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
-.btn {
-  display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px;
-  border: 1px solid var(--border-strong); border-radius: 8px;
-  background: var(--surface); color: var(--text-1); font-size: 13px; cursor: pointer;
-}
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); color: var(--text-1); font-size: 13px; cursor: pointer; }
 .btn:hover { border-color: var(--text-3); background: var(--bg); }
 .btn-primary { background: var(--brand); border-color: var(--brand); color: #fff; }
 .btn-primary:hover { background: var(--brand-deep); border-color: var(--brand-deep); }
@@ -148,7 +77,6 @@ button { font: inherit; }
 .btn-link { border: 0; background: none; color: var(--brand); padding: 2px 4px; height: auto; cursor: pointer; font-size: 13px; }
 .btn-link:hover { text-decoration: underline; }
 .btn-link.danger { color: var(--danger); }
-
 /* ===== 概览统计 ===== */
 .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .stat { padding: 14px 16px; }
@@ -157,55 +85,33 @@ button { font: inherit; }
 .stat-foot { margin: 2px 0 0; font-size: 12px; color: var(--text-3); }
 .stat-foot .up { color: var(--ok); }
 .stat-foot .down { color: var(--danger); }
-
 /* ===== 标签页 ===== */
 .tabs { display: flex; flex-direction: column; }
 .tablist { display: flex; gap: 2px; padding: 0 6px; border-bottom: 1px solid var(--border); overflow-x: auto; }
-.tab {
-  appearance: none; border: 0; background: none; padding: 10px 14px;
-  font-size: 13.5px; color: var(--text-2); cursor: pointer; position: relative; white-space: nowrap;
-}
+.tab { appearance: none; border: 0; background: none; padding: 10px 14px; font-size: 13.5px; color: var(--text-2); cursor: pointer; position: relative; white-space: nowrap; }
 .tab:hover { color: var(--text-1); }
 .tab[aria-selected="true"] { color: var(--brand-deep); font-weight: 600; }
-.tab[aria-selected="true"]::after {
-  content: ""; position: absolute; left: 12px; right: 12px; bottom: -1px;
-  height: 2px; background: var(--brand); border-radius: 2px;
-}
+.tab[aria-selected="true"]::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px; background: var(--brand); border-radius: 2px; }
 .panel { padding: 16px 0 0; display: flex; flex-direction: column; gap: 12px; }
-
 /* ===== 工具条 ===== */
 .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .inline-field { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-2); }
-.inline-field select, .inline-field input {
-  height: 32px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: 6px;
-  background: var(--surface); color: var(--text-1); font: inherit;
-}
+.inline-field select, .inline-field input { height: 32px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--surface); color: var(--text-1); font: inherit; }
 .toolbar-total { font-size: 12px; color: var(--text-3); margin-left: auto; }
-
 /* ===== 表格（横向滚动兜底） ===== */
-.table-wrap {
-  overflow-x: auto; border: 1px solid var(--border);
-  border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow);
-}
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); }
 table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 960px; }
-thead th {
-  text-align: left; font-weight: 600; color: var(--text-3); font-size: 12px;
-  padding: 10px 12px; background: var(--bg); border-bottom: 1px solid var(--border); white-space: nowrap;
-}
+thead th { text-align: left; font-weight: 600; color: var(--text-3); font-size: 12px; padding: 10px 12px; background: var(--bg); border-bottom: 1px solid var(--border); white-space: nowrap; }
 tbody td { padding: 11px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
 tbody tr:last-child td { border-bottom: 0; }
-tbody tr:hover td { background: rgba(37, 99, 235, 0.035); }
+tbody tr:hover td { background: rgba(37, 99, 235, .035); }
 td.num { font-variant-numeric: tabular-nums; }
 .cell-main { font-weight: 600; }
 .cell-sub { display: block; font-size: 12px; color: var(--text-3); font-weight: 400; }
 .mono { font-family: var(--mono); font-size: 12px; }
 .nowrap { white-space: nowrap; }
-
 /* ===== 状态徽章 ===== */
-.badge {
-  display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 9px;
-  border-radius: 999px; font-size: 12px; line-height: 1; border: 1px solid transparent; white-space: nowrap;
-}
+.badge { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 12px; line-height: 1; border: 1px solid transparent; white-space: nowrap; }
 .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
 .badge-plain::before { display: none; }
 .badge-ok { background: var(--ok-bg); color: var(--ok); }
@@ -213,7 +119,6 @@ td.num { font-variant-numeric: tabular-nums; }
 .badge-warn { background: var(--warn-bg); color: var(--warn); }
 .badge-danger { background: var(--danger-bg); color: var(--danger); }
 .badge-muted { background: var(--bg); color: var(--text-3); border-color: var(--border); }
-
 /* ===== 进度条 ===== */
 .progress { display: flex; align-items: center; gap: 8px; min-width: 150px; }
 .progress-track { flex: 1; height: 6px; border-radius: 999px; background: var(--bg); border: 1px solid var(--border); overflow: hidden; }
@@ -221,44 +126,30 @@ td.num { font-variant-numeric: tabular-nums; }
 .progress-bar.ok { background: var(--ok); }
 .progress-bar.danger { background: var(--danger); }
 .progress-num { font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums; width: 40px; text-align: right; }
-
 /* ===== 批量操作与分页 ===== */
-.batch-bar {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 12px;
-  border-radius: var(--radius); background: var(--brand-weak);
-  border: 1px solid rgba(37, 99, 235, 0.25); font-size: 13px;
-}
+.batch-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 12px; border-radius: var(--radius); background: var(--brand-weak); border: 1px solid rgba(37, 99, 235, .25); font-size: 13px; }
 .batch-count { color: var(--text-2); margin-right: 4px; }
 .batch-count strong { color: var(--brand-deep); }
 .pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .pager-total { font-size: 12px; color: var(--text-3); }
 .pager-btns { display: flex; gap: 6px; align-items: center; }
-.page-btn {
-  min-width: 30px; height: 30px; padding: 0 8px; border: 1px solid var(--border);
-  border-radius: 6px; background: var(--surface); color: var(--text-2); font-size: 13px; cursor: pointer;
-}
+.page-btn { min-width: 30px; height: 30px; padding: 0 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text-2); font-size: 13px; cursor: pointer; }
 .page-btn:hover:not(:disabled):not(.is-current) { border-color: var(--brand); color: var(--brand); }
 .page-btn.is-current { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
-.page-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-
+.page-btn:disabled { opacity: .45; cursor: not-allowed; }
 /* ===== 表单 ===== */
 .form-card { padding: 20px; max-width: 660px; }
 .form-title { margin: 0 0 4px; font-size: 15px; }
 .form-desc { margin: 0 0 16px; color: var(--text-3); font-size: 12.5px; }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; }
 .field { display: flex; flex-direction: column; gap: 5px; }
-.field.wide { grid-column: 1 / -1; }
 .field label { font-size: 13px; color: var(--text-2); }
 .field .hint { font-size: 12px; color: var(--text-3); }
-.field input, .field select, .field textarea {
-  height: 34px; padding: 0 10px; border: 1px solid var(--border-strong);
-  border-radius: 6px; background: var(--surface); color: var(--text-1); font: inherit;
-}
+.field input, .field select, .field textarea { height: 34px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--surface); color: var(--text-1); font: inherit; }
 .field textarea { height: auto; padding: 8px 10px; resize: vertical; }
 .check-row { display: flex; flex-wrap: wrap; gap: 14px; padding-top: 4px; }
 .check-item { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-2); }
 .form-actions { display: flex; gap: 10px; margin-top: 18px; }
-
 /* ===== 实时执行卡片 ===== */
 .live-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .run-card { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
@@ -266,23 +157,14 @@ td.num { font-variant-numeric: tabular-nums; }
 .run-name { font-weight: 600; }
 .run-meta { font-size: 12px; color: var(--text-3); }
 .run-foot { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-3); }
-.log {
-  background: #111827; color: #d5dde8; border-radius: 6px; padding: 10px 12px;
-  font-family: var(--mono); font-size: 12px; line-height: 1.75;
-}
+.log { background: #111827; color: #d5dde8; border-radius: 6px; padding: 10px 12px; font-family: var(--mono); font-size: 12px; line-height: 1.75; }
 .log .lv-info { color: #8ab4f8; }
 .log .lv-warn { color: #f5c26b; }
-
 /* ===== 空态 ===== */
-.empty {
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  padding: 34px 16px; text-align: center;
-  border: 1px dashed var(--border-strong); border-radius: var(--radius); background: var(--surface);
-}
+.empty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 34px 16px; text-align: center; border: 1px dashed var(--border-strong); border-radius: var(--radius); background: var(--surface); }
 .empty-icon { width: 44px; height: 44px; border-radius: 50%; background: var(--bg); color: var(--text-3); display: grid; place-items: center; font-size: 18px; }
 .empty-title { margin: 4px 0 0; color: var(--text-1); font-weight: 600; font-size: 14px; }
 .empty p { margin: 0; color: var(--text-3); font-size: 13px; }
-
 /* ===== 响应式兜底 ===== */
 @media (max-width: 960px) {
   .layout { grid-template-columns: 60px minmax(0, 1fr); }
@@ -320,7 +202,6 @@ td.num { font-variant-numeric: tabular-nums; }
       </div>
     </nav>
   </aside>
-
   <div class="frame">
     <header class="topbar">
       <nav class="crumb" aria-label="面包屑">
@@ -339,7 +220,6 @@ td.num { font-variant-numeric: tabular-nums; }
         <button class="avatar" type="button" aria-label="账户菜单：陈明宇">陈</button>
       </div>
     </header>
-
     <main class="main">
       <div class="page-head">
         <div>
@@ -351,14 +231,12 @@ td.num { font-variant-numeric: tabular-nums; }
           <button class="btn btn-primary" type="button">新建任务</button>
         </div>
       </div>
-
       <section class="stats" aria-label="今日调度概览">
         <div class="stat card"><p class="stat-label">运行中任务</p><p class="stat-value">3</p><p class="stat-foot">较昨日 <span class="up">+1</span></p></div>
         <div class="stat card"><p class="stat-label">今日执行</p><p class="stat-value">246</p><p class="stat-foot">批次 · 成功率 97.9%</p></div>
         <div class="stat card"><p class="stat-label">今日失败 / 超时</p><p class="stat-value">5 / 2</p><p class="stat-foot"><span class="down">失败 5 起</span>，已自动重试 3 起</p></div>
         <div class="stat card"><p class="stat-label">平均耗时</p><p class="stat-value">42s</p><p class="stat-foot">P95 耗时 4分12秒</p></div>
       </section>
-
       <div class="tabs" data-tabs>
         <div class="tablist" role="tablist" aria-label="调度任务视图">
           <button class="tab" role="tab" id="tab-jobs" aria-controls="panel-jobs" aria-selected="true" type="button">任务列表</button>
@@ -366,17 +244,10 @@ td.num { font-variant-numeric: tabular-nums; }
           <button class="tab" role="tab" id="tab-retry" aria-controls="panel-retry" aria-selected="false" tabindex="-1" type="button">失败重试策略</button>
           <button class="tab" role="tab" id="tab-live" aria-controls="panel-live" aria-selected="false" tabindex="-1" type="button">实时执行</button>
         </div>
-
         <section class="panel" id="panel-jobs" role="tabpanel" aria-labelledby="tab-jobs">
           <div class="toolbar">
-            <div class="inline-field">
-              <label for="f-group">任务组</label>
-              <select id="f-group"><option>全部任务组</option><option>数据备份</option><option>数据同步</option><option>报表计算</option></select>
-            </div>
-            <div class="inline-field">
-              <label for="f-state">状态</label>
-              <select id="f-state"><option>全部状态</option><option>运行中</option><option>已暂停</option></select>
-            </div>
+            <div class="inline-field"><label for="f-group">任务组</label><select id="f-group"><option>全部任务组</option><option>数据备份</option><option>数据同步</option><option>报表计算</option></select></div>
+            <div class="inline-field"><label for="f-state">状态</label><select id="f-state"><option>全部状态</option><option>运行中</option><option>已暂停</option></select></div>
             <button class="btn btn-sm" type="button">查询</button>
             <span class="toolbar-total">共 42 个任务 · 当前显示 6 个</span>
           </div>
@@ -478,17 +349,10 @@ td.num { font-variant-numeric: tabular-nums; }
             </div>
           </nav>
         </section>
-
         <section class="panel" id="panel-history" role="tabpanel" aria-labelledby="tab-history" hidden>
           <div class="toolbar">
-            <div class="inline-field">
-              <label for="f-trigger">触发方式</label>
-              <select id="f-trigger"><option>全部</option><option>定时触发</option><option>手动触发</option><option>失败补跑</option></select>
-            </div>
-            <div class="inline-field">
-              <label for="f-result">结果</label>
-              <select id="f-result"><option>全部</option><option>成功</option><option>失败</option><option>超时</option></select>
-            </div>
+            <div class="inline-field"><label for="f-trigger">触发方式</label><select id="f-trigger"><option>全部</option><option>定时触发</option><option>手动触发</option><option>失败补跑</option></select></div>
+            <div class="inline-field"><label for="f-result">结果</label><select id="f-result"><option>全部</option><option>成功</option><option>失败</option><option>超时</option></select></div>
             <button class="btn btn-sm" type="button">查询</button>
             <span class="toolbar-total">近 7 天共 1,732 个批次</span>
           </div>
@@ -568,7 +432,6 @@ td.num { font-variant-numeric: tabular-nums; }
             </div>
           </nav>
         </section>
-
         <section class="panel" id="panel-retry" role="tabpanel" aria-labelledby="tab-retry" hidden>
           <form class="card form-card">
             <h2 class="form-title">失败重试策略</h2>
@@ -586,11 +449,7 @@ td.num { font-variant-numeric: tabular-nums; }
               </div>
               <div class="field">
                 <label for="r-backoff">退避策略</label>
-                <select id="r-backoff">
-                  <option>指数退避（推荐）</option>
-                  <option>固定间隔</option>
-                  <option>线性递增</option>
-                </select>
+                <select id="r-backoff"><option>指数退避（推荐）</option><option>固定间隔</option><option>线性递增</option></select>
               </div>
               <div class="field">
                 <label for="r-budget">重试总时长上限（分钟）</label>
@@ -617,7 +476,6 @@ td.num { font-variant-numeric: tabular-nums; }
             </div>
           </form>
         </section>
-
         <section class="panel" id="panel-live" role="tabpanel" aria-labelledby="tab-live" hidden>
           <div class="live-grid">
             <article class="card run-card">
@@ -665,7 +523,6 @@ td.num { font-variant-numeric: tabular-nums; }
     </main>
   </div>
 </div>
-
 <script>
   // 标签切换：同步 tab 高亮与面板显隐（支持嵌套分组互不干扰）
   document.querySelectorAll('[data-tabs]').forEach(function (group) {

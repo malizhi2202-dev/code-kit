@@ -2,9 +2,9 @@
 
 一套 AI 编程流程文档。我自己平时写项目用的那套方法抽成可复用的 markdown 包。
 
-**集成能力**：10 阶段主流程（0-change→…→7-integration）+ 8 道专家团门禁（12 个领域角色）+ 逐 task 自动化投票（🤖自动/👤人工）+ git 最小化安全提交（每 task checkpoint，一键回滚）+ 门禁通过自动进入下一阶段（全票/多数→自动，平票→交人裁决）+ 5 道老项目安全护栏 + 横向命令 + 11 个独立可用的工件模板 + 4 个参考文档。纯 markdown，无运行时依赖。
+**集成能力**：10 阶段主流程（0-change→…→7-integration）+ 8 道专家团门禁（12 个领域角色）+ 逐 task 自动化投票（🤖自动/👤人工）+ git 最小化安全提交（每 task checkpoint，一键回滚）+ 门禁通过自动进入下一阶段（全票/多数→自动，平票→交人裁决）+ 5 道老项目安全护栏 + 语义路由 + 横向命令（含调研/产品文档/五层对齐三条新命令）+ 15 个独立可用的工件模板 + 6 个参考文档 + 内置 28 页零依赖界面基线库。纯 markdown + git，零外部依赖。
 
-主要是把最近折腾过的几个开源项目——bmad、spec-kit、OpenSpec、GSD、claude-task-master、superpowers、gstack、skills——里面我觉得有用的部分挑出来，再按自己的工作流重排一遍。各自的品牌和 CLI 依赖都剥掉了，只留 markdown。
+主要是把最近折腾过的几个开源方法论项目里面我觉得有用的部分挑出来，再按自己的工作流重排一遍。各自的品牌和 CLI 依赖都剥掉了，只留 markdown。
 
 **新增策略**（相比原始版）：8 Gate 专家团门禁（每阶段领域专属角色）、逐 task 自动化投票（🤖/👤 + `<auto>` 字段）、git 最小化安全提交（每 task safety checkpoint + 门禁通过自动前进 + 一键回滚）、角色定义文件体系（`R-*.md`）、5 道 brownfield 护栏、MVP 模式、极简模式、token 预算估算。
 
@@ -32,8 +32,11 @@ your-project/
 ├──code-kit/          ← 这里
 │   ├── METHODOLOGY.md
 │   ├── RULES.md
+│   ├── GO.md
 │   ├── prompts/
-│   └── templates/
+│   ├── templates/
+│   ├── reference/      ← 技术栈卡片 / UI 美学 / 反slop / 测试金字塔 / 产品文档范例
+│   └── ui-samples/     ← 28 页零依赖界面基线（patterns 4 + systems 24）
 ├── src/
 └── ...
 ```
@@ -120,7 +123,7 @@ cp code-kit/SYSTEM.md .hermes.md
 
 **Hermes 的特色能力：自进化**
 
-Hermes Agent 的 L7 自进化能力意味着：跑过几次完整 change 流程后，它可以自动把频繁使用的模式沉淀为 `SKILL.md`，后续调用更短、更精准。code-kit 的每个阶段 prompt 本身就是高质量的 skill 种子——Hermes 会在使用中自动学习你的偏好（比如你总是跳 2a、总是在 review 前跑 brooks-lint），逐渐形成你的个人变体。
+Hermes Agent 的 L7 自进化能力意味着：跑过几次完整 change 流程后，它可以自动把频繁使用的模式沉淀为 `SKILL.md`，后续调用更短、更精准。code-kit 的每个阶段 prompt 本身就是高质量的 skill 种子——Hermes 会在使用中自动学习你的偏好（比如你总是跳 2a、总是要求 review 前先跑 6 维自查），逐渐形成你的个人变体。
 
 > 💡 **提示**：如果你同时用 Claude Code 和 Hermes Agent，两者都遵循 [agentskills.io](https://agentskills.io) 开放标准，code-kit 的 skills 可以一次配置两边通用。详见[Auto-Porting CLAUDE.md Skills to Hermes Agent](https://dev.to/akaranjkar08/auto-porting-your-claudemd-skills-to-hermes-agent-the-agentskillsio-open-standard-nobody-is-5h89)。
 
@@ -458,12 +461,19 @@ flowchart TD
     MAIN -.->|"里程碑后"| L3["<b>A-architect</b><br/>重构 ARCHITECTURE.md"]
     MAIN -.->|"多 change 后"| L4["<b>A-evolve</b><br/>增量同步 CONTEXT + ARCHITECTURE"]
     MAIN -.->|"换视觉"| L5["<b>L-restyle</b><br/>一键换调性"]
+    MAIN -.->|"语义路由"| R0["<b>ROUTER</b><br/>听懂意图 → 分发到对应 prompt"]
+    MAIN -.->|"项目调研/找改进"| D1["<b>D-discovery</b><br/>议题发现循环 → roadmap"]
+    MAIN -.->|"写产品 PR+原型"| P1["<b>P-product</b><br/>单文件 PRODUCT-DESIGN.html"]
+    MAIN -.->|"7-integration 前（强制）"| S1["<b>S-align</b><br/>五层对齐检测 → 合并漂移"]
 
     L1 -.->|"产出"| CTX["📄 CONTEXT.md"]
     L2 -.->|"产出"| HEALTH["📄 .specs/health/DATE-HEALTH.md"]
     L3 -.->|"产出/更新"| ARCH["📄 ARCHITECTURE.md"]
     L4 -.->|"patch"| CTX2["📄 CONTEXT.md + ARCHITECTURE.md"]
     L5 -.->|"产出"| UI["📄 UI-DESIGN v2"]
+    D1 -.->|"产出"| DISC["📄 .specs/&lt;id&gt;/discovery/"]
+    P1 -.->|"产出"| PRD["📄 PRODUCT-DESIGN.html"]
+    S1 -.->|"产出"| ALIGN["📄 .specs/ALIGNMENT.md"]
 
     style MAIN fill:#e8eaf6,stroke:#283593,stroke-width:3px
     style L1 fill:#e1f5fe,stroke:#0288d1
@@ -471,11 +481,22 @@ flowchart TD
     style L3 fill:#fff3e0,stroke:#f57c00
     style L4 fill:#f3e5f5,stroke:#7b1fa2
     style L5 fill:#fce4ec,stroke:#c62828
+    style R0 fill:#fffde7,stroke:#f9a825
+    style D1 fill:#e0f2f1,stroke:#00695c
+    style P1 fill:#ede7f6,stroke:#4527a0
+    style S1 fill:#e3f2fd,stroke:#1565c0
 ```
 
 > 🛡️ **门禁已内建于每个阶段 prompt**（8 Gate，见上方完整闭环图），不再是独立横向命令。每个阶段出口自动触发 4 领域专家投票，全票/多数通过即自动进入下一阶段。
 
-**前缀规则**：`L-` 生命周期 · `M-` 维护巡检 · `I-` 项目情报 · `A-` 架构演进。都不在主流程里，按需调用，每个都可独立使用。
+**前缀规则**：`L-` 生命周期 · `M-` 维护巡检 · `I-` 项目情报 · `A-` 架构演进 · `D-` 调研发现 · `P-` 产品文档 · `S-` 对齐同步。`ROUTER` 是语义入口，不分阶段。都不在主流程里，按需调用（S-align 在 7-integration 前是强制的，见 R15），每个都可独立使用。
+
+**三个新横向命令与主流程的衔接**：
+
+- **ROUTER**：不确定该进哪个阶段时，把用户原话交给 `prompts/ROUTER.md`——它做语义分类 + 工件状态检测，然后移交对应 prompt（含 D/P/S）
+- **D-discovery**：想法还很模糊 / 想系统性找改进点时用。产出 `.specs/<change-id>/discovery/` 议题树 + roadmap，为 0-change 供弹药（全程零代码改动 · R16）
+- **P-product**：要写"产品 PR + 界面原型"时用。产出单文件 `PRODUCT-DESIGN.html`（九段制 · 内嵌原型页），喂给 1-requirement（AC 引用 § 章节）和 2a-ui-design（tokens 继承）
+- **S-align**：7-integration 前强制跑。五层对齐检测（代码/原型/活文档/决策留痕/执行留痕），展示**合并了什么、对齐了哪些本地 git 提交**（R15）
 
 ### 5. 8 门禁 × 12 领域专家体系
 
@@ -680,8 +701,8 @@ CONTEXT 从 50 行 增到 200+ / ADR 冲突 ≥ 5 → 建议跑 A-architect 重�
 
 **三层从哪里来：**
 
-- 受 [BMAD-METHOD](https://github.com/bmad-code-org/BMAD-METHOD) 的 `project-context.md`（rules）+ `architecture.md`（structure）分层启发
-- 但 BMAD 靠 `bmad-correct-course` 在 sprint 中修订，code-kit 靠 `A-evolve` 在多个 change 后批量同步 —— 后者更贴合 change-driven 哲学
+- 受社区 spec-driven 流派的 `project-context`（rules）+ `architecture`（structure）分层启发
+- 但它们靠 sprint 中途修订，code-kit 靠 `A-evolve` 在多个 change 后批量同步 —— 后者更贴合 change-driven 哲学
 
 ### 角色定义（12 个 · 每个门禁角色的独立操作手册）
 
@@ -702,21 +723,25 @@ CONTEXT 从 50 行 增到 200+ / ADR 冲突 ≥ 5 → 建议跑 A-architect 重�
 | `prompts/R-工程效能专家.md` | 工程效能专家 | Task |
 | `prompts/R-资深测试工程师.md` | 资深测试工程师 | Task/G3/测试门/G4 |
 
-### 横向命令（L / M / I / A 系列 · lateral / maintenance / intel / architecture）
+### 横向命令（L / M / I / A / D / P / S 系列 + ROUTER）
 
-不在主流程里，按需调用。前缀区分作用：**`L-`** 生命周期；**`M-`** 维护巡检；**`I-`** 项目情报；**`A-`** 架构演进。
+不在主流程里，按需调用。前缀区分作用：**`L-`** 生命周期；**`M-`** 维护巡检；**`I-`** 项目情报；**`A-`** 架构演进；**`D-`** 调研发现；**`P-`** 产品文档；**`S-`** 对齐同步；`ROUTER` 是语义入口。
 
 | 文件 | 作用 | 能否单独用 | 单独用场景 |
 |---|---|---|---|
+| `prompts/ROUTER.md` | **语义路由器**：听懂用户意图（17 类语义）→ 检测 `.specs/` 工件状态 → 移交对应 prompt。含深挖批评技术（苏格拉底 / 第一性原理 / 事前验尸 / 红队）| ✅ 完全独立 | 不确定该进哪个阶段时；新会话冷启动；用户一句模糊话自动分流 |
+| `prompts/D-discovery.md` | **议题发现循环**：只读扫描事实文档（项目文档 / 代码 / STATE.md / 用户材料）→ 拆解有据可查的子议题 → 每个子议题走完「头脑风暴 → 竞品调研 → 结论 → 3 角色评审 → 人工审核门」→ roadmap。最多 3 轮，全程零代码改动（R16）| ✅ 完全独立 | "项目调研 / 看看有啥改进 / 怎么优化 / 竞品分析后给建议 / 探索一下方案"；为 0-change 供弹药 |
+| `prompts/P-product.md` | **产品 PR + 界面原型合一**：产出单文件 `PRODUCT-DESIGN.html`（九段制：怎么读 / 全景 / 核心概念 / 架构 / 时序 / 使用指南 / 界面原型 / 权限矩阵 / 术语+FAQ），原型页与真实系统同布局、tokens 与产品源同步 | ✅ 完全独立 | "写产品文档 / 生成 PRD / 出产品原型"；喂给 1-requirement（AC 引用 §）和 2a-ui-design（tokens 继承） |
+| `prompts/S-align.md` | **五层对齐检测**：L1 代码 / L2 原型 / L3 活文档 / L4 决策留痕 / L5 执行留痕。基于 git 基线（上次 ALIGNMENT.md 记录的 HEAD）扫本地提交 → 逐层漂移判定（D1~D6 规则）→ 合并动作三分（自动 / 需人审 / 建议删除）→ 报告**覆盖提交列表 + 已对齐记录**（R15）。7-integration 前强制 | ⚠️ **半独立** | 检测部分任何时刻可跑；合并动作需用户确认；非 git 项目走快照降级模式 |
 | `prompts/L-restyle.md` | **一键换调性**：保留功能不变，只换视觉。自动识别现有调性 → 引导选新调性 → 生成 UI-DESIGN v2 + 任务波次 + 风险通告 | ✅ 完全独立 | 已有产品视觉陈旧；品牌换新；做暗色版 / 高端版并行设计系统 |
-| `prompts/M-health.md` | **代码库周期性巡检**：brooks-lint 6+6 维衰退诊断 / 架构图 / 技术债优先级 + **步骤 2.5 冗余扫描**（jscpd / knip / vulture / staticcheck · 字面重复块 / 死代码 / 未用导出 / 未用依赖） | ✅ 完全独立 | 月度 / 季度体检；里程碑前估价；接手陌生项目首周；单跑"扫冗余 / 找死代码 / 清未用导出" |
+| `prompts/M-health.md` | **代码库周期性巡检**：AI 内置 6+6 维衰退诊断 / 架构图 / 技术债优先级 + **步骤 2.5 冗余巡检**（字面重复块 / 死代码 / 未用导出 / 未用依赖 · 零外部工具） | ✅ 完全独立 | 月度 / 季度体检；里程碑前估价；接手陌生项目首周；单跑"扫冗余 / 找死代码 / 清未用导出" |
 | `prompts/I-intel-scan.md` | **老项目入场扫描**：检测 AI 上下文文档 + 扫代码生成 / 更新 `.specs/CONTEXT.md` | ✅ 完全独立 | brownfield 项目首次使用code-kit 必跑；老项目架构偏移后重扫 |
 | `prompts/A-architect.md` | **项目级架构梳理**：建立 / 重构 `ARCHITECTURE.md`，含模块图 + 依赖规则 + ADR 列表 + 跨模块契约 + 容量边界 | ✅ 完全独立 | 项目里程碑后架构梳理；接手陌生项目后结构化架构理解；ADR 定期重审 |
 | `prompts/A-evolve.md` | **架构增量同步**：扫近期归档 change 的 DESIGN § 9，逐项 review 后 patch CONTEXT.md / ARCHITECTURE.md | ✅ 完全独立 | 每月 / 每季 批量同步一次；里程碑发布后凝固架构决策 |
 
 > 未来还可能新增 `L-prune-lessons` / `L-archive-old` / `L-merge-changes` 等，思路一致：**横向、不属于线性流程、按需调用**。
 
-### 工件模板（11 个）
+### 工件模板（15 个）
 
 | 文件 | 作用 | 能否单独用 | 单独用场景 |
 |---|---|---|---|
@@ -725,53 +750,48 @@ CONTEXT 从 50 行 增到 200+ / ADR 冲突 ≥ 5 → 建议跑 A-architect 重�
 | `templates/CONTEXT.md` | 项目级共享上下文 · **rules 层**（术语表 + 已锁决策 + 默认偏好 + 既有抽象索引 + 禁动清单） | ✅ 独立，**强烈推荐** | 任何项目都该有一份；放一份就能让所有 AI 助手输出更稳更短 |
 | `templates/ARCHITECTURE.md` | 项目级架构文档 · **structure 层**（模块图 + 依赖规则 + ADR 列表 + 跨模块契约 + 扩展点 + 容量边界） | ✅ 独立，**中大型项目推荐** | 任何需要跨模块架构记录的项目；ADR 中心化管理；与 `prompts/A-architect.md` + `A-evolve.md` 配套使用 |
 | `templates/DESIGN.md` | change 级技术设计 + ADR + 风险 + § 9 架构沉淀建议（供 A-evolve 后续同步） | ✅ 独立 | 任何架构 / 技术方案文档 |
-| `templates/UI-DESIGN.md` | UI 美学方向 + design tokens（OKLCH / 字体 / 间距 / 动效）+ 反 AI-slop 自检 | ✅ 独立，**强烈推荐前端项目用** | 任何前端项目的视觉规约；提取已有项目的 design system；redesign 起点 |
+| `templates/UI-DESIGN.md` | UI 美学方向 + design tokens（OKLCH / 字体 / 间距 / 动效）+ **§0.1 基线样例引用**（记录基于哪个 `ui-samples/` 基线改造）+ 反 AI-slop 自检 | ✅ 独立，**强烈推荐前端项目用** | 任何前端项目的视觉规约；提取已有项目的 design system；redesign 起点 |
+| `templates/PRODUCT-DESIGN.md` | 产品 PR + 界面原型合一文档的**九段制内容模板**（先填内容再生成 `PRODUCT-DESIGN.html`） | ✅ 独立 | 手写产品文档；P-product 流程的前置草稿 |
 | `templates/TASK.md` | 任务清单（XML + 波次 + verify + done） | ✅ 独立 | 任何工作分解；可直接当 todo 看板用 |
 | `templates/TEST.md` | 测试矩阵 + UAT 脚本 + 覆盖率回顾 | ✅ 独立 | 任何测试计划 / QA 文档 |
 | `templates/REVIEW.md` | 双轮审查报告（spec 合规 + 代码质量 + 跨模型分歧） | ✅ 独立 | 任何 code review 报告模板 |
 | `templates/SUMMARY.md` | 任务级完成报告（做了什么 + verify 输出 + 决策偏离） | ✅ 独立 | 写日报 / 完成回执 / 任务汇报 |
+| `templates/ALIGNMENT.md` | 五层对齐报告（概要 / 覆盖的本地提交 / 漂移项 / 合并动作 / 已对齐记录 / 下一轮基线） | ⚠️ **半独立** | 与 `prompts/S-align.md` 配套；手动记录架构同步时也可用 |
 | `templates/PROGRESS.md` | **临时**——任务中途清窗的快照（已排除方案是核心） | ⚠️ **半独立** | 强绑定 R1.5 重启协议；脱离 4-dev 用价值不大 |
 | `templates/LESSONS.md` | **项目级常驻**——跨任务失败知识库 | ✅ 独立，**强烈推荐** | 任何项目都该有；不需要跑流程，只要每次踩坑后追加一条就值 |
 | `templates/STATE.md` | 跨会话项目状态（活跃 change / 中断任务 / 决策日志） | ⚠️ **半独立** | 只在用了多阶段流程后才有用；纯单文件项目不必要 |
 
-### 参考资料（4 个）
+### 参考资料（6 个）
 
 | 文件 | 作用 | 能否单独用 | 单独用场景 |
 |---|---|---|---|
 | `reference/tech-stacks.md` | 技术栈卡片—— 8 个主流前后端组合 + 适用矩阵 + 选型决策模板 | ✅ 独立 | 任何项目开工前的技术选型；给团队讲「为什么选这个栈」；评估现有项目要不要迁移 |
-| `reference/ui-aesthetics.md` | UI 美学决策框架（融合 Anthropic frontend-design + impeccable）—— 4 个问题 + 5 维度 + 9 张调性卡片 | ✅ 独立 | 任何前端项目开工前的"该选什么调性"思考；从设计稿反推 design system |
+| `reference/ui-aesthetics.md` | UI 美学决策框架（4 个问题 + 5 维度 + 9 张调性卡片） | ✅ 独立 | 任何前端项目开工前的"该选什么调性"思考；从设计稿反推 design system |
 | `reference/ui-anti-patterns.md` | 反 AI-slop 清单（grep 用）—— 字体 / 颜色 / 阴影 / 边框 / 动效 / 布局 / 文案 / 组件 8 类禁忌 | ✅ 独立，**强烈推荐前端项目用** | code review checklist；前端 PR self-review；`grep` 一次少踩 80% AI-slop 坑 |
+| `reference/frontend-engineer-rules.md` | 前端任务实现硬规则（4-dev 前端任务必读：硬规则 + 交付清单 + 具体模式） | ✅ 独立 | 任何前端实现的 quality bar；单独给 AI 注入也立即可用 |
 | `reference/test-pyramid.md` | 5 轮测试金字塔（功能 / 性能 / 安全 / 兼容 / 可观测）的工具 / 标准 / 反模式 / 适用矩阵 | ✅ 独立 | 给任何项目立测试规约；写 QA checklist；做发布前自查 |
+| `reference/product-design-exemplar.html` | **产品文档范例**——单文件 HTML 产品 PR + 界面原型合一的完整实例（P-product 的参照模型） | ✅ 独立 | 学习九段制产品文档长什么样；作为 P-product 产出的质量标尺 |
 
-### 可选外部扩展（按需安装，code-kit 自动检测并优先使用）
+### 零外部依赖原则（硬性）
 
-| 扩展 | 维度 | 角色 |code-kit 何处优先调用 | 何时受益 |
-|---|---|---|---|---|
-| [`brooks-lint`](https://github.com/hyhmrright/brooks-lint) | **代码质量** | 12 本经典工程书籍驱动的 6 维代码 + 6 维测试衰退诊断；带书页引用 / 严重度 / 4 要素结构化输出 | `4-dev` self-review · `5-test` 测试质量自检 · `6-review` 代码质量轮 · `M-health` 巡检 | 团队想要带书本引用的 review 报告；想周期性体检代码库；想有 Pain × Spread 优先级的技术债清单 |
-| `jscpd` + `knip` / `ts-prune` / `depcheck`（TS/JS）· `vulture` / `deptry`（Python）· `staticcheck` / `deadcode`（Go）· `cargo udeps` / `clippy`（Rust）| **字面冗余 + 死代码** | 跨语言字面重复块检测 + 未用导出 / 未用依赖 / 死代码扫描 | `M-health` 步骤 2.5（字面级冗余巡检） | 想找出重复代码块抽公共函数；清理未用的导出 / 依赖 / 死分支；接手老项目做"大扫除" |
-| [`ui-ux-pro-max`](https://uupm.cc) | **UI 广度** | 67 styles / 161 palettes / 57 fonts / 25 charts / 99 UX rules / 15+ stacks 的查询数据库 | `2a-ui-design` 字体 / 颜色 / 图表选择 | 想从更大候选池里挑（不只 9 调性）；想要栈级（React/Vue/Next）建议；做数据可视化想选合适图表 |
-| [`impeccable`](https://impeccable.style) | **UI 深度** | 23 个细粒度 UI 命令 + 自动检测 CLI | `2a-ui-design` design tokens · `4-dev` UI 任务自查 · `6-review` 第三轮视觉审 | 想把 design system 抠到组件级；想在 review 阶段做更严格的视觉 audit |
+code-kit 的机制**只依赖 markdown + git**，不依赖也不检测任何外部工具：
 
-code-kit 与四类扩展的关系：
+- **不依赖任何包管理器**（npm / pnpm / yarn / pip / cargo…）
+- **不依赖任何语言运行时**（python3 / go / java / node…）
+- **不依赖任何设计工具或外部 skill**（Figma / 外部 UI 数据库 / IDE 插件…）
+- **不依赖任何运行时适配器**（hooks / 门禁脚本 / 守护进程…）
 
-- **code-kit 编排流程**：定义在哪个阶段做哪类决策（0-change 选调性 / 2-design 选栈 / 2a 深化视觉 / 4-dev 落地 / 5-test 测试 / 6-review 审 / M-health 巡检）
-- **brooks-lint 加深「代码质量」一面**：把 review / dev self-check / test 质量从"凭感觉"提升为带书页引用的结构化诊断（概念级：R3 知识重复等 6 维衰退）
-- **jscpd / knip / vulture / staticcheck 加深「字面冗余」一面**：brooks-lint R3 覆盖不到的字面级重复代码块 / 死代码 / 未用导出 / 未用依赖，由它们补齐
-- **uipro 加宽「UI 决策」一面**：从更大数据库里查调性 / 调色板 / 字体 / 图表
-- **impeccable 加深「UI 落地」一面**：组件级细抠 / 视觉 audit / 修复建议
-
-**都没装code-kit 也能跑**——内置 `reference/*` 作为基线，6 维代码诊断 / 6 维测试诊断 / 9 调性 / 反 AI-slop 清单 / 冗余 grep fallback 都有内置回退。装上后**质量明显提升**（按 brooks-lint benchmark：带书本引用的代码 review 发现率 100% vs 不带 16%；字面冗余扫描 jscpd 的 recall 远高于 AI grep fallback）。
+项目自身的构建 / 测试命令（如 `npm test`、`go test`）由**目标项目的技术栈**决定，属于项目的 verify 命令示例，不是 code-kit 的依赖。UI 决策、界面参照、原型基线全部由内置 `reference/*` 与 `ui-samples/*`（零依赖单文件 HTML，断网可用）提供。
 
 ---
 
-### 可选运行时门禁：Forge
+### 内置界面基线样例库（ui-samples）
 
-code-kit 默认仍然是纯 markdown、无运行时。如果你在 Claude Code 里经常遇到 AI 跳过阶段、漏写产物、漏测试或漏 review，可以额外接入 Forge 作为可选 runtime adapter。
-有简单的gi最小提交，多角色专家审核。但是不能替代门禁系统
+详见 [`ui-samples/INDEX.md`](ui-samples/INDEX.md)：
 
-Forge 的角色不是替代code-kit，而是读取code-kit 的阶段 / change-id / task-id，并通过 Claude Code hooks、routing log、health check 和 smoke test 做运行时门禁。没装 Forge 时，code-kit 行为完全不变。
-
-详细说明见：[`reference/runtime-adapters/forge.md`](reference/runtime-adapters/forge.md)。
+- **`patterns/`** —— 4 种通用前端模式页（登录 / 仪表盘 / 表格 CRUD / 复杂表单），任何后台系统的页面骨架
+- **`systems/`** —— 24 类系统级页面模板（权限 RBAC / 用户管理 / 产品管理 / 财务 / agent 对话 / 对话记忆 / agent 团队协作 / 量化展示 / 订单 / 库存 / 内容管理 / BI / 工单 / 通知 / 审计日志 / API 平台 / 租户 / 日志监控 / 调度 / 配置中心 / 账单 / 文件 / 告警 / 知识库）
+- 全部单文件、零外部依赖、浏览器直接打开即用；`2a-ui-design` 阶段自动引用作为基线
 
 ---
 
@@ -782,15 +802,19 @@ Forge 的角色不是替代code-kit，而是读取code-kit 的阶段 / change-id
 | 你想要的 | 推荐组合 | 不需要 |
 |---|---|---|
 | 只想让 AI 更靠谱、更少幻觉 | `RULES.md` 注入到系统提示 | 其他都不要 |
+| 不确定从哪个阶段进 / 新会话冷启动 | `prompts/ROUTER.md`（一句话自动分流） | 其他都不要 |
+| 只想调研 / 讨论改进点 / 竞品分析 | `prompts/D-discovery.md`（零代码改动 · R16） | 其他都不要 |
+| 只想出产品文档 + 原型 | `prompts/P-product.md` + `templates/PRODUCT-DESIGN.md` + `reference/product-design-exemplar.html` | 其他都不要 |
+| 只想检查文档/原型/代码漂移 | `prompts/S-align.md` + `templates/ALIGNMENT.md` | 其他都不要 |
 | 只想理顺一个想法 | `prompts/0-change.md` + `templates/CHANGE.md` | 其他都不要 |
 | 只想写好一份需求 | `prompts/1-requirement.md` + `templates/REQUIREMENT.md` + `templates/CONTEXT.md` | 其他都不要 |
 | 只想做技术设计 | `prompts/2-design.md` + `templates/DESIGN.md` + `reference/tech-stacks.md` | 其他都不要 |
 | 只想选个技术栈 / 评估迁移 | `reference/tech-stacks.md` | 其他都不要 |
 | 只想拆好一组任务 | `prompts/3-task.md` + `templates/TASK.md` | 其他都不要 |
-| 只想做 code review | `prompts/6-review.md` + `templates/REVIEW.md`（装 [`brooks-lint`](https://github.com/hyhmrright/brooks-lint) 出书本引用 review）| 其他都不要 |
+| 只想做 code review | `prompts/6-review.md` + `templates/REVIEW.md`（AI 内置 6 维诊断 · 书本引用）| 其他都不要 |
 | 只想做 UI 视觉 audit | `prompts/6-review.md` 第 3 轮 + `reference/ui-anti-patterns.md` | 其他都不要 |
-| 只想做代码库周期性体检 / 评估技术债 | `prompts/M-health.md`（装 [`brooks-lint`](https://github.com/hyhmrright/brooks-lint) 自动 4 维仪表板 + 还债优先级）| 其他都不要 |
-| 只想扫冗余 / 找死代码 / 清未用导出 / 清未用依赖 | `prompts/M-health.md` 步骤 2.5（装 `jscpd` + `knip`/`vulture`/`staticcheck` 任一）| 其他都不要 |
+| 只想做代码库周期性体检 / 评估技术债 | `prompts/M-health.md`（AI 内置评分 + 还债优先级）| 其他都不要 |
+| 只想扫冗余 / 找死代码 / 清未用导出 / 清未用依赖 | `prompts/M-health.md` 步骤 2.5（AI 抽样检测）| 其他都不要 |
 | 只想立测试规范 / 做发布前自查 | `prompts/5-test.md` + `templates/TEST.md` + `reference/test-pyramid.md` | 其他都不要 |
 | 只想给前端项目立 design system | `prompts/2a-ui-design.md` + `templates/UI-DESIGN.md` + `reference/ui-aesthetics.md` | 其他都不要 |
 | 只想沉淀失败教训 | `templates/LESSONS.md`（手动维护即可） | 其他都不要 |
@@ -820,6 +844,9 @@ Forge 的角色不是替代code-kit，而是读取code-kit 的阶段 / change-id
 | `prompts/6-review.md` | **~25k - 50k** | REVIEW 模板 + git diff + ui-anti-patterns | REVIEW.md（三轮 + 第四轮可选）|
 | `prompts/7-integration.md` | **~20k - 40k** | 所有产物 | UAT + LESSONS 提名 |
 | `prompts/M-health.md`（横向） | **~15k - 30k** | CONTEXT + LESSONS + 上次 health 报告 | `.specs/health/<date>-HEALTH.md` |
+| `prompts/D-discovery.md`（横向） | **~20k - 60k**（视子议题数） | 事实文档只读扫描 + 逐议题五步讨论 | `discovery/` 产物 + roadmap |
+| `prompts/P-product.md`（横向） | **~60k - 150k** | PRODUCT-DESIGN 模板 + exemplar 节选 + ui-samples 基线 | `PRODUCT-DESIGN.html`（九段制） |
+| `prompts/S-align.md`（横向） | **~15k - 40k** | ALIGNMENT 模板 + git log + 各层工件 | `.specs/ALIGNMENT.md` |
 | `prompts/L-restyle.md`（横向） | **~25k - 50k** | UI-DESIGN + ui-aesthetics + ui-anti-patterns | 新 UI-DESIGN.md + theme migration |
 
 ### 完整闭环 · 一个 change 走完 0~7
@@ -839,14 +866,14 @@ Forge 的角色不是替代code-kit，而是读取code-kit 的阶段 / change-id
 | **7 个原生 skill 单会话**（brainstorm / writing-plans / TDD 等）| ~75k - 200k | **高**（一窗装下所有） | 代码 + 测试 + review 文字 | 个人项目 / 50-300 行 / hackathon |
 | **code-kit 极简模式** | ~205k - 445k | 低（每 task fresh ctx）| REQUIREMENT / DESIGN / TASK / SUMMARY × N / TEST / REVIEW + LESSONS（UI 项目另含 UI-DESIGN） | 中等 feature / 个人长期项目 |
 | **code-kit 完整模式** | ~250k - 530k | 低 | 8 个 .md + LESSONS + history | 团队项目 / PR 必走 / 长期维护 |
-| **code-kit + brooks-lint 完整** | ~280k - 600k | 低 | 同上 + 书本引用 review | 严肃工程 / 跨人交接 / 高质量门 |
+| **code-kit 完整模式（含横向命令）** | ~280k - 600k | 低 | 同上 + ALIGNMENT / 健康 / 架构等横向工件 | 严肃工程 / 跨人交接 / 高质量门 |
 
 ### 怎么选
 
 1. **改 < 30 行 / 一次性 / 简单 bugfix** → 跳code-kit，让 AI 直接改
 2. **改 30-100 行 / 个人项目** → 走 7 个原生 skill（brainstorm + TDD + review 三件套就够）
 3. **改 100-500 行 / 想要可追溯产物** →code-kit 极简模式，或code-kit 单点调 6-review
-4. **改 500+ 行 / 团队 / 长期** →code-kit 完整 + brooks-lint，**多花的 token 沉淀为团队资产**
+4. **改 500+ 行 / 团队 / 长期** →code-kit 完整模式 + 横向命令，**多花的 token 沉淀为团队资产**
 
 ### 为什么code-kit token 多
 
@@ -854,7 +881,7 @@ Forge 的角色不是替代code-kit，而是读取code-kit 的阶段 / change-id
 
 - **40%** · 每个 task 一个 fresh context，重新加载 prompt + spec（这是 R1.4 的核心设计——降单窗压力，避免 50k+ 的窗内崩盘 / "打转"）
 - **25%** · 写 8 个 .md 工件（CHANGE / REQUIREMENT / DESIGN / UI-DESIGN / TASK / SUMMARY × N / TEST / REVIEW）
-- **20%** · brooks-lint / brooks-test / brooks-audit / brooks-debt 的 4 个命令调用（装了才有）
+- **20%** · 横向命令调用（M-health 巡检 / A-architect 架构梳理 / S-align 对齐等，按需才有）
 
 **剩下 15% 是 prompt 文件本身长**——已经被 R1.9 工件加载预算 + reference 按节读 + R1.3 引用历史用 `@路径` 等机制压到底了。
 

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<!-- 用途：库存系统页面模板（库存总览 / 库存表格与安全线进度 / 仓库切换标签 / 出入库单 / 库位热力占位） | 所属：code-kit ui-samples/systems | 用法：2a UI-DESIGN 阶段按系统类型挑选基线，复制改造 -->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>云枢供应链 · 库存管理系统</title>
+<style>
+/* ============ 设计 Tokens：中性灰阶 + 单一品牌蓝（oklch 优先 / hex 兜底） ============ */
+:root {
+  --bg: #f3f4f6;            --bg: oklch(96.6% 0.005 260);
+  --bg-strong: #e9ebef;     --bg-strong: oklch(93.5% 0.007 260);
+  --surface: #ffffff;       --surface: oklch(100% 0 0);
+  --surface-2: #f8f9fb;     --surface-2: oklch(98.2% 0.003 260);
+  --border: #e3e6ec;        --border: oklch(91.6% 0.01 260);
+  --border-strong: #cdd3dd; --border-strong: oklch(87% 0.012 260);
+  --text-1: #1c2433;        --text-1: oklch(26% 0.02 262);
+  --text-2: #4a5468;        --text-2: oklch(43% 0.026 262);
+  --text-3: #7c8699;        --text-3: oklch(59% 0.02 262);
+  --brand: #2563eb;         --brand: oklch(54.6% 0.17 258);
+  --brand-strong: #1b4fc4;  --brand-strong: oklch(47% 0.16 258);
+  --brand-weak: #e8f0fd;    --brand-weak: oklch(95% 0.028 258);
+  --success: #0d7a4b;       --success: oklch(47% 0.11 160);
+  --warning: #96580c;       --warning: oklch(50% 0.11 70);
+  --danger: #b62b21;        --danger: oklch(48% 0.17 28);
+  --success-bg: #e3f4ec; --warning-bg: #fdf0dc; --danger-bg: #fceae7;
+  --radius: 10px; --radius-sm: 6px;
+  --shadow: 0 1px 2px rgba(28,36,51,.05), 0 6px 18px rgba(28,36,51,.07);
+  --font: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Consolas, "Courier New", monospace;
+}
+/* ============ 基础 ============ */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font: 14px/1.65 var(--font); background: var(--bg); color: var(--text-1); }
+a { color: inherit; text-decoration: none; }
+ul, ol { list-style: none; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 2px; }
+.vh { position: absolute; width: 1px; height: 1px; margin: -1px; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+/* ============ 布局：左侧边导航 + 顶栏 + 内容区 ============ */
+.layout { display: flex; min-height: 100vh; }
+.sidebar { width: 236px; flex: none; background: var(--surface); border-right: 1px solid var(--border); position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.brand { display: flex; gap: 10px; align-items: center; padding: 16px 16px 14px; border-bottom: 1px solid var(--border); }
+.brand__logo { width: 36px; height: 36px; border-radius: 10px; background: var(--brand); color: #fff; display: grid; place-items: center; font-weight: 700; }
+.brand__name { font-size: 15px; font-weight: 650; line-height: 1.3; } .brand__desc { font-size: 12px; color: var(--text-3); }
+.nav { padding: 10px 12px 16px; }
+.nav__group + .nav__group { margin-top: 14px; }
+.nav__title { font-size: 12px; color: var(--text-3); padding: 4px 10px 6px; }
+.nav__link { display: flex; align-items: center; gap: 10px; padding: 8px 10px; margin: 2px 0; border-radius: 8px; color: var(--text-2); position: relative; }
+.nav__link:hover { background: var(--bg-strong); color: var(--text-1); }
+.nav__link.is-active { background: var(--brand-weak); color: var(--brand-strong); font-weight: 600; }
+.nav__link.is-active::before { content: ""; position: absolute; left: -12px; top: 9px; bottom: 9px; width: 3px; border-radius: 2px; background: var(--brand); }
+.ico { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.nav__count { margin-left: auto; font-size: 11px; color: var(--text-3); }
+/* ---- 顶栏：面包屑 / 搜索 / 通知 / 头像 ---- */
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.topbar { height: 56px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 14px; padding: 0 20px; position: sticky; top: 0; z-index: 20; }
+.crumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-3); }
+.crumb b { color: var(--text-1); font-weight: 600; } .crumb i { color: var(--border-strong); font-style: normal; }
+.topbar__search { margin-left: auto; position: relative; }
+.topbar__search input { width: 236px; height: 34px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); padding: 0 54px 0 32px; }
+.topbar__search input:hover { border-color: var(--border-strong); }
+.topbar__search .ico { position: absolute; left: 10px; top: 9px; color: var(--text-3); }
+.topbar__search kbd { position: absolute; right: 8px; top: 8px; font: 11px var(--mono); color: var(--text-3); border: 1px solid var(--border); border-radius: 4px; padding: 0 5px; background: var(--surface); }
+.topbar__bell { position: relative; width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 8px; color: var(--text-2); background: none; cursor: pointer; }
+.topbar__bell:hover { background: var(--bg-strong); color: var(--text-1); }
+.topbar__bell i { position: absolute; top: 7px; right: 8px; width: 7px; height: 7px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 0 2px var(--surface); }
+.avatar { display: flex; align-items: center; gap: 8px; padding: 3px 10px 3px 4px; border-radius: 999px; border: 1px solid var(--border); background: none; cursor: pointer; }
+.avatar:hover { background: var(--bg-strong); }
+.avatar__face { width: 28px; height: 28px; border-radius: 50%; background: var(--brand-weak); color: var(--brand-strong); display: grid; place-items: center; font-size: 12px; font-weight: 600; }
+.avatar__name { font-size: 13px; color: var(--text-2); }
+/* ---- 内容区 ---- */
+.content { padding: 20px 24px 32px; display: flex; flex-direction: column; gap: 16px; max-width: 1440px; width: 100%; margin: 0 auto; }
+.page-head { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.page-head h1 { font-size: 20px; line-height: 1.3; } .page-head p { color: var(--text-3); font-size: 13px; margin-top: 2px; }
+.page-head__actions { margin-left: auto; display: flex; gap: 10px; }
+/* ============ 组件：按钮 / 卡片 / 徽章 ============ */
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); cursor: pointer; }
+.btn:hover { border-color: var(--border-strong); color: var(--text-1); background: var(--surface-2); }
+.btn--primary { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
+.btn--primary:hover { background: var(--brand-strong); border-color: var(--brand-strong); color: #fff; }
+.btn--sm { height: 28px; padding: 0 10px; font-size: 12px; border-radius: var(--radius-sm); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+.card__head { display: flex; align-items: center; gap: 10px; padding: 13px 18px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.card__head h2 { font-size: 15px; } .card__head .hint { font-size: 12px; color: var(--text-3); }
+.card__head .more { margin-left: auto; font-size: 13px; color: var(--brand); } .card__head .more:hover { color: var(--brand-strong); text-decoration: underline; }
+.card__body { padding: 16px 18px; }
+.badge { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.badge--success { color: var(--success); background: var(--success-bg); } .badge--processing { color: var(--brand-strong); background: var(--brand-weak); }
+.badge--warning { color: var(--warning); background: var(--warning-bg); } .badge--danger { color: var(--danger); background: var(--danger-bg); }
+.badge--neutral { color: var(--text-2); background: var(--bg-strong); }
+/* ============ 库存总览指标卡 ============ */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.stat { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+.stat:hover { border-color: var(--border-strong); box-shadow: var(--shadow); }
+.stat__label { font-size: 13px; color: var(--text-2); display: flex; align-items: center; gap: 6px; }
+.stat__label i { width: 8px; height: 8px; border-radius: 2px; background: var(--text-3); }
+.stat__value { font-size: 24px; font-weight: 650; font-family: var(--mono); }
+.stat__sub { font-size: 12px; color: var(--text-3); }
+.stat--danger .stat__value { color: var(--danger); } .stat--danger .stat__label i { background: var(--danger); }
+.stat--warn .stat__value { color: var(--warning); } .stat--warn .stat__label i { background: var(--warning); }
+.stat--doing .stat__label i { background: var(--brand); }
+/* ============ 库存表格（横向滚动兜底，安全线进度条） ============ */
+.table-wrap { overflow-x: auto; }
+table.grid { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 980px; }
+.grid thead th { text-align: right; font-size: 12px; font-weight: 500; color: var(--text-3); padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; background: var(--surface); }
+.grid thead th:first-child, .grid thead th:nth-child(2), .grid thead th:nth-child(3), .grid thead th:nth-child(4) { text-align: left; }
+.grid tbody td { padding: 11px 12px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
+.grid tbody td:nth-child(-n+4) { text-align: left; }
+.grid tbody tr { transition: background .12s; }
+.grid tbody tr:hover { background: var(--surface-2); }
+.grid tbody tr:has(.row-check:checked) { background: var(--brand-weak); }
+.grid tbody tr:last-child td { border-bottom: 0; }
+.grid .sku { font-family: var(--mono); font-size: 12.5px; color: var(--text-1); }
+.grid .name { color: var(--text-2); }
+.safety { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+.safety .progress { width: 88px; flex: none; }
+.progress { height: 6px; border-radius: 999px; background: var(--bg-strong); overflow: hidden; }
+.progress__bar { height: 100%; border-radius: inherit; background: var(--brand); }
+.progress__bar--ok { background: var(--success); } .progress__bar--warn { background: var(--warning); } .progress__bar--danger { background: var(--danger); }
+.safety .pct { font: 11px var(--mono); color: var(--text-3); }
+.row-check { accent-color: var(--brand); }
+.batch-bar { display: none; align-items: center; gap: 10px; background: var(--brand-weak); border: 1px solid var(--brand); border-radius: 8px; padding: 7px 14px; font-size: 13px; color: var(--brand-strong); flex-wrap: wrap; margin-top: 12px; }
+.table-wrap:has(.row-check:checked) ~ .batch-bar { display: flex; }
+.batch-bar .btn { background: var(--surface); } .batch-bar .grow { margin-left: auto; font-size: 12px; opacity: .8; }
+/* ============ 标签页 / 分页 / 空态 ============ */
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.tab { border: 0; background: none; padding: 8px 12px; font-size: 13px; color: var(--text-2); cursor: pointer; border-radius: 8px 8px 0 0; position: relative; }
+.tab:hover { color: var(--text-1); background: var(--surface-2); }
+.tab.is-active { color: var(--brand-strong); font-weight: 600; }
+.tab.is-active::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 2px; background: var(--brand); border-radius: 2px; }
+.tab .num { font-size: 12px; color: var(--text-3); margin-left: 3px; }
+.pager { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; color: var(--text-3); }
+.pager__info { margin-right: auto; }
+.pager button { min-width: 30px; height: 30px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); cursor: pointer; padding: 0 6px; }
+.pager button:hover:not(:disabled) { border-color: var(--brand); color: var(--brand-strong); }
+.pager button[aria-current="page"] { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
+.pager button:disabled { opacity: .45; cursor: not-allowed; } .pager .ellipsis { padding: 0 2px; }
+.empty { border: 1.5px dashed var(--border-strong); border-radius: 8px; padding: 30px 12px; text-align: center; color: var(--text-3); font-size: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 8px 0; }
+.empty .ico { width: 26px; height: 26px; color: var(--border-strong); }
+/* ============ 库位热力占位块 ============ */
+.heat-wrap { display: grid; grid-template-columns: 52px 1fr; gap: 8px 12px; align-items: center; }
+.heat-row-label { font: 12px var(--mono); color: var(--text-3); text-align: right; }
+.heat-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; }
+.heat { height: 34px; border-radius: 5px; background: var(--bg-strong); border: 1px solid var(--border); cursor: default; transition: transform .12s; }
+.heat:hover { transform: scale(1.08); border-color: var(--border-strong); }
+.h1 { background: #dbe7fb; } .h2 { background: #b7cdf7; } .h3 { background: #84acf2; }
+.h4 { background: #4f86ea; } .h5 { background: var(--warning-bg); border-color: var(--warning); }
+.heat-legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: var(--text-3); align-items: center; }
+.heat-legend .sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; margin-right: 5px; vertical-align: -1px; border: 1px solid var(--border); }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand__logo" aria-hidden="true">仓</div>
+      <div>
+        <div class="brand__name">云枢供应链</div>
+        <div class="brand__desc">仓储管理 WMS</div>
+      </div>
+    </div>
+    <nav class="nav" aria-label="主导航">
+      <div class="nav__group">
+        <div class="nav__title">库存</div>
+        <a class="nav__link is-active" href="#" aria-current="page"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.75" y="1.75" width="5" height="5" rx="1"/><rect x="9.25" y="1.75" width="5" height="5" rx="1"/><rect x="1.75" y="9.25" width="5" height="5" rx="1"/><rect x="9.25" y="9.25" width="5" height="5" rx="1"/></svg>库存总览</a>
+        <a class="nav__link" href="#"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4.5h8v8H2zM10 7.5h3.2l1.3 2v3H10z"/><circle cx="5" cy="12.5" r="1.4"/><circle cx="12" cy="12.5" r="1.4"/></svg>入库管理<span class="nav__count">18</span></a>
+        <a class="nav__link" href="#"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 5.5h9M11.5 5.5 9.3 3.3M13.5 10.5h-9M4.5 10.5l2.2 2.2"/></svg>出库管理</a>
+        <a class="nav__link" href="#"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 13.5V9M6.5 13.5V5M10.5 13.5V7.5M14 13.5V3"/></svg>安全库存策略</a>
+      </div>
+      <div class="nav__group">
+        <div class="nav__title">仓库</div>
+        <a class="nav__link" href="#"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 13.5V6.5L8 2l6 4.5v7z"/><path d="M6 13.5V9h4v4.5"/></svg>仓库档案</a>
+        <a class="nav__link" href="#"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="3" width="13" height="10" rx="1.5"/><path d="M4 6h8M4 9h5"/></svg>库位管理</a>
+        <a class="nav__link" href="#"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4.5h12M2 11.5h12"/><circle cx="6" cy="4.5" r="1.8"/><circle cx="11" cy="11.5" r="1.8"/></svg>盘点任务</a>
+      </div>
+      <div class="nav__group">
+        <div class="nav__title">系统</div>
+        <a class="nav__link" href="#"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 1.5H9l3 3v10H4.5z"/><path d="M6.5 8h3M6.5 10.5h3"/></svg>操作日志</a>
+      </div>
+    </nav>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <nav class="crumb" aria-label="面包屑"><span>供应链平台</span><i>/</i><span>仓储管理</span><i>/</i><b>库存总览</b></nav>
+      <div class="topbar__search">
+        <label class="vh" for="global-search">搜索 SKU 或商品名称</label>
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg>
+        <input id="global-search" type="search" placeholder="搜索 SKU / 商品名称…">
+        <kbd>Ctrl K</kbd>
+      </div>
+      <button class="topbar__bell" type="button" aria-label="通知，4 条未读">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8a3.8 3.8 0 0 0-3.8 3.8v2.6L2.8 10.6h10.4L11.8 8.2V5.6A3.8 3.8 0 0 0 8 1.8Z"/><path d="M6.6 12.8a1.5 1.5 0 0 0 2.8 0"/></svg>
+        <i aria-hidden="true"></i>
+      </button>
+      <button class="avatar" type="button"><span class="avatar__face" aria-hidden="true">苏</span><span class="avatar__name">苏婉宁 · 仓储主管</span></button>
+    </header>
+    <main class="content">
+      <div class="page-head">
+        <div>
+          <h1>库存总览</h1>
+          <p>4 个仓库 · 数据同步于 2024-09-14 10:32 · 库存准确率 99.6%</p>
+        </div>
+        <div class="page-head__actions">
+          <button class="btn" type="button">导出库存</button>
+          <button class="btn btn--primary" type="button">新建入库单</button>
+        </div>
+      </div>
+
+      <section class="stat-grid" aria-label="库存总览指标">
+        <div class="stat"><span class="stat__label"><i aria-hidden="true"></i>总 SKU 数</span><span class="stat__value">12,846</span><span class="stat__sub">本月新增 +86</span></div>
+        <div class="stat stat--danger"><span class="stat__label"><i aria-hidden="true"></i>低库存预警</span><span class="stat__value">37</span><span class="stat__sub">低于安全线，需补货</span></div>
+        <div class="stat stat--doing"><span class="stat__label"><i aria-hidden="true"></i>待入库</span><span class="stat__value">214</span><span class="stat__sub">在途入库单 18 张</span></div>
+        <div class="stat stat--warn"><span class="stat__label"><i aria-hidden="true"></i>滞销预警</span><span class="stat__value">129</span><span class="stat__sub">90 天无动销</span></div>
+      </section>
+
+      <section class="card" aria-labelledby="stock-title">
+        <div class="card__head">
+          <h2 id="stock-title">库存明细</h2>
+          <span class="hint">现存 ÷ 安全线 = 覆盖率 · 低于 100% 触发预警</span>
+          <a class="more" href="#">列设置 →</a>
+        </div>
+        <div class="card__body" style="padding:0" data-tabs>
+          <div class="tabs" role="tablist" aria-label="仓库切换" style="padding:12px 18px 0">
+            <button class="tab" type="button" role="tab" aria-selected="false" data-tab data-target="wh-all">全部仓库<span class="num">12,846</span></button>
+            <button class="tab is-active" type="button" role="tab" aria-selected="true" data-tab data-target="wh-hd">华东一仓 · 杭州<span class="num">5,214</span></button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-tab data-target="wh-hn">华南二仓 · 广州<span class="num">4,032</span></button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-tab data-target="wh-xn">西南仓 · 成都<span class="num">2,188</span></button>
+          </div>
+          <div id="wh-all" role="tabpanel" data-panel hidden>
+            <div class="empty" style="margin:18px">
+              <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg>
+              <p>请选择具体仓库查看库存明细<br>「全部仓库」视图仅提供汇总指标，避免大表渲染卡顿</p>
+            </div>
+          </div>
+          <div id="wh-hd" role="tabpanel" data-panel>
+            <div class="table-wrap">
+              <table class="grid">
+                <caption class="vh">华东一仓库存明细表</caption>
+                <thead>
+                  <tr>
+                    <th scope="col" style="width:36px"><span class="vh">选择</span></th>
+                    <th scope="col">SKU</th><th scope="col">商品名称</th><th scope="col">仓库</th><th scope="col">现存</th>
+                    <th scope="col">在途</th><th scope="col">预留</th><th scope="col">可用</th><th scope="col">安全线覆盖率</th><th scope="col">状态</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><input class="row-check" type="checkbox" id="s1" aria-label="选择 SKU JC-HZ-010235"></td>
+                    <td class="sku">JC-HZ-010235</td><td class="name">骨瓷手冲壶套装</td><td>华东一仓</td>
+                    <td class="num">1,284</td><td class="num">300</td><td class="num">120</td><td class="num">1,064</td>
+                    <td><span class="safety"><span class="progress"><span class="progress__bar progress__bar--ok" style="width:100%"></span></span><span class="pct">321%</span></span></td>
+                    <td><span class="badge badge--success">正常</span></td>
+                  </tr>
+                  <tr>
+                    <td><input class="row-check" type="checkbox" id="s2" checked aria-label="选择 SKU JC-HZ-010412"></td>
+                    <td class="sku">JC-HZ-010412</td><td class="name">耶加雪菲咖啡豆 500g</td><td>华东一仓</td>
+                    <td class="num">86</td><td class="num">240</td><td class="num">40</td><td class="num">46</td>
+                    <td><span class="safety"><span class="progress"><span class="progress__bar progress__bar--warn" style="width:72%"></span></span><span class="pct">72%</span></span></td>
+                    <td><span class="badge badge--warning">预警</span></td>
+                  </tr>
+                  <tr>
+                    <td><input class="row-check" type="checkbox" id="s3" aria-label="选择 SKU JC-HZ-010388"></td>
+                    <td class="sku">JC-HZ-010388</td><td class="name">手摇磨豆机</td><td>华东一仓</td>
+                    <td class="num">12</td><td class="num">0</td><td class="num">8</td><td class="num">4</td>
+                    <td><span class="safety"><span class="progress"><span class="progress__bar progress__bar--danger" style="width:20%"></span></span><span class="pct">20%</span></span></td>
+                    <td><span class="badge badge--danger">紧急</span></td>
+                  </tr>
+                  <tr>
+                    <td><input class="row-check" type="checkbox" id="s4" aria-label="选择 SKU JC-HZ-010167"></td>
+                    <td class="sku">JC-HZ-010167</td><td class="name">不锈钢保温杯 500ml</td><td>华东一仓</td>
+                    <td class="num">2,341</td><td class="num">500</td><td class="num">210</td><td class="num">1,631</td>
+                    <td><span class="safety"><span class="progress"><span class="progress__bar progress__bar--ok" style="width:100%"></span></span><span class="pct">234%</span></span></td>
+                    <td><span class="badge badge--success">正常</span></td>
+                  </tr>
+                  <tr>
+                    <td><input class="row-check" type="checkbox" id="s5" aria-label="选择 SKU JC-HZ-010054"></td>
+                    <td class="sku">JC-HZ-010054</td><td class="name">智能体感秤</td><td>华东一仓</td>
+                    <td class="num">458</td><td class="num">0</td><td class="num">60</td><td class="num">398</td>
+                    <td><span class="safety"><span class="progress"><span class="progress__bar progress__bar--ok" style="width:100%"></span></span><span class="pct">153%</span></span></td>
+                    <td><span class="badge badge--neutral">滞销</span></td>
+                  </tr>
+                  <tr>
+                    <td><input class="row-check" type="checkbox" id="s6" aria-label="选择 SKU JC-HZ-010221"></td>
+                    <td class="sku">JC-HZ-010221</td><td class="name">棉麻收纳三件套</td><td>华东一仓</td>
+                    <td class="num">97</td><td class="num">120</td><td class="num">30</td><td class="num">67</td>
+                    <td><span class="safety"><span class="progress"><span class="progress__bar progress__bar--warn" style="width:65%"></span></span><span class="pct">65%</span></span></td>
+                    <td><span class="badge badge--warning">预警</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="batch-bar" role="toolbar" aria-label="库存批量操作" style="margin:12px">
+              <strong>已选择 1 个 SKU</strong>
+              <button class="btn btn--sm btn--primary" type="button">批量补货</button>
+              <button class="btn btn--sm" type="button">批量调拨</button>
+              <button class="btn btn--sm" type="button">导出选中</button>
+              <span class="grow">补货将按安全线缺口自动建议采购量</span>
+            </div>
+            <nav class="pager" aria-label="库存分页" style="margin:0 12px 12px">
+              <span class="pager__info">共 5,214 个 SKU · 每页 20 条</span>
+              <button type="button" disabled>上一页</button>
+              <button type="button" aria-current="page">1</button>
+              <button type="button">2</button>
+              <button type="button">3</button>
+              <span class="ellipsis" aria-hidden="true">…</span>
+              <button type="button">261</button>
+              <button type="button">下一页</button>
+            </nav>
+          </div>
+          <div id="wh-hn" role="tabpanel" data-panel hidden>
+            <div class="empty" style="margin:18px">
+              <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 13.5V6.5L8 2l6 4.5v7z"/><path d="M6 13.5V9h4v4.5"/></svg>
+              <p>华南二仓库存快照生成中<br>每日 06:00 / 14:00 定时同步，也可点击右上角手动刷新</p>
+            </div>
+          </div>
+          <div id="wh-xn" role="tabpanel" data-panel hidden>
+            <div class="empty" style="margin:18px">
+              <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 13.5V6.5L8 2l6 4.5v7z"/><path d="M6 13.5V9h4v4.5"/></svg>
+              <p>西南仓库存快照生成中<br>示例占位：切换仓库标签可查看不同数据源接入方式</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="flow-title">
+        <div class="card__head">
+          <h2 id="flow-title">出入库与库位</h2>
+          <span class="hint">华东一仓 A 区 · 悬停色块查看库位占用</span>
+          <a class="more" href="#">单据中心 →</a>
+        </div>
+        <div class="card__body" style="padding:12px 18px 16px" data-tabs>
+          <div class="tabs" role="tablist" aria-label="出入库单据标签页">
+            <button class="tab is-active" type="button" role="tab" aria-selected="true" data-tab data-target="flow-in">入库单<span class="num">18</span></button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-tab data-target="flow-out">出库单<span class="num">32</span></button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-tab data-target="flow-move">调拨单</button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-tab data-target="flow-heat">库位热力</button>
+          </div>
+          <div id="flow-in" role="tabpanel" data-panel>
+            <div class="table-wrap" style="margin-top:12px">
+              <table class="grid" style="min-width:860px">
+                <caption class="vh">入库单列表</caption>
+                <thead><tr><th scope="col">入库单号</th><th scope="col">供应商</th><th scope="col">仓库</th><th scope="col">预计到货</th><th scope="col">数量</th><th scope="col">状态</th></tr></thead>
+                <tbody>
+                  <tr><td class="sku">IN-20240914-018</td><td>杭州雅致家居</td><td>华东一仓</td><td class="num">09-16</td><td class="num">1,200</td><td><span class="badge badge--warning">待收货</span></td></tr>
+                  <tr><td class="sku">IN-20240914-015</td><td>潮州荣丰陶瓷</td><td>华东一仓</td><td class="num">09-15</td><td class="num">640</td><td><span class="badge badge--processing">收货中</span></td></tr>
+                  <tr><td class="sku">IN-20240913-011</td><td>云南雨林咖啡贸易</td><td>华东一仓</td><td class="num">09-14</td><td class="num">240</td><td><span class="badge badge--processing">收货中</span></td></tr>
+                  <tr><td class="sku">IN-20240912-009</td><td>深圳精衡科技</td><td>华东一仓</td><td class="num">09-12</td><td class="num">300</td><td><span class="badge badge--success">已完成</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div id="flow-out" role="tabpanel" data-panel hidden>
+            <div class="table-wrap" style="margin-top:12px">
+              <table class="grid" style="min-width:860px">
+                <caption class="vh">出库单列表</caption>
+                <thead><tr><th scope="col">出库单号</th><th scope="col">关联波次</th><th scope="col">仓库</th><th scope="col">拣货进度</th><th scope="col">件数</th><th scope="col">状态</th></tr></thead>
+                <tbody>
+                  <tr><td class="sku">OUT-20240914-102</td><td class="num">W-0914-06</td><td>华东一仓</td><td><span class="safety"><span class="progress" style="width:88px"><span class="progress__bar" style="width:64%"></span></span><span class="pct">64%</span></span></td><td class="num">312</td><td><span class="badge badge--processing">拣货中</span></td></tr>
+                  <tr><td class="sku">OUT-20240914-098</td><td class="num">W-0914-05</td><td>华东一仓</td><td><span class="safety"><span class="progress" style="width:88px"><span class="progress__bar progress__bar--ok" style="width:100%"></span></span><span class="pct">100%</span></span></td><td class="num">208</td><td><span class="badge badge--success">已交接</span></td></tr>
+                  <tr><td class="sku">OUT-20240914-091</td><td class="num">W-0914-04</td><td>华东一仓</td><td><span class="safety"><span class="progress" style="width:88px"><span class="progress__bar progress__bar--ok" style="width:100%"></span></span><span class="pct">100%</span></span></td><td class="num">156</td><td><span class="badge badge--processing">配送中</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div id="flow-move" role="tabpanel" data-panel hidden>
+            <div class="empty">
+              <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 5.5h9M11.5 5.5 9.3 3.3M13.5 10.5h-9M4.5 10.5l2.2 2.2"/></svg>
+              <p>暂无进行中的调拨单<br>可在库存明细勾选 SKU 后发起「批量调拨」</p>
+            </div>
+          </div>
+          <div id="flow-heat" role="tabpanel" data-panel hidden>
+            <div class="heat-wrap" style="margin-top:14px">
+              <span class="heat-row-label" aria-hidden="true">A-1</span>
+              <div class="heat-grid">
+                <div class="heat h2" title="A-01 · 使用率 34%"></div><div class="heat h3" title="A-02 · 使用率 58%"></div><div class="heat h1" title="A-03 · 使用率 12%"></div><div class="heat h4" title="A-04 · 使用率 81%"></div>
+                <div class="heat h3" title="A-05 · 使用率 55%"></div><div class="heat h5" title="A-06 · 使用率 96%（超容）"></div><div class="heat h2" title="A-07 · 使用率 30%"></div><div class="heat" title="A-08 · 空置"></div>
+              </div>
+              <span class="heat-row-label" aria-hidden="true">A-2</span>
+              <div class="heat-grid">
+                <div class="heat h4" title="A-09 · 使用率 88%"></div><div class="heat h3" title="A-10 · 使用率 61%"></div><div class="heat h2" title="A-11 · 使用率 27%"></div><div class="heat h1" title="A-12 · 使用率 9%"></div>
+                <div class="heat h3" title="A-13 · 使用率 57%"></div><div class="heat h4" title="A-14 · 使用率 79%"></div><div class="heat h2" title="A-15 · 使用率 33%"></div><div class="heat h1" title="A-16 · 使用率 15%"></div>
+              </div>
+              <span class="heat-row-label" aria-hidden="true">A-3</span>
+              <div class="heat-grid">
+                <div class="heat h1" title="A-17 · 使用率 18%"></div><div class="heat h2" title="A-18 · 使用率 36%"></div><div class="heat h4" title="A-19 · 使用率 84%"></div><div class="heat h5" title="A-20 · 使用率 98%（超容）"></div>
+                <div class="heat h3" title="A-21 · 使用率 52%"></div><div class="heat" title="A-22 · 空置"></div><div class="heat h2" title="A-23 · 使用率 29%"></div><div class="heat h3" title="A-24 · 使用率 49%"></div>
+              </div>
+              <span class="heat-row-label" aria-hidden="true">A-4</span>
+              <div class="heat-grid">
+                <div class="heat h3" title="A-25 · 使用率 46%"></div><div class="heat h1" title="A-26 · 使用率 11%"></div><div class="heat h2" title="A-27 · 使用率 31%"></div><div class="heat h3" title="A-28 · 使用率 60%"></div>
+                <div class="heat h4" title="A-29 · 使用率 77%"></div><div class="heat h2" title="A-30 · 使用率 28%"></div><div class="heat h1" title="A-31 · 使用率 14%"></div><div class="heat h2" title="A-32 · 使用率 38%"></div>
+              </div>
+            </div>
+            <p class="heat-legend">
+              <span><span class="sw" style="background:var(--bg-strong)"></span>空置</span>
+              <span><span class="sw h1"></span>0–25%</span>
+              <span><span class="sw h2"></span>25–50%</span>
+              <span><span class="sw h3"></span>50–75%</span>
+              <span><span class="sw h4"></span>75–90%</span>
+              <span><span class="sw h5"></span>90% 以上（需扩容）</span>
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+  /* 标签切换：[data-tabs] 作用域内，按钮 data-target 指向面板 id（原生 JS，无依赖） */
+  document.querySelectorAll('[data-tab]').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var scope = tab.closest('[data-tabs]');
+      scope.querySelectorAll('[data-tab]').forEach(function (t) {
+        var on = t === tab;
+        t.classList.toggle('is-active', on);
+        t.setAttribute('aria-selected', on);
+      });
+      scope.querySelectorAll('[data-panel]').forEach(function (p) {
+        p.hidden = p.id !== tab.getAttribute('data-target');
+      });
+    });
+  });
+</script>
+</body>
+</html>

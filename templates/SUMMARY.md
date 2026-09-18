@@ -36,10 +36,10 @@ Tests: 3 passed, 3 total
 
 ## 6 维自查（生产代码改动必填 · 来自 4-dev 步骤 4）
 
-> 装了 [brooks-lint](https://github.com/hyhmrright/brooks-lint) → `/brooks-review` 输出原样贴入；未装 → AI 内置 R1~R6 快查结果。
+> AI 内置 R1~R6 快查结果，4 要素格式贴入下方代码块。
 
 ```markdown
-<贴 brooks-review 输出，或内置 6 维快查结果，4 要素格式：
+<贴 6 维快查结果，4 要素格式：
 ### 🔴/🟡/🟢 R<x> · <名字>：<结论>
 **Symptom**：...
 **Source**：...

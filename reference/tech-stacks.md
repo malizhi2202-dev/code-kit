@@ -377,7 +377,6 @@
 2. 后续所有 ADR / 数据流 / 架构图都基于这个栈展开
 3. 任务的 verify 命令 / 依赖管理 / 目录结构都按栈来
 4. 测试工具链按栈选（JS → Vitest，Python → pytest，Java → JUnit + Mockito，Go → testing）
-5. 如果有装 [`ui-ux-pro-max`](https://uupm.cc)：用 `--stack <stack>` 拉栈级 UI 建议（在 2a-ui-design 阶段）
 6. **变栈** = 改 DESIGN.md 的 0 段并全文复审 → 视为开新 CHANGE 处理（R7.1）
 
 ### `## 0. 技术栈选定` 段结构（写进 DESIGN.md）
@@ -518,11 +517,6 @@
 
 ---
 
-## 与外部扩展的协作
+## 零外部依赖说明
 
-| 扩展 | 在本步的作用 |
-|---|---|
-| `ui-ux-pro-max` | 后续 2a 阶段用 `--stack <stack>` 拿栈级 UI 模式（67 styles + 161 palettes 中适配该栈的部分）|
-| `impeccable` | 后续 2a 阶段做 design system 时按栈裁剪 |
-
-本步**不依赖任何外部扩展**——code-kit 内置 10 张完整工程模板够用。
+本步**不依赖任何外部扩展**——code-kit 内置 10 张完整工程模板够用；2a 阶段的 UI 基线走 `@code-kit/ui-samples/`。表中出现的技术名均为**项目可选技术栈**（用户项目的选型参考），不是 code-kit 自身的依赖。

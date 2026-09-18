@@ -1,0 +1,417 @@
+<!-- 用途：日志监控系统页面模板（日志流检索 / 级别统计 / 已保存查询 / 实时跟随） | 所属：code-kit ui-samples/systems | 用法：2a UI-DESIGN 阶段按系统类型挑基线，复制改造 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日志监控 · 实时日志检索控制台</title>
+<style>
+/* ========== 设计令牌 Design Tokens（oklch 优先，hex 兜底） ========== */
+:root {
+  --bg: #f4f5f7; --bg: oklch(97% 0.003 260);
+  --surface: #ffffff; --surface-2: #f8f9fb;
+  --border: #e3e6ec; --border: oklch(91% 0.006 260); --border-strong: #c8ced8;
+  --text: #20242e; --text: oklch(27% 0.012 265);
+  --text-2: #575f6d; --text-3: #6e7684;
+  --brand: #1d66d6; --brand: oklch(51% 0.14 258);
+  --brand-strong: #17458f; --brand-weak: #e9f0fb; --brand-border: #c6d9f4;
+  --ok: #147a3d; --ok-weak: #e5f3e9;
+  --warn: #7a4f00; --warn-weak: #fdf0d5; --warn-strong: #8a5a00;
+  --danger: #b3261e; --danger-weak: #fbe9e7;
+  --r-sm: 6px; --r-md: 10px; --r-lg: 14px;
+  --shadow-1: 0 1px 2px rgba(22, 28, 40, 0.07);
+  --shadow-2: 0 8px 28px rgba(22, 28, 40, 0.10);
+  --font-ui: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+}
+/* ========== 基础 Reset ========== */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-ui); font-size: 14px; line-height: 1.6; color: var(--text); background: var(--bg); -webkit-font-smoothing: antialiased; }
+a { color: var(--brand); text-decoration: none; }
+a:hover { text-decoration: underline; }
+button { font-family: inherit; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; }
+.mono { font-family: var(--font-mono); font-size: 12px; }
+/* ========== 三段式骨架 ========== */
+.layout { display: flex; min-height: 100vh; }
+.sidebar { width: 232px; flex: none; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.brand { display: flex; align-items: center; gap: 10px; padding: 18px 18px 14px; font-size: 15px; font-weight: 700; }
+.brand__mark { width: 30px; height: 30px; border-radius: 8px; background: var(--brand); color: #fff; display: grid; place-items: center; font-size: 13px; font-weight: 700; flex: none; }
+.brand__sub { display: block; font-size: 11px; font-weight: 400; color: var(--text-3); }
+.nav { padding: 4px 10px 20px; flex: 1; }
+.nav__group { margin-top: 14px; }
+.nav__group-title { font-size: 11px; color: var(--text-3); letter-spacing: 0.08em; padding: 0 10px 6px; font-weight: 600; }
+.nav__item { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: var(--r-sm); color: var(--text-2); font-size: 13px; margin-bottom: 2px; transition: background 0.15s, color 0.15s; }
+.nav__item:hover { background: var(--surface-2); color: var(--text); text-decoration: none; }
+.nav__item[aria-current="page"] { background: var(--brand-weak); color: var(--brand-strong); font-weight: 600; }
+.nav__count { margin-left: auto; font-size: 11px; color: var(--text-3); }
+.nav__count.is-alert { color: var(--danger); font-weight: 600; }
+/* ========== 顶栏 ========== */
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.topbar { height: 56px; flex: none; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; padding: 0 24px; position: sticky; top: 0; z-index: 10; }
+.crumbs { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-3); }
+.crumbs a { color: var(--text-3); } .crumbs a:hover { color: var(--brand); }
+.crumbs__sep { color: var(--border-strong); }
+.crumbs strong { color: var(--text); font-weight: 600; }
+.topbar__search { margin-left: auto; position: relative; }
+.topbar__search input { width: 240px; height: 32px; border: 1px solid var(--border); border-radius: 999px; padding: 0 14px 0 34px; font-size: 13px; background: var(--surface-2); color: var(--text); transition: border-color 0.15s, background 0.15s; }
+.topbar__search input::placeholder { color: var(--text-3); }
+.topbar__search input:hover { border-color: var(--border-strong); }
+.topbar__search input:focus { border-color: var(--brand); background: var(--surface); outline: none; }
+.topbar__search svg { position: absolute; left: 12px; top: 8px; color: var(--text-3); pointer-events: none; }
+.icon-btn { position: relative; width: 34px; height: 34px; border-radius: 50%; border: 1px solid transparent; background: none; color: var(--text-2); display: grid; place-items: center; cursor: pointer; transition: background 0.15s; }
+.icon-btn:hover { background: var(--surface-2); }
+.icon-btn__dot { position: absolute; top: 4px; right: 4px; min-width: 15px; height: 15px; border-radius: 999px; background: var(--danger); color: #fff; font-size: 10px; line-height: 15px; padding: 0 3px; font-weight: 600; }
+.avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--brand-weak); color: var(--brand-strong); border: 1px solid var(--brand-border); display: grid; place-items: center; font-size: 13px; font-weight: 600; cursor: pointer; flex: none; }
+/* ========== 内容区 ========== */
+.content { padding: 24px; max-width: 1440px; width: 100%; margin: 0 auto; }
+.page-head { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.page-head h1 { font-size: 20px; font-weight: 700; }
+.page-head p { color: var(--text-2); font-size: 13px; margin-top: 2px; }
+.page-head__actions { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+.follow { display: inline-flex; align-items: center; gap: 10px; padding: 7px 14px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); box-shadow: var(--shadow-1); }
+.follow__label { font-size: 13px; font-weight: 600; }
+.follow__state { font-size: 12px; color: var(--ok); display: inline-flex; align-items: center; gap: 5px; }
+.follow__state::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 16px; border-radius: var(--r-sm); font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); transition: border-color 0.15s, color 0.15s, background 0.15s; }
+.btn:hover { border-color: var(--border-strong); color: var(--text); }
+.btn--primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.btn--primary:hover { background: var(--brand-strong); border-color: var(--brand-strong); color: #fff; }
+/* ========== 卡片 ========== */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--shadow-1); }
+.card__head { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.card__head h2 { font-size: 15px; font-weight: 600; }
+.card__head .hint { font-size: 12px; color: var(--text-3); }
+.card__body { padding: 18px; }
+/* ========== 搜索栏 ========== */
+.searchbar { padding: 16px 18px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.searchbar__field { display: flex; align-items: center; gap: 8px; }
+.searchbar__field > span { font-size: 13px; color: var(--text-2); white-space: nowrap; }
+.searchbar select { height: 34px; border: 1px solid var(--border); border-radius: var(--r-sm); padding: 0 10px; font-size: 13px; background: var(--surface); color: var(--text); }
+.searchbar select:hover { border-color: var(--border-strong); }
+.searchbar input[type="search"] { height: 34px; width: 300px; border: 1px solid var(--border); border-radius: var(--r-sm); padding: 0 12px; font-size: 13px; background: var(--surface); color: var(--text); }
+.searchbar input[type="search"]:hover { border-color: var(--border-strong); }
+.searchbar input[type="search"]:focus { border-color: var(--brand); outline: none; }
+/* ---- 级别多选徽章 ---- */
+.lv-checks { display: flex; align-items: center; gap: 8px; }
+.lv-check { position: relative; display: inline-flex; }
+.lv-check input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.lv-check__tag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; font-family: var(--font-mono); border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-3); cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s; }
+.lv-check input:checked + .lv-check__tag--debug { background: #3c424d; border-color: #3c424d; color: #fff; }
+.lv-check input:checked + .lv-check__tag--info { background: var(--brand); border-color: var(--brand); color: #fff; }
+.lv-check input:checked + .lv-check__tag--warn { background: var(--warn-strong); border-color: var(--warn-strong); color: #fff; }
+.lv-check input:checked + .lv-check__tag--error { background: var(--danger); border-color: var(--danger); color: #fff; }
+.lv-check input:focus-visible + .lv-check__tag { outline: 2px solid var(--brand); outline-offset: 2px; }
+/* ---- 级别徽章（日志流内） ---- */
+.lv { display: inline-flex; align-items: center; padding: 1px 9px; border-radius: 4px; font-size: 11px; font-weight: 700; font-family: var(--font-mono); letter-spacing: 0.04em; border: 1px solid transparent; }
+.lv--debug { background: var(--surface-2); color: var(--text-2); border-color: var(--border); }
+.lv--info { background: var(--brand-weak); color: var(--brand-strong); border-color: var(--brand-border); }
+.lv--warn { background: var(--warn-weak); color: var(--warn); border-color: #efd9a8; }
+.lv--error { background: var(--danger-weak); color: var(--danger); border-color: #f2c4bf; }
+/* ========== 主体：日志流 + 字段统计栏 ========== */
+.split { display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start; margin-top: 20px; }
+.aside-col .card + .card { margin-top: 20px; }
+/* ---- 日志流表格 ---- */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 720px; }
+th { text-align: left; font-weight: 600; color: var(--text-2); font-size: 12px; padding: 10px 18px; background: var(--surface-2); border-bottom: 1px solid var(--border); white-space: nowrap; }
+td { padding: 9px 18px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tbody tr { transition: background 0.12s; }
+tbody tr:hover { background: var(--surface-2); }
+tbody tr:last-child td { border-bottom: none; }
+.ts { font-family: var(--font-mono); font-size: 12px; color: var(--text-2); white-space: nowrap; }
+.svc { font-family: var(--font-mono); font-size: 12px; color: var(--text); white-space: nowrap; }
+.msg { font-family: var(--font-mono); font-size: 12px; color: var(--text-2); line-height: 1.7; word-break: break-all; }
+mark { background: #ffe9a8; background: oklch(88% 0.09 95); color: #4a3200; padding: 0 3px; border-radius: 3px; font-weight: 600; }
+/* ---- 分页 ---- */
+.pager { display: flex; align-items: center; gap: 6px; padding: 14px 18px; flex-wrap: wrap; }
+.pager__info { font-size: 12px; color: var(--text-3); margin-right: auto; }
+.pager a, .pager span { min-width: 30px; height: 30px; display: inline-grid; place-items: center; border-radius: var(--r-sm); font-size: 13px; padding: 0 8px; border: 1px solid var(--border); color: var(--text-2); background: var(--surface); font-family: var(--font-mono); }
+.pager a:hover { border-color: var(--brand); color: var(--brand); text-decoration: none; }
+.pager .is-current { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
+.pager .is-disabled { color: var(--border-strong); pointer-events: none; }
+/* ---- 级别分布条形 ---- */
+.dist { list-style: none; }
+.dist li { display: flex; align-items: center; gap: 10px; padding: 7px 0; }
+.dist .lv { flex: none; width: 58px; justify-content: center; }
+.dist__track { flex: 1; height: 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; }
+.dist__fill { height: 100%; border-radius: 999px; }
+.dist__fill--info { background: var(--brand); } .dist__fill--debug { background: #8a93a3; }
+.dist__fill--warn { background: var(--warn-strong); } .dist__fill--error { background: var(--danger); }
+.dist__num { font-family: var(--font-mono); font-size: 12px; color: var(--text-2); width: 44px; text-align: right; }
+.dist__pct { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); width: 44px; text-align: right; }
+.dist__total { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-2); }
+.dist__total b { font-family: var(--font-mono); color: var(--text); }
+/* ---- Top 服务列表 ---- */
+.tops { list-style: none; }
+.tops li { display: flex; align-items: center; gap: 10px; padding: 7px 0; }
+.tops__rank { width: 18px; height: 18px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-3); font-size: 11px; display: grid; place-items: center; font-family: var(--font-mono); flex: none; }
+.tops li:first-child .tops__rank { background: var(--brand-weak); border-color: var(--brand-border); color: var(--brand-strong); font-weight: 700; }
+.tops__name { font-family: var(--font-mono); font-size: 12px; color: var(--text); }
+.tops__bar { flex: 1; height: 6px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; }
+.tops__bar i { display: block; height: 100%; background: var(--brand); border-radius: 999px; }
+.tops__num { font-family: var(--font-mono); font-size: 12px; color: var(--text-2); width: 52px; text-align: right; }
+/* ---- 已保存查询 ---- */
+.saved { list-style: none; }
+.saved li { position: relative; border: 1px solid var(--border); border-radius: var(--r-md); padding: 10px 12px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.15s, background 0.15s, box-shadow 0.15s; }
+.saved li:hover { border-color: var(--brand); background: var(--brand-weak); box-shadow: var(--shadow-1); }
+.saved li:hover .saved__apply { opacity: 1; }
+.saved__name { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.saved__query { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); margin-top: 3px; }
+.saved__apply { position: absolute; top: 10px; right: 12px; font-size: 11px; color: var(--brand-strong); opacity: 0; transition: opacity 0.15s; font-weight: 600; }
+.saved__more { text-align: center; font-size: 12px; padding-top: 2px; }
+/* ---- 空态 ---- */
+.empty { text-align: center; padding: 34px 16px 38px; }
+.empty__icon { width: 52px; height: 52px; margin: 0 auto 14px; border-radius: 50%; background: var(--surface-2); border: 1px solid var(--border); display: grid; place-items: center; color: var(--text-3); }
+.empty h3 { font-size: 14px; font-weight: 600; }
+.empty p { font-size: 13px; color: var(--text-3); margin: 4px 0 16px; }
+/* ========== 响应式 ========== */
+@media (max-width: 1200px) { .split { grid-template-columns: 1fr; } .aside-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; } .aside-col .card + .card { margin-top: 0; } }
+@media (max-width: 720px) { .sidebar { display: none; } .topbar__search input { width: 150px; } .searchbar input[type="search"] { width: 100%; } .aside-col { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="layout">
+  <!-- 左侧边导航 -->
+  <aside class="sidebar" aria-label="主导航">
+    <div class="brand">
+      <span class="brand__mark" aria-hidden="true">瞰</span>
+      <span>瞰澜日志平台<span class="brand__sub">生产环境 · 华东区</span></span>
+    </div>
+    <nav class="nav">
+      <div class="nav__group">
+        <div class="nav__group-title">检索分析</div>
+        <a class="nav__item" href="#" aria-current="page">📡 实时日志</a>
+        <a class="nav__item" href="#">🗂️ 历史检索</a>
+        <a class="nav__item" href="#">🧮 聚合分析</a>
+      </div>
+      <div class="nav__group">
+        <div class="nav__group-title">监控告警</div>
+        <a class="nav__item" href="#">🔔 告警规则<span class="nav__count is-alert">2 触发</span></a>
+        <a class="nav__item" href="#">📈 指标仪表盘</a>
+        <a class="nav__item" href="#">📟 服务拓扑</a>
+      </div>
+      <div class="nav__group">
+        <div class="nav__group-title">管理</div>
+        <a class="nav__item" href="#">🛠️ 采集配置</a>
+        <a class="nav__item" href="#">🗄️ 留存策略</a>
+        <a class="nav__item" href="#">⚙️ 系统设置</a>
+      </div>
+    </nav>
+  </aside>
+  <div class="main">
+    <!-- 顶栏：面包屑 / 搜索 / 通知 / 头像 -->
+    <header class="topbar">
+      <nav class="crumbs" aria-label="面包屑">
+        <a href="#">瞰澜日志平台</a><span class="crumbs__sep">/</span>
+        <a href="#">检索分析</a><span class="crumbs__sep">/</span>
+        <strong>实时日志</strong>
+      </nav>
+      <form class="topbar__search" role="search" onsubmit="return false">
+        <label class="sr-only" for="global-search">搜索服务、字段或保存的查询</label>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="global-search" type="search" placeholder="搜索服务、字段或保存的查询">
+      </form>
+      <button class="icon-btn" type="button" aria-label="通知（5 条未读）">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        <span class="icon-btn__dot" aria-hidden="true">5</span>
+      </button>
+      <button class="avatar" type="button" aria-label="顾云深（值班工程师）的个人菜单">顾</button>
+    </header>
+    <main class="content">
+      <!-- 页头 + 实时跟随开关 -->
+      <div class="page-head">
+        <div>
+          <h1>实时日志检索</h1>
+          <p>汇聚 12 个微服务的标准输出日志，支持按时间、级别、关键词组合过滤。</p>
+        </div>
+        <div class="page-head__actions">
+          <div class="follow">
+            <span class="follow__label">实时跟随</span>
+            <label class="lv-check">
+              <input type="checkbox" role="switch" checked aria-label="实时跟随开关">
+              <span class="lv-check__tag lv-check__tag--debug" style="padding:2px 0;border:none;background:none" aria-hidden="true">
+                <span style="display:inline-block;width:34px;height:19px;border-radius:999px;background:var(--brand);position:relative">
+                  <span style="position:absolute;top:2px;left:17px;width:15px;height:15px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25)"></span>
+                </span>
+              </span>
+            </label>
+            <span class="follow__state">跟随中 · 3s</span>
+          </div>
+          <button class="btn" type="button">导出 CSV</button>
+        </div>
+      </div>
+      <!-- 搜索栏：时间范围 / 级别多选徽章 / 关键词 -->
+      <section class="card" aria-label="日志搜索条件">
+        <form class="searchbar" onsubmit="return false">
+          <div class="searchbar__field">
+            <label for="f-range">时间范围</label>
+            <select id="f-range">
+              <option>最近 15 分钟</option>
+              <option selected>最近 1 小时</option>
+              <option>最近 6 小时</option>
+              <option>今天</option>
+              <option>自定义…</option>
+            </select>
+          </div>
+          <div class="searchbar__field">
+            <span id="lv-group-label">日志级别</span>
+            <div class="lv-checks" role="group" aria-labelledby="lv-group-label">
+              <label class="lv-check"><input type="checkbox" checked><span class="lv-check__tag lv-check__tag--debug">DEBUG</span></label>
+              <label class="lv-check"><input type="checkbox" checked><span class="lv-check__tag lv-check__tag--info">INFO</span></label>
+              <label class="lv-check"><input type="checkbox" checked><span class="lv-check__tag lv-check__tag--warn">WARN</span></label>
+              <label class="lv-check"><input type="checkbox" checked><span class="lv-check__tag lv-check__tag--error">ERROR</span></label>
+            </div>
+          </div>
+          <div class="searchbar__field" style="flex:1;min-width:220px">
+            <label class="sr-only" for="f-kw">关键词</label>
+            <input id="f-kw" type="search" value="超时" placeholder="输入关键词，如 order_no、timeout、超时">
+          </div>
+          <button class="btn btn--primary" type="submit">检索</button>
+          <button class="btn" type="reset">重置</button>
+        </form>
+      </section>
+      <div class="split">
+        <!-- 左：日志流表格 -->
+        <section class="card" aria-label="日志流">
+          <div class="card__head">
+            <h2>日志流</h2>
+            <span class="hint">匹配关键词「超时」已高亮，共 10,950 条</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>时间戳</th><th>级别</th><th>来源服务</th><th>消息</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="ts">06-12 14:32:07.412</td><td><span class="lv lv--info">INFO</span></td><td class="svc">api-gateway</td>
+                  <td class="msg">请求处理完成 GET /api/v2/orders status=200 耗时 43ms</td>
+                </tr>
+                <tr>
+                  <td class="ts">06-12 14:32:05.880</td><td><span class="lv lv--warn">WARN</span></td><td class="svc">order-service</td>
+                  <td class="msg">库存服务调用重试第 2 次：连接<mark>超时</mark> timeout=3000ms</td>
+                </tr>
+                <tr>
+                  <td class="ts">06-12 14:32:04.221</td><td><span class="lv lv--error">ERROR</span></td><td class="svc">payment-service</td>
+                  <td class="msg">支付回调验签失败：签名不匹配 order_no=20250612000871</td>
+                </tr>
+                <tr>
+                  <td class="ts">06-12 14:31:58.096</td><td><span class="lv lv--info">INFO</span></td><td class="svc">auth-service</td>
+                  <td class="msg">用户登录成功 uid=10283 ip=10.8.24.117</td>
+                </tr>
+                <tr>
+                  <td class="ts">06-12 14:31:55.403</td><td><span class="lv lv--debug">DEBUG</span></td><td class="svc">search-worker</td>
+                  <td class="msg">索引分片合并完成 segments=12→7 耗时 812ms</td>
+                </tr>
+                <tr>
+                  <td class="ts">06-12 14:31:52.766</td><td><span class="lv lv--warn">WARN</span></td><td class="svc">api-gateway</td>
+                  <td class="msg">上游服务响应缓慢 order-service p99=1840ms</td>
+                </tr>
+                <tr>
+                  <td class="ts">06-12 14:31:49.130</td><td><span class="lv lv--error">ERROR</span></td><td class="svc">inventory-service</td>
+                  <td class="msg">Redis 连接池耗尽 max=64 waiting=31</td>
+                </tr>
+                <tr>
+                  <td class="ts">06-12 14:31:47.005</td><td><span class="lv lv--info">INFO</span></td><td class="svc">user-center</td>
+                  <td class="msg">短信验证码发送成功 mobile=138****6293</td>
+                </tr>
+                <tr>
+                  <td class="ts">06-12 14:31:44.882</td><td><span class="lv lv--debug">DEBUG</span></td><td class="svc">order-service</td>
+                  <td class="msg">慢查询追踪 SELECT * FROM orders WHERE status='pending' rows=1204</td>
+                </tr>
+                <tr>
+                  <td class="ts">06-12 14:31:40.274</td><td><span class="lv lv--warn">WARN</span></td><td class="svc">notification-service</td>
+                  <td class="msg">短信网关请求<mark>超时</mark>，已进入重试队列 retry=1</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <nav class="pager" aria-label="日志分页">
+            <span class="pager__info">共 10,950 条匹配 · 每页 10 条</span>
+            <span class="is-disabled" aria-hidden="true">上一页</span>
+            <span class="is-current" aria-current="page">1</span>
+            <a href="#">2</a><a href="#">3</a>
+            <span aria-hidden="true">…</span>
+            <a href="#">1095</a>
+            <a href="#">下一页</a>
+          </nav>
+        </section>
+        <!-- 右：字段统计栏 -->
+        <div class="aside-col">
+          <!-- 级别分布 -->
+          <section class="card" aria-label="级别分布">
+            <div class="card__head"><h2>级别分布</h2><span class="hint">最近 1 小时</span></div>
+            <div class="card__body">
+              <ul class="dist">
+                <li><span class="lv lv--info">INFO</span><div class="dist__track"><div class="dist__fill dist__fill--info" style="width: 62.5%"></div></div><span class="dist__num">6,842</span><span class="dist__pct">62.5%</span></li>
+                <li><span class="lv lv--debug">DEBUG</span><div class="dist__track"><div class="dist__fill dist__fill--debug" style="width: 19.2%"></div></div><span class="dist__num">2,105</span><span class="dist__pct">19.2%</span></li>
+                <li><span class="lv lv--warn">WARN</span><div class="dist__track"><div class="dist__fill dist__fill--warn" style="width: 13.8%"></div></div><span class="dist__num">1,517</span><span class="dist__pct">13.8%</span></li>
+                <li><span class="lv lv--error">ERROR</span><div class="dist__track"><div class="dist__fill dist__fill--error" style="width: 4.4%"></div></div><span class="dist__num">486</span><span class="dist__pct">4.4%</span></li>
+              </ul>
+              <p class="dist__total">合计 <b>10,950</b> 条 · 较上一时段 <b style="color:var(--ok)">↓ 8.2%</b></p>
+            </div>
+          </section>
+          <!-- Top 服务 -->
+          <section class="card" aria-label="Top 服务">
+            <div class="card__head"><h2>Top 服务</h2><span class="hint">按日志量</span></div>
+            <div class="card__body">
+              <ol class="tops">
+                <li><span class="tops__rank">1</span><span class="tops__name">api-gateway</span><div class="tops__bar"><i style="width: 100%"></i></div><span class="tops__num">3,120</span></li>
+                <li><span class="tops__rank">2</span><span class="tops__name">order-service</span><div class="tops__bar"><i style="width: 80%"></i></div><span class="tops__num">2,487</span></li>
+                <li><span class="tops__rank">3</span><span class="tops__name">payment-service</span><div class="tops__bar"><i style="width: 61%"></i></div><span class="tops__num">1,903</span></li>
+                <li><span class="tops__rank">4</span><span class="tops__name">user-center</span><div class="tops__bar"><i style="width: 40%"></i></div><span class="tops__num">1,246</span></li>
+                <li><span class="tops__rank">5</span><span class="tops__name">inventory-service</span><div class="tops__bar"><i style="width: 32%"></i></div><span class="tops__num">984</span></li>
+                <li><span class="tops__rank">6</span><span class="tops__name">search-worker</span><div class="tops__bar"><i style="width: 23%"></i></div><span class="tops__num">731</span></li>
+              </ol>
+            </div>
+          </section>
+          <!-- 已保存查询（点击套用） -->
+          <section class="card" aria-label="已保存查询">
+            <div class="card__head"><h2>已保存查询</h2><span class="hint">点击套用</span></div>
+            <div class="card__body">
+              <ul class="saved">
+                <li>
+                  <p class="saved__name"><span class="lv lv--error">ERROR</span>支付链路错误追踪</p>
+                  <p class="saved__query">level=ERROR · service=payment-service</p>
+                  <span class="saved__apply" aria-hidden="true">套用 →</span>
+                </li>
+                <li>
+                  <p class="saved__name"><span class="lv lv--warn">WARN</span>网关慢响应监控</p>
+                  <p class="saved__query">level=WARN · keyword=p99</p>
+                  <span class="saved__apply" aria-hidden="true">套用 →</span>
+                </li>
+                <li>
+                  <p class="saved__name"><span class="lv lv--info">INFO</span>登录安全审计</p>
+                  <p class="saved__query">service=auth-service · 近 24 小时</p>
+                  <span class="saved__apply" aria-hidden="true">套用 →</span>
+                </li>
+                <li>
+                  <p class="saved__name"><span class="lv lv--debug">DEBUG</span>索引合并调优</p>
+                  <p class="saved__query">level=DEBUG · service=search-worker</p>
+                  <span class="saved__apply" aria-hidden="true">套用 →</span>
+                </li>
+              </ul>
+              <p class="saved__more"><a href="#">管理全部 12 个查询</a></p>
+            </div>
+          </section>
+          <!-- 空态示例：告警订阅 -->
+          <section class="card" aria-label="告警订阅">
+            <div class="card__head"><h2>告警订阅</h2></div>
+            <div class="empty">
+              <div class="empty__icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a2 2 0 0 0 3.4 0"/></svg>
+              </div>
+              <h3>尚未订阅任何告警规则</h3>
+              <p>订阅后，规则触发时会通过邮件与即时消息通知你。</p>
+              <button class="btn btn--primary" type="button">去配置告警规则</button>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

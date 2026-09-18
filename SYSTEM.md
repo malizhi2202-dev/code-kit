@@ -21,9 +21,9 @@
 - `TEST.md` — 测试矩阵 + UAT
 - `REVIEW.md` — 双轮审查
 - `UAT.md` — 集成验证
-- `PRODUCT-DESIGN.html` — 产品 PR + 界面原型合一的单文件 HTML（`B-product` 产出）
+- `PRODUCT-DESIGN.html` — 产品 PR + 界面原型合一的单文件 HTML（`P-product` 产出）
 - `.specs/ALIGNMENT.md` — 五层对齐报告（`S-align` 产出，跨 change 常驻）
-- `.specs/<change-id>/discovery/` — 议题发现循环产物（`B-discovery` 产出）
+- `.specs/<change-id>/discovery/` — 议题发现循环产物（`D-discovery` 产出）
 - `.specs/CONTEXT.md` — 项目级共享上下文（术语、决策、偏好）
 - `.specs/LESSONS.md` — 跨任务失败知识库
 - `STATE.md`（仓库根）— 跨会话状态
@@ -31,8 +31,8 @@
 ## 三条新门（R15/R16，详见 RULES）
 
 - **进入 `7-integration` 前必须跑一次 `@code-kit/prompts/S-align.md` 五层对齐**（代码/原型/活文档/决策留痕/执行留痕），未跑禁止集成验证
-- **调研/讨论/找改进点** → `@code-kit/prompts/B-discovery.md`：事实文档驱动拆子议题、五步讨论、三轮上限、人工审核门、**零代码改动**
-- **写产品 PR + 原型** → `@code-kit/prompts/B-product.md`：单文件 HTML 九段制，基线样例在 `@code-kit/ui-samples/`
+- **调研/讨论/找改进点** → `@code-kit/prompts/D-discovery.md`：事实文档驱动拆子议题、五步讨论、三轮上限、人工审核门、**零代码改动**
+- **写产品 PR + 原型** → `@code-kit/prompts/P-product.md`：单文件 HTML 九段制，基线样例在 `@code-kit/ui-samples/`
 
 ## 角色红线（**必须遵守**）
 

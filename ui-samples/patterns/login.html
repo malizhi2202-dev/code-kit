@@ -1,0 +1,381 @@
+<!-- 用途：登录页模式样例（居中卡片 + 校验错误提示条 + 第三方登录分隔区 + 备案页脚） | 所属：code-kit ui-samples/patterns | 用法：2a UI-DESIGN 阶段基线样例，复制改造 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>登录 · 云麓数据中台</title>
+  <style>
+    /* ================= 设计令牌：hex 兜底，oklch 优先 ================= */
+    :root {
+      /* 品牌蓝（全局唯一品牌色，视觉占比 ≤ 10%） */
+      --brand: #3B66E8;
+      --brand-strong: #2E51C9;   /* 白/浅底上的可读蓝：链接与次强调 */
+      --brand-hover: #345AD9;
+      --brand-tint: #EDF1FE;     /* 聚焦光圈、选中浅底 */
+      /* 中性灰阶 */
+      --ink-900: #17181C;        /* 主文本（白底 16.2:1） */
+      --ink-600: #4A5060;        /* 次文本（白底 7.4:1） */
+      --ink-500: #6E7480;        /* 辅助文本（白底 4.7:1） */
+      --ink-300: #A6ABB6;        /* 禁用与装饰 */
+      --line: #E3E5EB;           /* 常规描边 */
+      --line-strong: #C9CDD6;    /* 输入框描边 */
+      --surface: #FFFFFF;
+      --surface-dim: #F6F7F9;    /* 页面底色 */
+      /* 危险色 */
+      --danger: #C53030;
+      --danger-hover: #B02A2A;
+      --danger-deep: #9B1C1C;    /* 错误文案（红底 7:1+） */
+      --danger-bg: #FDECEA;
+      --danger-line: #F3C3BF;
+      /* 圆角 / 阴影 / 字体 */
+      --radius: 10px;
+      --radius-sm: 8px;
+      --shadow-card: 0 12px 32px rgba(23, 24, 28, 0.08), 0 2px 6px rgba(23, 24, 28, 0.04);
+      --font: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    }
+
+    /* 支持 oklch 的浏览器用感知均匀的色彩值覆盖 hex 兜底 */
+    @supports (color: oklch(0% 0 0)) {
+      :root {
+        --brand: oklch(0.546 0.19 262.5);
+        --brand-strong: oklch(0.483 0.178 263);
+        --brand-hover: oklch(0.52 0.181 263);
+        --brand-tint: oklch(0.955 0.02 263);
+        --ink-900: oklch(0.235 0.014 265);
+        --ink-600: oklch(0.395 0.02 265);
+        --ink-500: oklch(0.532 0.018 265);
+        --ink-300: oklch(0.715 0.016 265);
+        --line: oklch(0.915 0.008 265);
+        --line-strong: oklch(0.83 0.012 265);
+        --surface-dim: oklch(0.976 0.004 265);
+        --danger: oklch(0.515 0.175 29);
+        --danger-hover: oklch(0.47 0.165 29);
+        --danger-deep: oklch(0.37 0.14 29);
+        --danger-bg: oklch(0.955 0.025 29);
+        --danger-line: oklch(0.87 0.05 29);
+      }
+    }
+
+    /* ================= 基础 ================= */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink-900);
+      background-color: var(--surface-dim);
+      /* 中性白光晕（非蓝紫渐变），仅作层次背景 */
+      background-image: radial-gradient(48rem 26rem at 50% -8%, #FFFFFF 0%, rgba(255, 255, 255, 0) 72%);
+      background-repeat: no-repeat;
+    }
+    .page {
+      min-height: 100vh;
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ================= 登录主区（水平垂直居中） ================= */
+    .login-main {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 16px;
+    }
+    .login-card {
+      width: 100%;
+      max-width: 400px;
+      padding: 36px 32px 28px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-card);
+    }
+
+    /* ================= 品牌区 ================= */
+    .brand { margin: 0 0 28px; text-align: center; }
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      margin-bottom: 14px;
+      color: #FFFFFF;
+      background: var(--brand);
+      border-radius: 12px;
+    }
+    .brand-name {
+      margin: 0 0 2px;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .brand-slogan { margin: 0; font-size: 12px; color: var(--ink-500); }
+
+    /* ================= 错误提示条（校验失败示例态） ================= */
+    .alert {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--danger-deep);
+      background: var(--danger-bg);
+      border: 1px solid var(--danger-line);
+      border-radius: var(--radius-sm);
+    }
+    .alert svg { flex: none; margin-top: 3px; }
+
+    /* ================= 表单 ================= */
+    .field { margin-bottom: 18px; }
+    .field-label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink-600);
+    }
+    .field-input {
+      width: 100%;
+      height: 40px;
+      padding: 0 12px;
+      font: inherit;
+      color: var(--ink-900);
+      background: var(--surface);
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-sm);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .field-input::placeholder { color: var(--ink-500); }
+    .field-input:hover { border-color: var(--ink-300); }
+    .field-input:focus-visible {
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px var(--brand-tint);
+    }
+
+    /* 记住我 + 忘记密码 */
+    .field-aux {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: -4px 0 20px;
+    }
+    .checkbox {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--ink-600);
+      cursor: pointer;
+    }
+    .checkbox input {
+      width: 15px;
+      height: 15px;
+      margin: 0;
+      accent-color: var(--brand);
+      cursor: pointer;
+    }
+    .checkbox:hover { color: var(--ink-900); }
+    .checkbox input:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+    .link {
+      color: var(--brand-strong);
+      font-size: 13px;
+      text-decoration: none;
+    }
+    .link:hover { text-decoration: underline; }
+    .link:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 3px; }
+
+    /* 登录主按钮 */
+    .btn-primary {
+      width: 100%;
+      height: 42px;
+      font: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.25em;
+      text-indent: 0.25em;
+      color: #FFFFFF;
+      background: var(--brand);
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+    .btn-primary:hover { background: var(--brand-hover); }
+    .btn-primary:active { background: var(--brand-strong); }
+    .btn-primary:focus-visible { outline: 2px solid var(--brand-strong); outline-offset: 2px; }
+
+    /* 协议提示 */
+    .legal {
+      margin: 12px 0 0;
+      font-size: 12px;
+      color: var(--ink-500);
+      text-align: center;
+    }
+    .legal .link { font-size: 12px; }
+
+    /* ================= 第三方登录分隔区 ================= */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 24px 0 16px;
+      font-size: 12px;
+      color: var(--ink-500);
+    }
+    .divider::before,
+    .divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--line);
+    }
+    .oauth { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .oauth-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      height: 38px;
+      font: inherit;
+      font-size: 13px;
+      color: var(--ink-600);
+      background: var(--surface);
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+    }
+    .oauth-btn:hover {
+      color: var(--ink-900);
+      background: var(--surface-dim);
+      border-color: var(--ink-300);
+    }
+    .oauth-btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+    /* ================= 注册引导 ================= */
+    .register {
+      margin: 20px 0 0;
+      font-size: 13px;
+      color: var(--ink-600);
+      text-align: center;
+    }
+
+    /* ================= 页脚备案 ================= */
+    .page-footer {
+      width: 100%;
+      padding: 20px 16px 28px;
+      font-size: 12px;
+      line-height: 1.9;
+      color: var(--ink-500);
+      text-align: center;
+    }
+    .page-footer p { margin: 0; }
+    .page-footer a { color: var(--ink-500); text-decoration: none; }
+    .page-footer a:hover { color: var(--ink-900); text-decoration: underline; }
+    .page-footer a:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+    .page-footer .sep { margin: 0 8px; color: var(--ink-300); }
+
+    /* ================= 响应式与动效偏好 ================= */
+    @media (max-width: 480px) {
+      .login-main { padding: 24px 12px; }
+      .login-card { padding: 28px 20px 22px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <main class="login-main">
+      <section class="login-card" aria-labelledby="brand-name">
+        <!-- 品牌区 -->
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M4 5.5h16M4 12h10M4 18.5h13" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <h1 class="brand-name" id="brand-name">云麓数据中台</h1>
+          <p class="brand-slogan">一站式数据接入 · 治理 · 服务</p>
+        </div>
+
+        <!-- 错误提示条：校验失败示例（role=alert 即时播报） -->
+        <div class="alert" role="alert">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M8 4.8v3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <circle cx="8" cy="11.3" r="0.95" fill="currentColor"/>
+          </svg>
+          <span>账号或密码不正确，今日还可尝试 4 次；连续失败 5 次将锁定账号 15 分钟。</span>
+        </div>
+
+        <!-- 登录表单 -->
+        <form action="#" method="post" novalidate>
+          <div class="field">
+            <label class="field-label" for="account">账号</label>
+            <input class="field-input" type="text" id="account" name="account"
+                   placeholder="请输入邮箱或手机号" autocomplete="username" required>
+          </div>
+          <div class="field">
+            <label class="field-label" for="password">密码</label>
+            <input class="field-input" type="password" id="password" name="password"
+                   placeholder="请输入密码（8-32 位，含字母与数字）"
+                   autocomplete="current-password" required>
+          </div>
+          <div class="field-aux">
+            <label class="checkbox" for="remember">
+              <input type="checkbox" id="remember" name="remember" checked>
+              <span>记住我（7 天内免登录）</span>
+            </label>
+            <a class="link" href="#">忘记密码？</a>
+          </div>
+          <button class="btn-primary" type="submit">登录</button>
+          <p class="legal">
+            登录即表示同意<a class="link" href="#">《服务协议》</a>与<a class="link" href="#">《隐私政策》</a>
+          </p>
+        </form>
+
+        <!-- 第三方登录分隔区 -->
+        <div class="divider">其他登录方式</div>
+        <div class="oauth">
+          <button class="oauth-btn" type="button">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M2.5 3.5h11v7H8.6L5.5 13V10.5h-3v-7z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+            </svg>
+            <span>企业微信</span>
+          </button>
+          <button class="oauth-btn" type="button">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M9 2.5 4.5 9h3L7 13.5 11.5 7h-3L9 2.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+            </svg>
+            <span>钉钉</span>
+          </button>
+        </div>
+
+        <!-- 注册引导 -->
+        <p class="register">还没有账号？<a class="link" href="#">注册账号</a></p>
+      </section>
+    </main>
+
+    <footer class="page-footer">
+      <p>© 2025 杭州云麓科技有限公司 · 客服热线 0571-8866 2100</p>
+      <p>
+        <a href="#">浙ICP备2024112866号-3</a><span class="sep" aria-hidden="true">|</span><a href="#">浙公网安备 33010802034567 号</a>
+      </p>
+    </footer>
+  </div>
+</body>
+</html>

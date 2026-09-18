@@ -1,30 +1,16 @@
 # UI 美学决策框架（精简版）
 
-> 融合自 Anthropic 原版 `frontend-design` skill + 社区 `impeccable` 项目精华。
-> **本文件是 code-kit 内置的"够用"基线**。如果装了下面任一外部 skill，优先用它们的更精细数据。
+> 融合自经典前端设计方法论的精华，收编为 code-kit 内置基线。
+> **本文件是唯一的美学决策来源**：code-kit 零外部依赖，不装任何外部 skill；需要更直观的参照时用 `@code-kit/ui-samples/` 的 HTML 基线对照（浏览器打开即用，断网可用）。
 
-## 外部扩展（按可用优先级使用）
+## 与 ui-samples 基线库的关系
 
-| Skill | 提供 | 何时压过本文件 |
-|---|---|---|
-| [`ui-ux-pro-max`](https://uupm.cc) | 67 UI styles + 161 color palettes + 57 font pairings + 99 UX guidelines + 25 chart types + 15+ stack guidelines | 装了 uipro 时，**调性卡片源 / 调色板 / 字体配对 / 图表选择**全部走它 |
-| [`impeccable`](https://impeccable.style) | 23 个细粒度 UI 命令 + 自动检测 CLI | 装了 impeccable 时，**视觉决策深化 / anti-pattern 检测**走它 |
-
-**调用方式**：
-
-```bash
-# ui-ux-pro-max（Python CLI）
-python3 src/ui-ux-pro-max/scripts/search.py "<query>" --domain {style|product|color|typography|chart|landing|ux}
-python3 src/ui-ux-pro-max/scripts/search.py "<query>" --stack {react|nextjs|vue|...}
-
-# impeccable（npm CLI）
-npx impeccable detect <file>
-npx impeccable suggest <component>
-```
-
-如何检测装没装：检查项目根 / 用户全局是否有 `src/ui-ux-pro-max/` 或 `node_modules/impeccable/`。
-
-**降级路径**：两者都没装 → 用本文件的 9 调性卡片（够用，但选项更少）。
+| 场景 | 用什么 |
+|---|---|
+| 调性卡片 / 调色板 / 字体配对 | 本文件的 9 调性卡片 + `ui-samples/` 各基线的 `:root` tokens |
+| 图表选择 | `ui-samples/patterns/dashboard.html` 的内联 SVG 画法 |
+| 系统/模式级页面参照 | `ui-samples/systems/`（24 类）+ `ui-samples/patterns/`（4 模式）|
+| anti-pattern 检测 | `ui-anti-patterns.md`（grep 清单）|
 
 ---
 
@@ -236,14 +222,6 @@ UI 任务进入实现前，AI 必须能回答以下问题，否则**停下来反
 
 ---
 
-## 装了 impeccable 的话怎么办
+## 深化决策的路径
 
-如果项目里有 `.claude/skills/impeccable/` 或类似目录，**优先调用** impeccable 的命令：
-
-- `/impeccable shape <area>` — 替代本文档的"4 个问题 + 5 维度"环节
-- `/impeccable critique <area>` — UX 评审
-- `/impeccable audit <area>` — 技术质量
-- `/impeccable polish <area>` — 出货前打磨
-- `/impeccable harden <area>` — 错误处理 / 边界 / i18n
-
-code-kit 与 impeccable 互补：code-kit 决定**什么时候做 UI 决策**，impeccable 决定**做得多深**。
+5 维度决策做完后，想继续深挖某个区域（UX 评审 / 技术质量 / 出货前打磨 / 错误处理与 i18n），**重新过一遍本文档对应章节 + 对照 `ui-samples/` 基线**，每个维度问一句「基线里它是怎么解的，我的方案是否更有理由偏离」。code-kit 的机制层决定**什么时候做 UI 决策**，本文档决定**做得多深**。

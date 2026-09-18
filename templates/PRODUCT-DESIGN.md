@@ -1,6 +1,6 @@
 # Product Design: <产品名>
 
-> B-product 的结构模板（九段制）。最终产物不是本 .md，而是 `.specs/<change-id>/PRODUCT-DESIGN.html`——按 `@code-kit/prompts/B-product.md` 的硬性要求制作单文件 HTML。本模板用于**开写前把内容想清楚**，逐段填完后照搬到 HTML。
+> P-product 的结构模板（九段制）。最终产物不是本 .md，而是 `.specs/<change-id>/PRODUCT-DESIGN.html`——按 `@code-kit/prompts/P-product.md` 的硬性要求制作单文件 HTML。本模板用于**开写前把内容想清楚**，逐段填完后照搬到 HTML。
 
 ## 元信息
 

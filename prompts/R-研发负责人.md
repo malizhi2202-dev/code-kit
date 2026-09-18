@@ -85,12 +85,12 @@ Mock 合理性：
 快速过每个 SUMMARY.md：
 
 - [ ] 6 维自查（R1~R6）是否都有实质内容（不是每维写「无」就过）？
-- [ ] 装了 brooks-lint 的项目：/brooks-review 输出是否贴入 SUMMARY？
+- [ ] 6 维自查输出是否贴入 SUMMARY（含 🔴 项的修复 commit 记录）？
 - [ ] 🔴 Critical 是否已修？🟡 Major 是否有处理记录？
 
 🔴 致命问题（直接驳回）：
   - 生产代码改动但 SUMMARY 的 6 维自查全是「无」
-  - brooks-review 标记了 🔴 但 SUMMARY 说「已修」却没有 commit 记录
+  - 6 维自查标记了 🔴 但 SUMMARY 说「已修」却没有 commit 记录
   - 多个 SUMMARY 内容高度雷同（复制粘贴模板）
 ```
 

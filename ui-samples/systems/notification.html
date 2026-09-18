@@ -1,0 +1,418 @@
+<!-- 用途：通知中心页面模板 | 所属：code-kit ui-samples/systems | 用法：2a UI-DESIGN 阶段按系统类型挑基线，复制改造 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>通知中心 · 消息与偏好 - 云澈控制台</title>
+<style>
+/* ===== 设计令牌（hex 兜底，支持 oklch 时覆盖） ===== */
+:root{
+  --bg:#f4f5f7; --surface:#ffffff; --surface-2:#fafbfc;
+  --border:#e4e7ec; --border-strong:#cdd3dd;
+  --text:#1c2433; --text-2:#414c5f; --text-3:#5d6b7e;
+  --brand:#1f5fe0; --brand-strong:#1a4dc0; --brand-weak:#edf3fe;
+  --ok:#147a3c; --ok-weak:#e7f5ec;
+  --warn:#8a5a00; --warn-weak:#fdf2dd;
+  --danger:#b3261e; --danger-weak:#fdecea;
+  --radius:10px; --radius-sm:8px;
+  --shadow-sm:0 1px 2px rgba(16,24,40,.06);
+  --font:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+}
+@supports (color:oklch(50% .18 262)){
+  :root{
+    --bg:oklch(97% .004 255); --surface:oklch(100% 0 0); --surface-2:oklch(98.4% .003 255);
+    --border:oklch(90.5% .007 255); --border-strong:oklch(83% .01 255);
+    --text:oklch(26% .02 260); --text-2:oklch(44% .02 258); --text-3:oklch(55% .02 255);
+    --brand:oklch(51% .19 262); --brand-strong:oklch(45% .19 264); --brand-weak:oklch(95.5% .025 262);
+    --ok:oklch(45% .12 152); --ok-weak:oklch(95.5% .035 152);
+    --warn:oklch(52% .1 85); --warn-weak:oklch(96% .045 90);
+    --danger:oklch(48% .17 27); --danger-weak:oklch(96% .025 27);
+  }
+}
+/* ===== 基础与可访问性 ===== */
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);font-size:14px;line-height:1.6;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+ul,ol{list-style:none}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:4px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.skip{position:fixed;left:12px;top:-48px;z-index:99;padding:8px 14px;background:var(--brand);color:#fff;border-radius:8px;transition:top .15s}
+.skip:focus{top:12px}
+/* ===== 三段式布局 ===== */
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh}
+.sidebar{display:flex;flex-direction:column;background:var(--surface);border-right:1px solid var(--border);position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;padding:18px 20px 14px;border-bottom:1px solid var(--border)}
+.brand-mark{width:34px;height:34px;border-radius:9px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700;font-size:15px}
+.brand-name{font-size:15px;font-weight:700;line-height:1.3}
+.brand-sub{font-size:11px;color:var(--text-3)}
+.nav{flex:1;overflow-y:auto;padding:12px 12px 20px}
+.nav-group{margin-bottom:14px}
+.nav-title{font-size:11px;font-weight:600;color:var(--text-3);letter-spacing:.08em;padding:6px 10px}
+.nav-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:2px;border-radius:8px;font-size:13.5px;color:var(--text-2)}
+.nav-item:hover{background:var(--surface-2);color:var(--text)}
+.nav-item.is-active{background:var(--brand-weak);color:var(--brand-strong);font-weight:600}
+.nav-count{font-size:11px;font-weight:600;color:var(--brand-strong);background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:0 7px;line-height:17px}
+.sidebar-foot{border-top:1px solid var(--border);padding:12px 18px;font-size:12px;color:var(--text-3);line-height:1.8}
+.sidebar-foot strong{color:var(--text-2);font-weight:600}
+/* ===== 顶栏 ===== */
+.main{display:flex;flex-direction:column;min-width:0}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 24px;height:58px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.crumbs ol{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-3)}
+.crumbs li+li::before{content:"/";margin-right:6px;color:var(--border-strong)}
+.crumbs a:hover{color:var(--brand-strong);text-decoration:underline}
+.crumbs [aria-current="page"]{color:var(--text);font-weight:600}
+.topbar-right{display:flex;align-items:center;gap:14px}
+.search{display:flex;align-items:center;gap:8px;border:1px solid var(--border-strong);border-radius:8px;padding:0 10px;height:34px;width:250px;background:var(--surface-2);color:var(--text-3)}
+.search:focus-within{border-color:var(--brand);background:var(--surface)}
+.search input{border:none;outline:none;background:transparent;width:100%;font-size:13px;color:var(--text)}
+.search input::placeholder{color:var(--text-3)}
+.bell{position:relative;width:34px;height:34px;display:grid;place-items:center;border-radius:8px;color:var(--text-2)}
+.bell:hover{background:var(--surface-2);color:var(--text)}
+.bell.is-on{background:var(--brand-weak);color:var(--brand-strong)}
+.bell-dot{position:absolute;top:3px;right:3px;min-width:15px;height:15px;padding:0 3px;border-radius:999px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;line-height:15px;text-align:center;border:2px solid var(--surface)}
+.user{display:flex;align-items:center;gap:9px}
+.avatar{width:33px;height:33px;border-radius:50%;background:var(--brand-weak);color:var(--brand-strong);display:grid;place-items:center;font-size:13px;font-weight:700}
+.user-name{font-size:13px;font-weight:600;line-height:1.3}
+.user-sub{font-size:11px;color:var(--text-3)}
+/* ===== 内容区通用 ===== */
+.content{padding:20px 24px 32px;display:flex;flex-direction:column;gap:14px}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.page-head h1{font-size:20px;font-weight:700;letter-spacing:-.01em}
+.page-desc{font-size:13px;color:var(--text-3);margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text-2);border-radius:8px;padding:7px 14px;font-size:13px;font-weight:500}
+.btn:hover{border-color:var(--text-3);color:var(--text)}
+.btn-primary{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+.btn-primary:hover{background:var(--brand-strong);border-color:var(--brand-strong);color:#fff}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm)}
+/* ===== 工作区：通知流 + 偏好面板 ===== */
+.workspace{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:14px;align-items:start}
+/* --- 标签页（radio 纯 CSS 切换） --- */
+.tab-radio{position:absolute;opacity:0;pointer-events:none}
+.tab-list{display:flex;gap:2px;border-bottom:1px solid var(--border);padding:0 12px;overflow-x:auto}
+.tab-list label{padding:11px 12px;font-size:13.5px;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;display:inline-flex;gap:7px;align-items:center;white-space:nowrap}
+.tab-list label:hover{color:var(--text)}
+.tab-count{font-size:11px;color:var(--text-3);background:var(--bg);border-radius:999px;padding:0 7px;line-height:18px;font-variant-numeric:tabular-nums}
+#tab-all:checked~.tab-list [for="tab-all"],#tab-unread:checked~.tab-list [for="tab-unread"],
+#tab-arch:checked~.tab-list [for="tab-arch"]{color:var(--brand-strong);font-weight:600;border-bottom-color:var(--brand)}
+#tab-all:checked~.tab-list [for="tab-all"] .tab-count,#tab-unread:checked~.tab-list [for="tab-unread"] .tab-count,
+#tab-arch:checked~.tab-list [for="tab-arch"] .tab-count{background:var(--brand-weak);color:var(--brand-strong)}
+#tab-all:focus-visible~.tab-list [for="tab-all"],#tab-unread:focus-visible~.tab-list [for="tab-unread"],
+#tab-arch:focus-visible~.tab-list [for="tab-arch"]{outline:2px solid var(--brand);outline-offset:-2px;border-radius:6px}
+.panel{display:none}
+#tab-all:checked~.tab-panels #panel-all,#tab-unread:checked~.tab-panels #panel-unread,
+#tab-arch:checked~.tab-panels #panel-arch{display:block}
+/* --- 通知列表条目 --- */
+.ntf{display:grid;grid-template-columns:14px minmax(0,1fr) auto auto;gap:10px;align-items:flex-start;padding:13px 18px;border-bottom:1px solid var(--border)}
+.ntf:last-of-type{border-bottom:none}
+.ntf:hover{background:var(--surface-2)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--brand);margin-top:7px;visibility:hidden}
+.is-unread .dot{visibility:visible}
+.ntf-title{font-size:13.5px;font-weight:500;color:var(--text-2);line-height:1.55}
+.is-unread .ntf-title{font-weight:700;color:var(--text)}
+.ntf-sum{font-size:12.5px;color:var(--text-3);line-height:1.65;margin-top:3px}
+.tp{font-size:11.5px;font-weight:600;padding:1px 8px;border-radius:4px;line-height:19px;margin-top:3px;white-space:nowrap}
+.tp-sys{color:var(--text-3);background:var(--bg);border:1px solid var(--border)}
+.tp-alert{color:#b3261e;background:var(--danger-weak)}
+.tp-approve{color:#8a5a00;background:var(--warn-weak)}
+.tp-mention{color:var(--brand-strong);background:var(--brand-weak)}
+.ntf-time{font-size:11.5px;color:var(--text-3);font-variant-numeric:tabular-nums;margin-top:4px;white-space:nowrap}
+/* --- 聚合分组折叠行 --- */
+.more-row{display:flex;justify-content:center;padding:8px 0;border-bottom:1px solid var(--border);background:var(--surface-2)}
+.more-btn{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--brand-strong);padding:6px 14px;border-radius:999px;border:1px dashed var(--border-strong)}
+.more-btn:hover{background:var(--brand-weak);border-color:var(--brand)}
+.more-btn svg{transition:transform .15s}
+.more-btn:hover svg{transform:translateY(1px)}
+/* --- 分页 / 空态 --- */
+.pager{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;flex-wrap:wrap}
+.pager-info{font-size:12.5px;color:var(--text-3)}
+.pager-btns{display:flex;gap:6px;align-items:center}
+.pg{min-width:30px;height:30px;padding:0 9px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:6px;font-size:12.5px;color:var(--text-2);background:var(--surface)}
+.pg:hover{border-color:var(--brand);color:var(--brand-strong)}
+.pg.is-cur{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+.pg-dis{pointer-events:none;color:#aeb6c2}
+.empty{padding:52px 20px;text-align:center}
+.empty-ico{width:52px;height:52px;margin:0 auto 14px;border-radius:50%;background:var(--surface-2);border:1px solid var(--border);display:grid;place-items:center;color:var(--text-3)}
+.empty h3{font-size:14.5px;margin-bottom:6px}
+.empty p{font-size:13px;color:var(--text-3);max-width:340px;margin:0 auto 16px;line-height:1.7}
+/* ===== 通知偏好设置面板 ===== */
+.pref-card{position:sticky;top:74px}
+.pref-head{padding:14px 16px;border-bottom:1px solid var(--border)}
+.pref-head h2{font-size:14px;font-weight:700}
+.pref-tip{font-size:12px;color:var(--text-3);line-height:1.7;padding:12px 16px 0}
+.table-wrap{overflow-x:auto;padding:10px 8px 4px}
+.mx{width:100%;border-collapse:collapse;min-width:300px}
+.mx th,.mx td{text-align:center;padding:8px 6px;border-bottom:1px solid var(--border)}
+.mx thead th{font-size:12px;font-weight:600;color:var(--text-3);background:var(--surface-2)}
+.mx tbody th{font-size:12.5px;font-weight:500;color:var(--text-2);text-align:left;white-space:nowrap;padding-left:10px}
+.mx tbody tr:last-child th,.mx tbody tr:last-child td{border-bottom:none}
+.mx tbody tr:hover{background:var(--surface-2)}
+/* --- 开关格子 --- */
+.sw{position:relative;display:inline-block;width:34px;height:19px;vertical-align:middle}
+.sw input{position:absolute;inset:0;margin:0;opacity:0;cursor:pointer}
+.sw i{position:absolute;inset:0;border-radius:999px;background:var(--border-strong);transition:background .15s;pointer-events:none}
+.sw i::after{content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(16,24,40,.25);transition:transform .15s}
+.sw input:checked+i{background:var(--brand)}
+.sw input:checked+i::after{transform:translateX(15px)}
+.sw input:focus-visible+i{outline:2px solid var(--brand);outline-offset:2px}
+.pref-note{margin:0 16px;padding:9px 12px;border-left:3px solid var(--warn);background:var(--warn-weak);border-radius:6px;font-size:12px;color:#6d4a00;line-height:1.7}
+.pref-foot{display:flex;gap:8px;padding:14px 16px}
+.pref-foot .btn{flex:1;justify-content:center;padding:7px 8px;font-size:12.5px}
+/* ===== 响应式兜底 ===== */
+@media (max-width:1180px){ .workspace{grid-template-columns:1fr} .pref-card{position:static} }
+@media (max-width:900px){
+  .app{grid-template-columns:1fr} .sidebar{display:none} .search{width:160px}
+  .topbar{flex-wrap:wrap;height:auto;padding:10px 16px}
+  .ntf{grid-template-columns:12px minmax(0,1fr);grid-auto-rows:auto}
+  .ntf .tp{grid-column:2;margin-left:0}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">跳到主要内容</a>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">云</div>
+      <div><p class="brand-name">云澈控制台</p><p class="brand-sub">消息与通知中心</p></div>
+    </div>
+    <nav class="nav" aria-label="控制台主导航">
+      <div class="nav-group">
+        <p class="nav-title">工作台</p>
+        <a class="nav-item" href="#"><span>今日概览</span></a>
+        <a class="nav-item" href="#"><span>我的待办</span><span class="nav-count">5</span></a>
+      </div>
+      <div class="nav-group">
+        <p class="nav-title">消息中心</p>
+        <a class="nav-item is-active" href="#" aria-current="page"><span>通知中心</span><span class="nav-count">8</span></a>
+        <a class="nav-item" href="#"><span>系统公告</span></a>
+        <a class="nav-item" href="#"><span>订阅规则</span></a>
+      </div>
+      <div class="nav-group">
+        <p class="nav-title">客服中心</p>
+        <a class="nav-item" href="#"><span>工单队列</span></a>
+        <a class="nav-item" href="#"><span>我的工单</span></a>
+      </div>
+      <div class="nav-group">
+        <p class="nav-title">系统管理</p>
+        <a class="nav-item" href="#"><span>成员与角色</span></a>
+        <a class="nav-item" href="#"><span>操作审计</span></a>
+      </div>
+    </nav>
+    <div class="sidebar-foot">
+      <p><strong>值班客服 · 林晚晴</strong></p>
+      <p>一线坐席 12 人在线</p>
+    </div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <nav class="crumbs" aria-label="面包屑">
+        <ol>
+          <li><a href="#">控制台</a></li>
+          <li><a href="#">消息中心</a></li>
+          <li aria-current="page">通知中心</li>
+        </ol>
+      </nav>
+      <div class="topbar-right">
+        <div class="search">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg>
+          <label class="sr-only" for="kw">搜索通知标题或摘要内容</label>
+          <input id="kw" type="search" placeholder="搜索通知标题 / 摘要">
+        </div>
+        <button class="bell is-on" type="button" aria-label="通知中心，8 条未读">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          <span class="bell-dot">8</span>
+        </button>
+        <div class="user">
+          <div class="avatar" aria-hidden="true">沈</div>
+          <div><p class="user-name">沈亦舟</p><p class="user-sub">客服主管</p></div>
+        </div>
+      </div>
+    </header>
+    <main id="main" class="content">
+      <div class="page-head">
+        <div>
+          <h1>通知中心</h1>
+          <p class="page-desc">汇总告警、审批、提及与系统消息，未读通知以蓝点标记。</p>
+        </div>
+        <button class="btn" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+          全部标记已读
+        </button>
+      </div>
+      <div class="workspace">
+        <section class="card" aria-labelledby="list-h">
+          <h2 id="list-h" class="sr-only">通知列表</h2>
+          <input class="tab-radio" type="radio" name="ntfTab" id="tab-all" checked>
+          <input class="tab-radio" type="radio" name="ntfTab" id="tab-unread">
+          <input class="tab-radio" type="radio" name="ntfTab" id="tab-arch">
+          <div class="tab-list" role="tablist" aria-label="通知范围筛选">
+            <label for="tab-all">全部 <span class="tab-count">23</span></label>
+            <label for="tab-unread">未读 <span class="tab-count">8</span></label>
+            <label for="tab-arch">已归档 <span class="tab-count">0</span></label>
+          </div>
+          <div class="tab-panels">
+            <div class="panel" id="panel-all">
+              <article class="ntf is-unread">
+                <span class="dot" aria-label="未读"></span>
+                <div><h3 class="ntf-title">支付网关 5xx 错误率超过 2%</h3><p class="ntf-sum">生产环境 · 持续 6 分钟，影响回调成功率，系统已自动创建工单 GD-20481 并升级值班群。</p></div>
+                <span class="tp tp-alert">告警</span>
+                <time class="ntf-time" datetime="2025-09-18T14:32">14:32</time>
+              </article>
+              <article class="ntf is-unread">
+                <span class="dot" aria-label="未读"></span>
+                <div><h3 class="ntf-title">陈明宇 提交的「测试环境扩容申请」等待你审批</h3><p class="ntf-sum">申请将测试集群从 4 节点扩容至 6 节点，预计月成本增加 1,860 元，附容量评估报告。</p></div>
+                <span class="tp tp-approve">审批</span>
+                <time class="ntf-time" datetime="2025-09-18T13:58">13:58</time>
+              </article>
+              <article class="ntf is-unread">
+                <span class="dot" aria-label="未读"></span>
+                <div><h3 class="ntf-title">林晚晴 在工单 GD-20486 中 @你</h3><p class="ntf-sum">「回调日志显示 notify 请求均返回 504，与 9 月 17 日变更单 CM-3321 相关，请帮忙确认网关连接池配置。」</p></div>
+                <span class="tp tp-mention">提及</span>
+                <time class="ntf-time" datetime="2025-09-18T14:18">14:18</time>
+              </article>
+              <article class="ntf is-unread">
+                <span class="dot" aria-label="未读"></span>
+                <div><h3 class="ntf-title">v2.14.0 版本将于今晚 23:00 发布</h3><p class="ntf-sum">本次发布包含工单批量转派、SLA 规则自定义等 9 项更新，发布期间控制台预计中断 5 分钟。</p></div>
+                <span class="tp tp-sys">系统</span>
+                <time class="ntf-time" datetime="2025-09-18T11:20">11:20</time>
+              </article>
+              <div class="more-row">
+                <button class="more-btn" type="button" aria-expanded="false">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                  还有 12 条同类通知 · 版本发布提醒
+                </button>
+              </div>
+              <article class="ntf">
+                <span class="dot" aria-hidden="true"></span>
+                <div><h3 class="ntf-title">你发起的「短信通道切换」已被 王启铭 审批通过</h3><p class="ntf-sum">审批意见：切换方案已复核，注意保留旧通道 7 天用于失败重试。</p></div>
+                <span class="tp tp-approve">审批</span>
+                <time class="ntf-time" datetime="2025-09-17T17:24">昨天 17:24</time>
+              </article>
+              <article class="ntf">
+                <span class="dot" aria-hidden="true"></span>
+                <div><h3 class="ntf-title">已恢复：CDN 回源延迟告警</h3><p class="ntf-sum">华东节点回源 P95 延迟已回落至 180ms，告警持续 42 分钟后自动恢复。</p></div>
+                <span class="tp tp-alert">告警</span>
+                <time class="ntf-time" datetime="2025-09-17T22:40">昨天 22:40</time>
+              </article>
+              <article class="ntf">
+                <span class="dot" aria-hidden="true"></span>
+                <div><h3 class="ntf-title">每周数据备份完成</h3><p class="ntf-sum">9 月第 3 周全量备份已完成，共 217 GB，备份包校验通过，保留 30 天。</p></div>
+                <span class="tp tp-sys">系统</span>
+                <time class="ntf-time" datetime="2025-09-17T09:00">昨天 09:00</time>
+              </article>
+              <article class="ntf">
+                <span class="dot" aria-hidden="true"></span>
+                <div><h3 class="ntf-title">苏念芜 在知识库文档《退换货处理指引》评论中 @你</h3><p class="ntf-sum">「第 4 节的时效说明和现行 SLA 不一致，建议同步更新为 48 小时。」</p></div>
+                <span class="tp tp-mention">提及</span>
+                <time class="ntf-time" datetime="2025-09-17T16:05">昨天 16:05</time>
+              </article>
+              <div class="pager">
+                <p class="pager-info">共 23 条通知 · 每页 10 条</p>
+                <nav class="pager-btns" aria-label="通知分页">
+                  <a class="pg pg-dis" href="#" aria-disabled="true">上一页</a>
+                  <a class="pg is-cur" href="#" aria-current="page">1</a>
+                  <a class="pg" href="#">2</a>
+                  <a class="pg" href="#">3</a>
+                  <a class="pg" href="#">下一页</a>
+                </nav>
+              </div>
+            </div>
+            <div class="panel" id="panel-unread">
+              <article class="ntf is-unread">
+                <span class="dot" aria-label="未读"></span>
+                <div><h3 class="ntf-title">支付网关 5xx 错误率超过 2%</h3><p class="ntf-sum">生产环境 · 持续 6 分钟，影响回调成功率，系统已自动创建工单 GD-20481 并升级值班群。</p></div>
+                <span class="tp tp-alert">告警</span>
+                <time class="ntf-time" datetime="2025-09-18T14:32">14:32</time>
+              </article>
+              <article class="ntf is-unread">
+                <span class="dot" aria-label="未读"></span>
+                <div><h3 class="ntf-title">陈明宇 提交的「测试环境扩容申请」等待你审批</h3><p class="ntf-sum">申请将测试集群从 4 节点扩容至 6 节点，预计月成本增加 1,860 元，附容量评估报告。</p></div>
+                <span class="tp tp-approve">审批</span>
+                <time class="ntf-time" datetime="2025-09-18T13:58">13:58</time>
+              </article>
+              <article class="ntf is-unread">
+                <span class="dot" aria-label="未读"></span>
+                <div><h3 class="ntf-title">林晚晴 在工单 GD-20486 中 @你</h3><p class="ntf-sum">「回调日志显示 notify 请求均返回 504，与 9 月 17 日变更单 CM-3321 相关，请帮忙确认网关连接池配置。」</p></div>
+                <span class="tp tp-mention">提及</span>
+                <time class="ntf-time" datetime="2025-09-18T14:18">14:18</time>
+              </article>
+              <article class="ntf is-unread">
+                <span class="dot" aria-label="未读"></span>
+                <div><h3 class="ntf-title">v2.14.0 版本将于今晚 23:00 发布</h3><p class="ntf-sum">本次发布包含工单批量转派、SLA 规则自定义等 9 项更新，发布期间控制台预计中断 5 分钟。</p></div>
+                <span class="tp tp-sys">系统</span>
+                <time class="ntf-time" datetime="2025-09-18T11:20">11:20</time>
+              </article>
+              <div class="more-row">
+                <button class="more-btn" type="button" aria-expanded="false">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                  还有 4 条未读 · 版本发布提醒
+                </button>
+              </div>
+            </div>
+            <div class="panel" id="panel-arch">
+              <div class="empty">
+                <div class="empty-ico" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+                </div>
+                <h3>没有已归档的通知</h3>
+                <p>已读通知保留 30 天后自动归档，当前暂无归档记录，可在「全部」标签页查看历史消息。</p>
+                <button class="btn" type="button">查看全部通知</button>
+              </div>
+            </div>
+          </div>
+        </section>
+        <aside class="card pref-card" aria-labelledby="pref-h">
+          <div class="pref-head"><h2 id="pref-h">通知偏好设置</h2></div>
+          <p class="pref-tip">按事件类型勾选接收渠道，保存后 24 小时内生效；同类型通知每小时最多推送 5 条。</p>
+          <div class="table-wrap">
+            <table class="mx">
+              <thead><tr><th scope="col">事件类型</th><th scope="col">站内</th><th scope="col">邮件</th><th scope="col">短信</th></tr></thead>
+              <tbody>
+                <tr>
+                  <th scope="row">告警事件</th>
+                  <td><label class="sw"><input type="checkbox" checked><i aria-hidden="true"></i><span class="sr-only">告警事件 · 站内通知开关</span></label></td>
+                  <td><label class="sw"><input type="checkbox" checked><i aria-hidden="true"></i><span class="sr-only">告警事件 · 邮件通知开关</span></label></td>
+                  <td><label class="sw"><input type="checkbox" checked><i aria-hidden="true"></i><span class="sr-only">告警事件 · 短信通知开关</span></label></td>
+                </tr>
+                <tr>
+                  <th scope="row">审批流程</th>
+                  <td><label class="sw"><input type="checkbox" checked><i aria-hidden="true"></i><span class="sr-only">审批流程 · 站内通知开关</span></label></td>
+                  <td><label class="sw"><input type="checkbox" checked><i aria-hidden="true"></i><span class="sr-only">审批流程 · 邮件通知开关</span></label></td>
+                  <td><label class="sw"><input type="checkbox"><i aria-hidden="true"></i><span class="sr-only">审批流程 · 短信通知开关</span></label></td>
+                </tr>
+                <tr>
+                  <th scope="row">安全提醒</th>
+                  <td><label class="sw"><input type="checkbox" checked><i aria-hidden="true"></i><span class="sr-only">安全提醒 · 站内通知开关</span></label></td>
+                  <td><label class="sw"><input type="checkbox" checked><i aria-hidden="true"></i><span class="sr-only">安全提醒 · 邮件通知开关</span></label></td>
+                  <td><label class="sw"><input type="checkbox" checked><i aria-hidden="true"></i><span class="sr-only">安全提醒 · 短信通知开关</span></label></td>
+                </tr>
+                <tr>
+                  <th scope="row">系统公告</th>
+                  <td><label class="sw"><input type="checkbox" checked><i aria-hidden="true"></i><span class="sr-only">系统公告 · 站内通知开关</span></label></td>
+                  <td><label class="sw"><input type="checkbox" checked><i aria-hidden="true"></i><span class="sr-only">系统公告 · 邮件通知开关</span></label></td>
+                  <td><label class="sw"><input type="checkbox"><i aria-hidden="true"></i><span class="sr-only">系统公告 · 短信通知开关</span></label></td>
+                </tr>
+                <tr>
+                  <th scope="row">被 @ 提及</th>
+                  <td><label class="sw"><input type="checkbox" checked><i aria-hidden="true"></i><span class="sr-only">被提及 · 站内通知开关</span></label></td>
+                  <td><label class="sw"><input type="checkbox" checked><i aria-hidden="true"></i><span class="sr-only">被提及 · 邮件通知开关</span></label></td>
+                  <td><label class="sw"><input type="checkbox"><i aria-hidden="true"></i><span class="sr-only">被提及 · 短信通知开关</span></label></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="pref-note">短信渠道每日上限 20 条，超出后自动降级为站内通知；凌晨 0:00 - 7:00 的非紧急告警将延迟发送。</p>
+          <div class="pref-foot">
+            <button class="btn btn-primary" type="button">保存偏好</button>
+            <button class="btn" type="button">恢复默认</button>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

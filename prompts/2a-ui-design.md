@@ -82,22 +82,21 @@ UI Director。**只产视觉/交互方向，不产实现代码**（角色红线 
 
 ### 2. 美学维度决策
 
-按 `ui-aesthetics.md` 的 5 个维度逐项决策。每个决策必须给理由。**优先调用外部 skill 拿候选**，没装才回退到内置经验：
+按 `ui-aesthetics.md` 的 5 个维度逐项决策。每个决策必须给理由。**全部使用内置基线，无外部依赖**；需要更直观的参照时直接打开 `@code-kit/ui-samples/` 里的 HTML 对照（浏览器打开即用，断网可用）：
 
-| 维度 | 装了 ui-ux-pro-max 走它（首选）| 没装时的内置基线 |
-|---|---|---|
-| **字体** | `python3 src/ui-ux-pro-max/scripts/search.py "<tone> <product>" --domain typography` 从 57 pairings 选 | 自己挑，**显式避开** Inter / Roboto / Arial / Helvetica / system-ui |
-| **颜色** | `--domain color`，从 161 palettes 选符合调性的；每色仍按 OKLCH 输出 | 自己用 OKLCH 设计主色 + 中性梯度 |
-| **图表**（如有数据可视化） | `--domain chart`，从 25 chart types 选并附库推荐 | 默认 Recharts / Chart.js |
-| **UX 模式** | `--domain ux`，对照 99 guidelines 验证不踩反模式 | 用 `ui-anti-patterns.md` |
-| **栈适配**（按项目栈） | `--stack <react|nextjs|vue|...>` 拿栈级模式 | 通用 token，不做栈级建议 |
-| **动效 / 空间 / 质感** | uipro 不直接覆盖，仍按 `ui-aesthetics.md` 的 5 维框架决 | 同左 |
+| 维度 | 决策方法（内置） |
+|---|---|
+| **字体** | 自己挑，**显式避开** Inter / Roboto / Arial / Helvetica / system-ui；从 `ui-samples/` 基线的字体栈起手 |
+| **颜色** | 自己用 OKLCH 设计主色 + 中性梯度；从 `ui-samples/` 任一基线的 `:root` tokens 起手改造 |
+| **图表**（如有数据可视化） | 默认 Recharts / Chart.js；图式参照 `ui-samples/patterns/dashboard.html` 的内联 SVG 画法 |
+| **UX 模式** | 用 `ui-anti-patterns.md`；模式参照 `ui-samples/patterns/`（表格 CRUD / 表单 / 看板…） |
+| **栈适配**（按项目栈） | 通用 token，不做栈级建议；系统级页面参照 `ui-samples/systems/`（24 类系统页面） |
+| **动效 / 空间 / 质感** | 按 `ui-aesthetics.md` 的 5 维框架决 |
 
-**调用纪律**：
+**决策纪律**：
 
-- 每个维度必须**贴出 uipro 查询命令 + 其前 3 个候选**（如装了），再说明你的最终选择和理由
-- 候选不满意 → 调整 query 重查，不允许直接拍脑袋
-- 没装 uipro → 在该维度开头明确写 `(uipro 未检出，使用内置基线)`，避免后期审查混淆来源
+- 每个维度的选择都要**写明来源**：`ui-samples/` 哪个基线 / `ui-aesthetics.md` 哪条原则，避免后期审查混淆来源
+- 候选不满意 → 换基线重新推敲，不允许直接拍脑袋
 
 具体落到 5 个决策项：
 
@@ -216,35 +215,22 @@ v0 = 占位符 + 关键布局 + 步骤 2 决定的 token + 假设清单。
   - 包含 frontmatter 形式的 design tokens（颜色 / 字体 / 间距 / 圆角 / 动效）
   - 包含调性声明、5 维决策、组件规约、Do's and Don'ts
 
-## 外部 skill 集成（按可用情况优先）
+## 界面基线样例库（内置，零外部依赖）
 
-### 装了 ui-ux-pro-max（uipro）
+### `@code-kit/ui-samples/` 是什么
 
-检测：项目根 `src/ui-ux-pro-max/scripts/search.py` 存在，或全局装了 `uipro-cli`。
+一套**单文件、零依赖、浏览器直接打开即用**的 HTML 参考样例库，本阶段的可视化基线。两条线：
 
-- **步骤 1**（美学方向）：调性已从 CHANGE.md 读到，可补 `--domain product` 拿场景模式
-- **步骤 2**（5 维决策）：按上面表格，逐维度调 `--domain {typography|color|chart|ux}` 拿候选
-- **步骤 4**（组件规约）：按项目栈调 `--stack <stack>` 拿栈级建议（如 React + shadcn）
-- **步骤 6**（自检）：调 `--domain ux` 对照 99 UX guidelines 二次校验
+- **`patterns/`（通用前端模式）**：login / dashboard / table-crud / form —— 任何后台系统都反复出现的 4 种页面骨架。每份含完整 tokens、状态徽章、空态、分页等后台要素，复制改造即可作为项目起点。
+- **`systems/`（系统级页面，24 类）**：权限 RBAC / 用户管理 / 产品管理 / 财务 / agent 对话 / 对话记忆 / agent 团队协作 / 量化交易（深色）/ 订单 / 库存 / 内容管理 / BI 分析 / 客服工单 / 通知中心 / 审计日志 / API 开放平台 / 租户组织 / 日志监控 / 调度任务 / 配置中心 / 支付账单 / 文件管理 / 监控告警 / 知识库。做对应类型系统时先取基线再改。
 
-### 装了 impeccable
+### 使用规则
 
-检测：`.claude/skills/impeccable/` / `.cursor/skills/impeccable/` / `node_modules/impeccable/` 之一存在。
-
-- **步骤 1-3** 可替换为：调用 `/impeccable shape <area>` 一站完成
-- **步骤 6** 替换为：调用 `/impeccable audit <area>` + `/impeccable critique <area>`
-- 步骤 4-5 仍按本 prompt 执行（impeccable 不直接产 UI-DESIGN.md）
-
-### 两者都装
-
-uipro 负责"**广**"（穷举候选）→ impeccable 负责"**深**"（细抠落地）。流程：
-- 用 uipro 选出字体 / 颜色 / 图表候选
-- 用 impeccable shape 把候选拉成完整 design system
-- 用 impeccable audit 做最终自检
-
-### 都没装
-
-按本 prompt 主流程走 + `ui-aesthetics.md` + `ui-anti-patterns.md`，够用但选项更少。
+1. **优先挑基线**：先按系统类型从 `ui-samples/INDEX.md` 挑最接近的基线，读其 `:root` tokens 与布局骨架，声明"基线：systems/xxx.html"记入 UI-DESIGN.md 第 0.1 节
+2. **改造而非重造**：tokens 从基线起手改 OKLCH 主色；布局沿用基线三段式（侧导航 + 顶栏 + 内容区）
+3. **原型组合**：需要"产品 PR + 界面原型"一体的单文件文档时走 `@code-kit/prompts/P-product.md`（九段制 HTML，原型页从本库取基线）
+4. **对齐追溯**：基线引用会被 `S-align` 用作 L2 层事实来源（原型漂移检测的比对基准）
+5. 本库文件**只是参照物**，不要求项目代码复刻；禁止把基线整页粘进 UI-DESIGN.md（那是 4-dev 的活，且违反 R3.1 延伸）
 
 ## 约束（强制）
 
