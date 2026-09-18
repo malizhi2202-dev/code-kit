@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<!-- 用途：AgentTeam 协作系统页面模板（成员卡片网格 / 任务分派看板 / 成员详情抽屉 / 任务交接时间线） | 所属：code-kit ui-samples/systems | 用法：2a UI-DESIGN 阶段按系统类型挑选基线，复制改造 -->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgentTeam 协作系统 · 团队工作台</title>
+<style>
+/* ============ 设计 Tokens：中性灰阶 + 单一品牌蓝（oklch 优先 / hex 兜底） ============ */
+:root {
+  --bg: #f3f4f6;            --bg: oklch(96.6% 0.005 260);
+  --bg-strong: #e9ebef;     --bg-strong: oklch(93.5% 0.007 260);
+  --surface: #ffffff;       --surface: oklch(100% 0 0);
+  --surface-2: #f8f9fb;     --surface-2: oklch(98.2% 0.003 260);
+  --border: #e3e6ec;        --border: oklch(91.6% 0.01 260);
+  --border-strong: #cdd3dd; --border-strong: oklch(87% 0.012 260);
+  --text-1: #1c2433;        --text-1: oklch(26% 0.02 262);
+  --text-2: #4a5468;        --text-2: oklch(43% 0.026 262);
+  --text-3: #7c8699;        --text-3: oklch(59% 0.02 262);
+  --brand: #2563eb;         --brand: oklch(54.6% 0.17 258);
+  --brand-strong: #1b4fc4;  --brand-strong: oklch(47% 0.16 258);
+  --brand-weak: #e8f0fd;    --brand-weak: oklch(95% 0.028 258);
+  --success: #0d7a4b;       --success: oklch(47% 0.11 160);
+  --success-bg: #e3f4ec;
+  --warning: #96580c;       --warning: oklch(50% 0.11 70);
+  --warning-bg: #fdf0dc;
+  --danger: #b62b21;        --danger: oklch(48% 0.17 28);
+  --danger-bg: #fceae7;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 1px 2px rgba(28,36,51,.05), 0 6px 18px rgba(28,36,51,.07);
+  --font: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Consolas, "Courier New", monospace;
+}
+/* ============ 基础 ============ */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font: 14px/1.65 var(--font); background: var(--bg); color: var(--text-1); }
+a { color: inherit; text-decoration: none; }
+ul, ol { list-style: none; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 2px; }
+.vh { position: absolute; width: 1px; height: 1px; margin: -1px; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
+/* ============ 布局：左侧边导航 + 顶栏 + 内容区 ============ */
+.layout { display: flex; min-height: 100vh; }
+.sidebar { width: 236px; flex: none; background: var(--surface); border-right: 1px solid var(--border); position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.brand { display: flex; gap: 10px; align-items: center; padding: 16px 16px 14px; border-bottom: 1px solid var(--border); }
+.brand__logo { width: 36px; height: 36px; border-radius: 10px; background: var(--brand); color: #fff; display: grid; place-items: center; font-weight: 700; }
+.brand__name { font-size: 15px; font-weight: 650; line-height: 1.3; }
+.brand__desc { font-size: 12px; color: var(--text-3); }
+.nav { padding: 10px 12px 16px; }
+.nav__group + .nav__group { margin-top: 14px; }
+.nav__title { font-size: 12px; color: var(--text-3); padding: 4px 10px 6px; }
+.nav__link { display: flex; align-items: center; gap: 10px; padding: 8px 10px; margin: 2px 0; border-radius: 8px; color: var(--text-2); position: relative; }
+.nav__link:hover { background: var(--bg-strong); color: var(--text-1); }
+.nav__link.is-active { background: var(--brand-weak); color: var(--brand-strong); font-weight: 600; }
+.nav__link.is-active::before { content: ""; position: absolute; left: -12px; top: 9px; bottom: 9px; width: 3px; border-radius: 2px; background: var(--brand); }
+.ico { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.nav__count { margin-left: auto; font-size: 11px; color: var(--text-3); }
+/* ---- 顶栏：面包屑 / 搜索 / 通知 / 头像 ---- */
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.topbar { height: 56px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 14px; padding: 0 20px; position: sticky; top: 0; z-index: 20; }
+.crumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-3); }
+.crumb b { color: var(--text-1); font-weight: 600; }
+.crumb i { color: var(--border-strong); font-style: normal; }
+.topbar__search { margin-left: auto; position: relative; }
+.topbar__search input { width: 236px; height: 34px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); padding: 0 54px 0 32px; }
+.topbar__search input:hover { border-color: var(--border-strong); }
+.topbar__search .ico { position: absolute; left: 10px; top: 9px; color: var(--text-3); }
+.topbar__search kbd { position: absolute; right: 8px; top: 8px; font: 11px var(--mono); color: var(--text-3); border: 1px solid var(--border); border-radius: 4px; padding: 0 5px; background: var(--surface); }
+.topbar__bell { position: relative; width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 8px; color: var(--text-2); background: none; cursor: pointer; }
+.topbar__bell:hover { background: var(--bg-strong); color: var(--text-1); }
+.topbar__bell i { position: absolute; top: 7px; right: 8px; width: 7px; height: 7px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 0 2px var(--surface); }
+.avatar { display: flex; align-items: center; gap: 8px; padding: 3px 10px 3px 4px; border-radius: 999px; border: 1px solid var(--border); background: none; cursor: pointer; }
+.avatar:hover { background: var(--bg-strong); }
+.avatar__face { width: 28px; height: 28px; border-radius: 50%; background: var(--brand-weak); color: var(--brand-strong); display: grid; place-items: center; font-size: 12px; font-weight: 600; }
+.avatar__name { font-size: 13px; color: var(--text-2); }
+/* ---- 内容区 ---- */
+.content { padding: 20px 24px 32px; display: flex; flex-direction: column; gap: 16px; max-width: 1440px; width: 100%; margin: 0 auto; }
+.page-head { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.page-head h1 { font-size: 20px; line-height: 1.3; }
+.page-head p { color: var(--text-3); font-size: 13px; margin-top: 2px; }
+.page-head__actions { margin-left: auto; display: flex; gap: 10px; }
+/* ============ 组件：按钮 / 卡片 / 徽章 ============ */
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); cursor: pointer; }
+.btn:hover { border-color: var(--border-strong); color: var(--text-1); background: var(--surface-2); }
+.btn--primary { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
+.btn--primary:hover { background: var(--brand-strong); border-color: var(--brand-strong); color: #fff; }
+.btn--sm { height: 28px; padding: 0 10px; font-size: 12px; border-radius: var(--radius-sm); }
+.btn--danger { color: var(--danger); border-color: var(--danger-bg); }
+.btn--danger:hover { background: var(--danger-bg); color: var(--danger); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+.card__head { display: flex; align-items: center; gap: 10px; padding: 13px 18px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.card__head h2 { font-size: 15px; }
+.card__head .hint { font-size: 12px; color: var(--text-3); }
+.card__head .more { margin-left: auto; font-size: 13px; color: var(--brand); }
+.card__head .more:hover { color: var(--brand-strong); text-decoration: underline; }
+.badge { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.badge--success { color: var(--success); background: var(--success-bg); }
+.badge--processing { color: var(--brand-strong); background: var(--brand-weak); }
+.badge--warning { color: var(--warning); background: var(--warning-bg); }
+.badge--danger { color: var(--danger); background: var(--danger-bg); }
+.badge--neutral { color: var(--text-2); background: var(--bg-strong); }
+.chip { display: inline-flex; height: 20px; align-items: center; padding: 0 8px; border-radius: 5px; font-size: 11px; font-weight: 600; letter-spacing: .02em; }
+.chip--planner { color: var(--brand-strong); background: var(--brand-weak); }
+.chip--coder { color: var(--success); background: var(--success-bg); }
+.chip--reviewer { color: var(--warning); background: var(--warning-bg); }
+.tag { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 6px; background: var(--bg-strong); color: var(--text-2); font-size: 12px; }
+.link { color: var(--brand); font-size: 13px; }
+.link:hover { color: var(--brand-strong); text-decoration: underline; }
+/* ============ 团队成员卡片网格 ============ */
+.member-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(238px, 1fr)); gap: 14px; }
+.member { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 14px; display: flex; flex-direction: column; gap: 10px; transition: border-color .15s, box-shadow .15s; }
+.member:hover { border-color: var(--border-strong); box-shadow: var(--shadow); }
+.member__top { display: flex; gap: 10px; align-items: center; }
+.member__face { width: 40px; height: 40px; border-radius: 10px; background: var(--brand-weak); color: var(--brand-strong); display: grid; place-items: center; font-weight: 650; font-size: 16px; }
+.member__name { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.member__id { font: 11px var(--mono); color: var(--text-3); font-weight: 400; }
+.st { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; margin-left: auto; white-space: nowrap; }
+.st i { width: 7px; height: 7px; border-radius: 50%; }
+.st--idle { color: var(--success); } .st--idle i { background: var(--success); }
+.st--run { color: var(--brand-strong); } .st--run i { background: var(--brand); animation: pulse 1.6s infinite; }
+.st--wait { color: var(--warning); } .st--wait i { background: var(--warning); }
+@keyframes pulse { 50% { opacity: .35; } }
+.member__task { font-size: 13px; color: var(--text-2); background: var(--surface-2); border: 1px dashed var(--border-strong); border-radius: 8px; padding: 7px 10px; min-height: 46px; }
+.stat-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-3); }
+.stat-row b { color: var(--text-1); font-weight: 600; }
+.progress { height: 6px; border-radius: 999px; background: var(--bg-strong); overflow: hidden; }
+.progress__bar { height: 100%; border-radius: inherit; background: var(--brand); }
+.progress__bar--warn { background: var(--warning); }
+.member__foot { display: flex; gap: 4px; border-top: 1px solid var(--border); padding-top: 10px; }
+/* ============ 任务分派看板 ============ */
+.board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.col { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+.col__head { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; padding: 2px 4px; }
+.col__count { margin-left: auto; font-size: 12px; color: var(--text-3); background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 0 8px; }
+.col--todo .col__head i { width: 8px; height: 8px; border-radius: 2px; background: var(--text-3); }
+.col--doing .col__head i { width: 8px; height: 8px; border-radius: 2px; background: var(--brand); }
+.col--review .col__head i { width: 8px; height: 8px; border-radius: 2px; background: var(--warning); }
+.col--done .col__head i { width: 8px; height: 8px; border-radius: 2px; background: var(--success); }
+.task { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; transition: transform .15s, box-shadow .15s, border-color .15s; }
+.task:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+.task:has(.task-check:checked) { border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand-weak); }
+.task__check { position: absolute; top: 11px; left: 10px; accent-color: var(--brand); }
+.task__title { font-size: 13px; font-weight: 550; line-height: 1.45; padding: 0 34px 0 22px; }
+.pri { position: absolute; top: 10px; right: 10px; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 4px; }
+.pri--p0 { color: var(--danger); background: var(--danger-bg); }
+.pri--p1 { color: var(--warning); background: var(--warning-bg); }
+.pri--p2 { color: var(--brand-strong); background: var(--brand-weak); }
+.pri--p3 { color: var(--text-2); background: var(--bg-strong); }
+.task__meta { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 12px; color: var(--text-3); flex-wrap: wrap; }
+.task__meta .face { width: 18px; height: 18px; border-radius: 50%; background: var(--brand-weak); color: var(--brand-strong); display: grid; place-items: center; font-size: 10px; }
+.task__meta .due { font-family: var(--mono); font-size: 11px; }
+/* ============ 空态 / 批量操作条 ============ */
+.empty { border: 1.5px dashed var(--border-strong); border-radius: 8px; padding: 26px 12px; text-align: center; color: var(--text-3); font-size: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; margin: auto 4px; }
+.empty .ico { width: 26px; height: 26px; color: var(--border-strong); }
+.batch-bar { display: none; align-items: center; gap: 10px; background: var(--brand-weak); border: 1px solid var(--brand); border-radius: 8px; padding: 7px 14px; font-size: 13px; color: var(--brand-strong); flex-wrap: wrap; }
+.board:has(.task-check:checked) ~ .batch-bar { display: flex; }
+.batch-bar .btn { background: var(--surface); }
+.batch-bar .grow { margin-left: auto; font-size: 12px; opacity: .8; }
+/* ============ 任务交接时间线 ============ */
+.timeline { position: relative; padding: 4px 0 2px; }
+.timeline::before { content: ""; position: absolute; left: 5px; top: 8px; bottom: 8px; width: 2px; background: var(--border); }
+.tl-item { position: relative; padding: 0 0 18px 26px; }
+.tl-item:last-child { padding-bottom: 4px; }
+.tl-item::before { content: ""; position: absolute; left: 0; top: 5px; width: 8px; height: 8px; border-radius: 50%; background: var(--surface); border: 3px solid var(--brand); }
+.tl-item--ok::before { border-color: var(--success); }
+.tl-item--warn::before { border-color: var(--warning); }
+.tl-head { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.tl-time { font: 12px var(--mono); color: var(--text-3); }
+.tl-title { font-size: 13px; font-weight: 550; }
+.tl-body { font-size: 13px; color: var(--text-2); margin-top: 2px; }
+.tl-body b { font-weight: 600; color: var(--text-1); }
+.tl-note { font-size: 12px; color: var(--text-3); margin-top: 6px; background: var(--surface-2); border-radius: 6px; padding: 6px 10px; max-width: 560px; }
+/* ============ 标签页 ============ */
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); }
+.tab { border: 0; background: none; padding: 8px 12px; font-size: 13px; color: var(--text-2); cursor: pointer; border-radius: 8px 8px 0 0; position: relative; }
+.tab:hover { color: var(--text-1); background: var(--surface-2); }
+.tab.is-active { color: var(--brand-strong); font-weight: 600; }
+.tab.is-active::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 2px; background: var(--brand); border-radius: 2px; }
+.tab .num { font-size: 12px; color: var(--text-3); margin-left: 3px; }
+/* ============ 分页 ============ */
+.pager { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; color: var(--text-3); }
+.pager__info { margin-right: auto; }
+.pager button { min-width: 30px; height: 30px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); cursor: pointer; padding: 0 6px; }
+.pager button:hover:not(:disabled) { border-color: var(--brand); color: var(--brand-strong); }
+.pager button[aria-current="page"] { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
+.pager button:disabled { opacity: .45; cursor: not-allowed; }
+.pager .ellipsis { padding: 0 2px; }
+/* ============ 成员详情抽屉（:target 纯 CSS 开关，无 JS） ============ */
+.drawer-overlay { position: fixed; inset: 0; background: rgba(18,24,38,.45); opacity: 0; visibility: hidden; transition: opacity .2s, visibility .2s; z-index: 40; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(420px, 92vw); background: var(--surface); border-left: 1px solid var(--border); box-shadow: -12px 0 32px rgba(18,24,38,.16); z-index: 50; transform: translateX(100%); transition: transform .22s ease; display: flex; flex-direction: column; visibility: hidden; }
+.drawer:target { transform: none; visibility: visible; }
+.drawer:target ~ .drawer-overlay { opacity: 1; visibility: visible; }
+.drawer__head { display: flex; gap: 12px; align-items: center; padding: 16px 18px; border-bottom: 1px solid var(--border); }
+.drawer__close { margin-left: auto; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px; color: var(--text-3); border: 1px solid var(--border); font-size: 15px; }
+.drawer__close:hover { color: var(--text-1); background: var(--bg-strong); }
+.drawer__body { flex: 1; overflow-y: auto; padding: 16px 18px; display: flex; flex-direction: column; gap: 16px; }
+.drawer__foot { display: flex; gap: 10px; padding: 14px 18px; border-top: 1px solid var(--border); }
+.kv { display: grid; grid-template-columns: 88px 1fr; gap: 6px 12px; font-size: 13px; }
+.kv dt { color: var(--text-3); }
+.kv dd { color: var(--text-1); }
+.skill { display: grid; grid-template-columns: 96px 1fr 44px; align-items: center; gap: 10px; font-size: 13px; }
+.skill + .skill { margin-top: 10px; }
+.skill .pct { text-align: right; font-family: var(--mono); font-size: 12px; color: var(--text-3); }
+.mini-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.mini-table th { text-align: left; font-weight: 500; color: var(--text-3); padding: 6px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.mini-table td { padding: 7px 8px; border-bottom: 1px solid var(--border); color: var(--text-2); }
+.mini-table tr:last-child td { border-bottom: 0; }
+.mini-table td:first-child { font-family: var(--mono); color: var(--text-3); font-size: 12px; }
+.out-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-bottom: 1px dashed var(--border); }
+.out-item:last-child { border-bottom: 0; }
+.out-item .ico { margin-top: 3px; color: var(--brand); }
+.out-item h4 { font-size: 13px; font-weight: 550; }
+.out-item p { font-size: 12px; color: var(--text-3); margin-top: 1px; }
+.block-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand__logo" aria-hidden="true">协</div>
+      <div>
+        <div class="brand__name">智体协作台</div>
+        <div class="brand__desc">AgentTeam Console</div>
+      </div>
+    </div>
+    <nav class="nav" aria-label="主导航">
+      <div class="nav__group">
+        <div class="nav__title">协作</div>
+        <a class="nav__link" href="#"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.75" y="1.75" width="5" height="5" rx="1"/><rect x="9.25" y="1.75" width="5" height="5" rx="1"/><rect x="1.75" y="9.25" width="5" height="5" rx="1"/><rect x="9.25" y="9.25" width="5" height="5" rx="1"/></svg>概览仪表盘</a>
+        <a class="nav__link is-active" href="#" aria-current="page"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="6" cy="5" r="2.4"/><path d="M1.8 13.2c.5-2.4 2.2-3.8 4.2-3.8s3.7 1.4 4.2 3.8"/><circle cx="11.6" cy="5.6" r="1.9"/><path d="M11.1 9.7c1.8.2 3 1.3 3.3 3"/></svg>团队工作台</a>
+        <a class="nav__link" href="#"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="4" height="12" rx="1"/><rect x="6.5" y="2" width="4" height="8" rx="1"/><rect x="11" y="2" width="3" height="10" rx="1"/></svg>任务大厅<span class="nav__count">12</span></a>
+      </div>
+      <div class="nav__group">
+        <div class="nav__title">成员</div>
+        <a class="nav__link" href="#"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="3" width="13" height="10" rx="1.5"/><circle cx="5.5" cy="7.5" r="1.5"/><path d="M3.5 11c.4-1.3 1.2-2 2-2s1.6.7 2 2"/><path d="M9 7h3.5M9 9.5h3.5"/></svg>成员列表</a>
+        <a class="nav__link" href="#"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="4" cy="4" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="6" cy="12" r="2"/><path d="M5.8 4.9l4.4.6M5 5.8l.6 4.2M10.8 7.4l-3.4 3.6"/></svg>技能图谱</a>
+        <a class="nav__link" href="#"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 5.5h9M11.5 5.5 9.3 3.3M13.5 10.5h-9M4.5 10.5l2.2 2.2"/></svg>交接记录</a>
+      </div>
+      <div class="nav__group">
+        <div class="nav__title">分析</div>
+        <a class="nav__link" href="#"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 13.5V9M6.5 13.5V5M10.5 13.5V7.5M14 13.5V3"/></svg>成功率报表</a>
+        <a class="nav__link" href="#"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4.5h12M2 11.5h12"/><circle cx="6" cy="4.5" r="1.8"/><circle cx="11" cy="11.5" r="1.8"/></svg>负载与成本</a>
+      </div>
+      <div class="nav__group">
+        <div class="nav__title">系统</div>
+        <a class="nav__link" href="#"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 1.5H9l3 3v10H4.5z"/><path d="M6.5 8h3M6.5 10.5h3"/></svg>操作审计</a>
+      </div>
+    </nav>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <nav class="crumb" aria-label="面包屑">
+        <span>协作平台</span><i>/</i><span>团队管理</span><i>/</i><b>团队工作台</b>
+      </nav>
+      <div class="topbar__search">
+        <label class="vh" for="global-search">搜索任务、成员或指令</label>
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg>
+        <input id="global-search" type="search" placeholder="搜索任务、成员或指令…">
+        <kbd>Ctrl K</kbd>
+      </div>
+      <button class="topbar__bell" type="button" aria-label="通知，3 条未读">
+        <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8a3.8 3.8 0 0 0-3.8 3.8v2.6L2.8 10.6h10.4L11.8 8.2V5.6A3.8 3.8 0 0 0 8 1.8Z"/><path d="M6.6 12.8a1.5 1.5 0 0 0 2.8 0"/></svg>
+        <i aria-hidden="true"></i>
+      </button>
+      <button class="avatar" type="button">
+        <span class="avatar__face" aria-hidden="true">陈</span>
+        <span class="avatar__name">陈明宇 · 调度管理员</span>
+      </button>
+    </header>
+    <main class="content">
+      <div class="page-head">
+        <div>
+          <h1>团队工作台</h1>
+          <p>迭代 SP-2409 · 在线成员 5 / 8 · 待审核任务 2 项</p>
+        </div>
+        <div class="page-head__actions">
+          <button class="btn" type="button">批量指派</button>
+          <button class="btn btn--primary" type="button">+ 新建 Agent</button>
+        </div>
+      </div>
+
+      <section class="card" aria-labelledby="members-title">
+        <div class="card__head">
+          <h2 id="members-title">团队成员</h2>
+          <span class="hint">按角色定位分组展示，卡片支持悬停查看快捷操作</span>
+          <a class="more" href="#">成员列表 →</a>
+        </div>
+        <div class="card__body">
+          <div class="member-grid">
+            <article class="member">
+              <div class="member__top">
+                <div class="member__face" aria-hidden="true">墨</div>
+                <div>
+                  <div class="member__name">墨衡 <span class="chip chip--planner">PLANNER</span></div>
+                  <div class="member__id">AGT-0117</div>
+                </div>
+                <span class="st st--wait"><i aria-hidden="true"></i>等待</span>
+              </div>
+              <p class="member__task">等待「Q3 风控策略拆解」评审结论，预计 17:30 前释放</p>
+              <div class="stat-row"><span>任务成功率</span><b>92%</b></div>
+              <div class="progress" role="img" aria-label="任务成功率 92%"><div class="progress__bar" style="width:92%"></div></div>
+              <div class="member__foot">
+                <a class="link" href="#member-drawer">详情</a>
+                <a class="link" href="#">分派任务</a>
+              </div>
+            </article>
+            <article class="member">
+              <div class="member__top">
+                <div class="member__face" aria-hidden="true">青</div>
+                <div>
+                  <div class="member__name">青梧 <span class="chip chip--coder">CODER</span></div>
+                  <div class="member__id">AGT-0142</div>
+                </div>
+                <span class="st st--run"><i aria-hidden="true"></i>执行中</span>
+              </div>
+              <p class="member__task">T-2088 持仓合并计算模块 · 09-16 交付</p>
+              <div class="stat-row"><span>任务成功率</span><b>87%</b></div>
+              <div class="progress" role="img" aria-label="任务成功率 87%"><div class="progress__bar" style="width:87%"></div></div>
+              <div class="member__foot">
+                <a class="link" href="#member-drawer">详情</a>
+                <a class="link" href="#">分派任务</a>
+              </div>
+            </article>
+            <article class="member">
+              <div class="member__top">
+                <div class="member__face" aria-hidden="true">临</div>
+                <div>
+                  <div class="member__name">临川 <span class="chip chip--reviewer">REVIEWER</span></div>
+                  <div class="member__id">AGT-0129</div>
+                </div>
+                <span class="st st--idle"><i aria-hidden="true"></i>空闲</span>
+              </div>
+              <p class="member__task">暂无分配任务，可接单</p>
+              <div class="stat-row"><span>任务成功率</span><b>95%</b></div>
+              <div class="progress" role="img" aria-label="任务成功率 95%"><div class="progress__bar" style="width:95%"></div></div>
+              <div class="member__foot">
+                <a class="link" href="#member-drawer">详情</a>
+                <a class="link" href="#">分派任务</a>
+              </div>
+            </article>
+            <article class="member">
+              <div class="member__top">
+                <div class="member__face" aria-hidden="true">望</div>
+                <div>
+                  <div class="member__name">望舒 <span class="chip chip--coder">CODER</span></div>
+                  <div class="member__id">AGT-0156</div>
+                </div>
+                <span class="st st--run"><i aria-hidden="true"></i>执行中</span>
+              </div>
+              <p class="member__task">T-2079 行情推送网关限流方案 · 09-18 交付</p>
+              <div class="stat-row"><span>任务成功率</span><b>81%</b></div>
+              <div class="progress" role="img" aria-label="任务成功率 81%"><div class="progress__bar progress__bar--warn" style="width:81%"></div></div>
+              <div class="member__foot">
+                <a class="link" href="#member-drawer">详情</a>
+                <a class="link" href="#">分派任务</a>
+              </div>
+            </article>
+            <article class="member">
+              <div class="member__top">
+                <div class="member__face" aria-hidden="true">少</div>
+                <div>
+                  <div class="member__name">少微 <span class="chip chip--planner">PLANNER</span></div>
+                  <div class="member__id">AGT-0163</div>
+                </div>
+                <span class="st st--idle"><i aria-hidden="true"></i>空闲</span>
+              </div>
+              <p class="member__task">暂无分配任务，可接单</p>
+              <div class="stat-row"><span>任务成功率</span><b>94%</b></div>
+              <div class="progress" role="img" aria-label="任务成功率 94%"><div class="progress__bar" style="width:94%"></div></div>
+              <div class="member__foot">
+                <a class="link" href="#member-drawer">详情</a>
+                <a class="link" href="#">分派任务</a>
+              </div>
+            </article>
+            <article class="member">
+              <div class="member__top">
+                <div class="member__face" aria-hidden="true">天</div>
+                <div>
+                  <div class="member__name">天枢 <span class="chip chip--reviewer">REVIEWER</span></div>
+                  <div class="member__id">AGT-0138</div>
+                </div>
+                <span class="st st--wait"><i aria-hidden="true"></i>等待</span>
+              </div>
+              <p class="member__task">等待「青梧」提交清算对账脚本修复件</p>
+              <div class="stat-row"><span>任务成功率</span><b>89%</b></div>
+              <div class="progress" role="img" aria-label="任务成功率 89%"><div class="progress__bar" style="width:89%"></div></div>
+              <div class="member__foot">
+                <a class="link" href="#member-drawer">详情</a>
+                <a class="link" href="#">分派任务</a>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="board-title">
+        <div class="card__head">
+          <h2 id="board-title">任务分派看板</h2>
+          <span class="hint">勾选任务卡片可进行批量操作</span>
+          <a class="more" href="#">看板设置 →</a>
+        </div>
+        <div class="card__body">
+          <div class="board">
+            <div class="col col--todo">
+              <div class="col__head"><i aria-hidden="true"></i>待分配<span class="col__count">3</span></div>
+              <article class="task">
+                <input class="task-check" type="checkbox" id="t-2091" aria-label="选择任务 T-2091">
+                <span class="pri pri--p0">P0</span>
+                <h3 class="task__title">委托清算模块异常补偿逻辑设计</h3>
+                <div class="task__meta"><span class="tag">#清算</span><span>需 Coder</span><span class="due">09-17</span></div>
+              </article>
+              <article class="task">
+                <input class="task-check" type="checkbox" id="t-2098">
+                <span class="pri pri--p1">P1</span>
+                <h3 class="task__title">行情推送网关限流阈值压测方案</h3>
+                <div class="task__meta"><span class="tag">#网关</span><span>需 Coder</span><span class="due">09-19</span></div>
+              </article>
+              <article class="task">
+                <input class="task-check" type="checkbox" id="t-2094">
+                <span class="pri pri--p2">P2</span>
+                <h3 class="task__title">投顾话术库季度梳理与归类</h3>
+                <div class="task__meta"><span class="tag">#内容</span><span>任意角色</span><span class="due">09-24</span></div>
+              </article>
+            </div>
+            <div class="col col--doing">
+              <div class="col__head"><i aria-hidden="true"></i>执行中<span class="col__count">3</span></div>
+              <article class="task">
+                <input class="task-check" type="checkbox" id="t-2088" checked>
+                <span class="pri pri--p1">P1</span>
+                <h3 class="task__title">持仓合并计算模块开发</h3>
+                <div class="task__meta"><span class="face" aria-hidden="true">青</span>青梧<span class="due">09-16</span></div>
+              </article>
+              <article class="task">
+                <input class="task-check" type="checkbox" id="t-2085">
+                <span class="pri pri--p2">P2</span>
+                <h3 class="task__title">风控指标口径核对与差异标注</h3>
+                <div class="task__meta"><span class="face" aria-hidden="true">墨</span>墨衡<span class="due">09-15</span></div>
+              </article>
+              <article class="task">
+                <input class="task-check" type="checkbox" id="t-2079">
+                <span class="pri pri--p3">P3</span>
+                <h3 class="task__title">文档站搜索结果排序优化</h3>
+                <div class="task__meta"><span class="face" aria-hidden="true">望</span>望舒<span class="due">09-18</span></div>
+              </article>
+            </div>
+            <div class="col col--review">
+              <div class="col__head"><i aria-hidden="true"></i>待审核<span class="col__count">2</span></div>
+              <article class="task">
+                <input class="task-check" type="checkbox" id="t-2076">
+                <span class="pri pri--p1">P1</span>
+                <h3 class="task__title">清算对账脚本重构</h3>
+                <div class="task__meta"><span class="face" aria-hidden="true">青</span>青梧 → 天枢<span class="badge badge--processing">验收中</span></div>
+              </article>
+              <article class="task">
+                <input class="task-check" type="checkbox" id="t-2071">
+                <span class="pri pri--p2">P2</span>
+                <h3 class="task__title">客户端埋点 SDK 升级 2.4.0</h3>
+                <div class="task__meta"><span class="face" aria-hidden="true">望</span>望舒 → 临川<span class="due">09-15</span></div>
+              </article>
+            </div>
+            <div class="col col--done">
+              <div class="col__head"><i aria-hidden="true"></i>完成<span class="col__count">0</span></div>
+              <div class="empty">
+                <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.75" y="1.75" width="5" height="5" rx="1"/><rect x="9.25" y="1.75" width="5" height="5" rx="1"/><rect x="1.75" y="9.25" width="5" height="5" rx="1"/><rect x="9.25" y="9.25" width="5" height="5" rx="1"/></svg>
+                <p>暂无已完成任务<br>评审通过的任务将在每日 18:00 自动归档</p>
+              </div>
+            </div>
+          </div>
+          <div class="batch-bar" role="toolbar" aria-label="批量操作">
+            <strong>已选择任务</strong>
+            <button class="btn btn--sm" type="button">批量指派</button>
+            <button class="btn btn--sm" type="button">移至待审核</button>
+            <button class="btn btn--sm btn--danger" type="button">归档</button>
+            <span class="grow">勾选看板卡片后出现，支持跨列批量操作</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="timeline-title">
+        <div class="card__head">
+          <h2 id="timeline-title">任务交接时间线</h2>
+          <span class="hint">记录成员之间的任务流转与评审往来</span>
+        </div>
+        <div class="card__body" data-tabs>
+          <div class="tabs" role="tablist" aria-label="交接记录筛选">
+            <button class="tab is-active" type="button" role="tab" aria-selected="true" data-tab data-target="tl-all">全部<span class="num">47</span></button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-tab data-target="tl-week">最近 7 天<span class="num">12</span></button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-tab data-target="tl-mine">待我确认<span class="num">2</span></button>
+          </div>
+          <div id="tl-all" role="tabpanel" data-panel>
+            <ol class="timeline" style="padding-top:14px">
+              <li class="tl-item">
+                <div class="tl-head"><span class="tl-time">09-14 16:20</span><span class="tl-title">墨衡 → 青梧</span><span class="badge badge--success">交接成功</span></div>
+                <p class="tl-body">「持仓合并计算模块」完成拆解并交接给 <b>青梧</b> 开发</p>
+                <p class="tl-note">附言：接口契约已冻结，注意大额持仓分批合并的幂等处理。</p>
+              </li>
+              <li class="tl-item">
+                <div class="tl-head"><span class="tl-time">09-14 11:05</span><span class="tl-title">望舒 → 临川</span><span class="badge badge--processing">待确认</span></div>
+                <p class="tl-body">「行情推送网关重构」提请 <b>临川</b> 评审，含压测数据附件</p>
+                <p class="tl-note">等待评审人确认受理，超时 24 小时将自动升级提醒。</p>
+              </li>
+              <li class="tl-item tl-item--warn">
+                <div class="tl-head"><span class="tl-time">09-13 18:40</span><span class="tl-title">天枢退回 → 青梧</span><span class="badge badge--warning">已退回</span></div>
+                <p class="tl-body">「清算对账脚本」评审未通过，退回 <b>青梧</b> 修改</p>
+                <p class="tl-note">退回原因：边界用例缺失，请补充零持仓与负持仓场景。</p>
+              </li>
+              <li class="tl-item tl-item--ok">
+                <div class="tl-head"><span class="tl-time">09-13 10:12</span><span class="tl-title">少微创建</span><span class="badge badge--success">已指派</span></div>
+                <p class="tl-body">创建任务「Q4 投顾话术库梳理」并指派给 <b>墨衡</b> 排期</p>
+              </li>
+            </ol>
+            <nav class="pager" aria-label="交接记录分页" style="margin-top:10px">
+              <span class="pager__info">共 47 条记录 · 每页 10 条</span>
+              <button type="button" disabled>上一页</button>
+              <button type="button" aria-current="page">1</button>
+              <button type="button">2</button>
+              <button type="button">3</button>
+              <span class="ellipsis" aria-hidden="true">…</span>
+              <button type="button">5</button>
+              <button type="button">下一页</button>
+            </nav>
+          </div>
+          <div id="tl-week" role="tabpanel" data-panel hidden>
+            <ol class="timeline" style="padding-top:14px">
+              <li class="tl-item">
+                <div class="tl-head"><span class="tl-time">09-14 16:20</span><span class="tl-title">墨衡 → 青梧</span><span class="badge badge--success">交接成功</span></div>
+                <p class="tl-body">「持仓合并计算模块」完成拆解并交接给 <b>青梧</b> 开发</p>
+              </li>
+              <li class="tl-item tl-item--warn">
+                <div class="tl-head"><span class="tl-time">09-13 18:40</span><span class="tl-title">天枢退回 → 青梧</span><span class="badge badge--warning">已退回</span></div>
+                <p class="tl-body">「清算对账脚本」评审未通过，退回 <b>青梧</b> 修改</p>
+              </li>
+            </ol>
+          </div>
+          <div id="tl-mine" role="tabpanel" data-panel hidden>
+            <div class="empty" style="margin:24px auto">
+              <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 1.5H9l3 3v10H4.5z"/><path d="M6.5 8h3M6.5 10.5h3"/></svg>
+              <p>暂无待你确认的交接<br>有新评审请求时会通过顶栏通知提醒</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<aside class="drawer" id="member-drawer" aria-label="成员详情抽屉">
+  <div class="drawer__head">
+    <div class="member__face" aria-hidden="true">青</div>
+    <div>
+      <div class="member__name">青梧 <span class="chip chip--coder">CODER</span></div>
+      <div class="member__id">AGT-0142 · <span class="st st--run" style="margin-left:4px"><i aria-hidden="true"></i>执行中</span></div>
+    </div>
+    <a class="drawer__close" href="#members-title" aria-label="关闭抽屉">×</a>
+  </div>
+  <div class="drawer__body">
+    <dl class="kv">
+      <dt>成员编号</dt><dd>AGT-0142</dd>
+      <dt>负责人类别</dt><dd>Coder（编码实现）</dd>
+      <dt>创建时间</dt><dd>2024-06-12</dd>
+      <dt>累计任务</dt><dd>342 个 · 成功率 87%</dd>
+    </dl>
+    <div data-tabs>
+      <div class="tabs" role="tablist" aria-label="成员详情标签页">
+        <button class="tab is-active" type="button" role="tab" aria-selected="true" data-tab data-target="panel-skill">技能标签</button>
+        <button class="tab" type="button" role="tab" aria-selected="false" data-tab data-target="panel-output">近期产出</button>
+        <button class="tab" type="button" role="tab" aria-selected="false" data-tab data-target="panel-collab">协作记录</button>
+      </div>
+      <div id="panel-skill" role="tabpanel" data-panel style="padding-top:14px">
+        <div class="skill"><span>Python</span><div class="progress"><div class="progress__bar" style="width:95%"></div></div><span class="pct">95%</span></div>
+        <div class="skill"><span>低延迟网络</span><div class="progress"><div class="progress__bar" style="width:88%"></div></div><span class="pct">88%</span></div>
+        <div class="skill"><span>单元测试</span><div class="progress"><div class="progress__bar" style="width:86%"></div></div><span class="pct">86%</span></div>
+        <div class="skill"><span>TypeScript</span><div class="progress"><div class="progress__bar" style="width:80%"></div></div><span class="pct">80%</span></div>
+        <div class="skill"><span>PostgreSQL</span><div class="progress"><div class="progress__bar" style="width:74%"></div></div><span class="pct">74%</span></div>
+        <div class="skill"><span>K8s 运维</span><div class="progress"><div class="progress__bar progress__bar--warn" style="width:62%"></div></div><span class="pct">62%</span></div>
+      </div>
+      <div id="panel-output" role="tabpanel" data-panel hidden style="padding-top:14px">
+        <div class="out-item">
+          <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 13.5V9M6.5 13.5V5M10.5 13.5V7.5M14 13.5V3"/></svg>
+          <div><h4>PR #1042 委托清算模块单测补全</h4><p>+382 −41 · 已合入主干 · 09-13</p></div>
+        </div>
+        <div class="out-item">
+          <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 1.5H9l3 3v10H4.5z"/><path d="M6.5 8h3M6.5 10.5h3"/></svg>
+          <div><h4>《行情推送网关限流方案》设计文档</h4><p>评审中 · 09-12 提交</p></div>
+        </div>
+        <div class="out-item">
+          <svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.75" y="1.75" width="5" height="5" rx="1"/><rect x="9.25" y="1.75" width="5" height="5" rx="1"/><rect x="1.75" y="9.25" width="5" height="5" rx="1"/><rect x="9.25" y="9.25" width="5" height="5" rx="1"/></svg>
+          <div><h4>sync_position.py 持仓同步脚本重构</h4><p>已部署生产 · 耗时降低 37%</p></div>
+        </div>
+      </div>
+      <div id="panel-collab" role="tabpanel" data-panel hidden style="padding-top:10px">
+        <table class="mini-table">
+          <caption class="vh">青梧的近期协作记录</caption>
+          <thead><tr><th scope="col">时间</th><th scope="col">协作对象</th><th scope="col">动作</th><th scope="col">结果</th></tr></thead>
+          <tbody>
+            <tr><td>09-14 16:20</td><td>墨衡</td><td>接收交接</td><td><span class="badge badge--success">成功</span></td></tr>
+            <tr><td>09-13 18:40</td><td>天枢</td><td>评审退回</td><td><span class="badge badge--warning">已退回</span></td></tr>
+            <tr><td>09-12 09:15</td><td>望舒</td><td>结对调试</td><td><span class="badge badge--processing">进行中</span></td></tr>
+            <tr><td>09-10 14:02</td><td>少微</td><td>需求澄清</td><td><span class="badge badge--success">成功</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="drawer__foot">
+    <button class="btn btn--primary" type="button">指派任务</button>
+    <button class="btn" type="button">查看完整档案</button>
+  </div>
+</aside>
+<div class="drawer-overlay" aria-hidden="true"></div>
+
+<script>
+  /* 标签切换：[data-tabs] 作用域内，按钮 data-target 指向面板 id（原生 JS，无依赖） */
+  document.querySelectorAll('[data-tab]').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var scope = tab.closest('[data-tabs]');
+      scope.querySelectorAll('[data-tab]').forEach(function (t) {
+        var on = t === tab;
+        t.classList.toggle('is-active', on);
+        t.setAttribute('aria-selected', on);
+      });
+      scope.querySelectorAll('[data-panel]').forEach(function (p) {
+        p.hidden = p.id !== tab.getAttribute('data-target');
+      });
+    });
+  });
+</script>
+</body>
+</html>

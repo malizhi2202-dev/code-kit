@@ -1,0 +1,686 @@
+<!-- 用途：调度任务系统页面模板 | 所属：code-kit ui-samples/systems | 用法：2a UI-DESIGN 阶段按系统类型挑选基线，复制改造 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>调度任务系统 · 磐石运维平台</title>
+<style>
+/* ===== 设计令牌：oklch 优先，hex 兜底 ===== */
+:root {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --border: #e3e6eb;
+  --border-strong: #c8ced8;
+  --text-1: #1b2233;
+  --text-2: #49505f;
+  --text-3: #5c6575;
+  --brand: #2563eb;
+  --brand-deep: #1d4ed8;
+  --brand-weak: #e9f0fd;
+  --ok: #157347;
+  --ok-bg: #e6f4ea;
+  --warn: #8a5410;
+  --warn-bg: #f9efd9;
+  --danger: #b42323;
+  --danger-bg: #fbe8e8;
+  --radius: 8px;
+  --shadow: 0 1px 2px rgba(27, 34, 51, 0.06);
+  --mono: ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace;
+}
+@supports (color: oklch(0 0 0)) {
+  :root {
+    --bg: oklch(96.9% 0.004 250);
+    --surface: oklch(100% 0 0);
+    --border: oklch(91.9% 0.006 250);
+    --border-strong: oklch(81.5% 0.012 250);
+    --text-1: oklch(24% 0.022 262);
+    --text-2: oklch(43% 0.02 262);
+    --text-3: oklch(51% 0.018 262);
+    --brand: oklch(54.6% 0.215 262.9);
+    --brand-deep: oklch(48.8% 0.203 265.8);
+    --brand-weak: oklch(95.2% 0.024 255);
+    --ok: oklch(47% 0.12 156);
+    --ok-bg: oklch(95.5% 0.028 156);
+    --warn: oklch(48% 0.09 75);
+    --warn-bg: oklch(96% 0.032 85);
+    --danger: oklch(49% 0.18 27);
+    --danger-bg: oklch(95.5% 0.03 25);
+  }
+}
+
+/* ===== 基础 ===== */
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0;
+  font: 14px/1.65 system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  color: var(--text-1);
+  background: var(--bg);
+}
+a { color: var(--brand); text-decoration: none; }
+a:hover { text-decoration: underline; }
+button { font: inherit; }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.vh {
+  position: absolute; width: 1px; height: 1px; margin: -1px;
+  clip-path: inset(50%); overflow: hidden; white-space: nowrap;
+}
+
+/* ===== 三段式布局 ===== */
+.layout { display: grid; grid-template-columns: 222px minmax(0, 1fr); min-height: 100vh; }
+.frame { display: flex; flex-direction: column; min-width: 0; }
+
+/* ===== 侧边导航 ===== */
+.sidebar {
+  background: var(--surface); border-right: 1px solid var(--border);
+  padding: 16px 12px; position: sticky; top: 0; align-self: start;
+  height: 100vh; overflow-y: auto;
+}
+.logo { display: flex; align-items: center; gap: 10px; padding: 2px 8px 16px; }
+.logo-mark {
+  width: 34px; height: 34px; border-radius: 9px; flex: none;
+  background: var(--brand); color: #fff;
+  display: grid; place-items: center; font-weight: 700; font-size: 16px;
+}
+.logo-text strong { display: block; font-size: 14px; }
+.logo-text span { font-size: 10.5px; color: var(--text-3); letter-spacing: 0.6px; }
+.nav-group { margin-bottom: 18px; }
+.nav-title { margin: 0 8px 6px; font-size: 11px; color: var(--text-3); letter-spacing: 2px; }
+.nav-item {
+  display: block; padding: 7px 10px; margin: 1px 0;
+  border-radius: 6px; color: var(--text-2); font-size: 13.5px;
+}
+.nav-item:hover { background: var(--bg); color: var(--text-1); text-decoration: none; }
+.nav-item.is-active { background: var(--brand-weak); color: var(--brand-deep); font-weight: 600; }
+
+/* ===== 顶栏 ===== */
+.topbar {
+  display: flex; align-items: center; gap: 16px; height: 56px; padding: 0 24px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 10;
+}
+.crumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-3); min-width: 0; overflow: hidden; }
+.crumb a { color: var(--text-3); white-space: nowrap; }
+.crumb a:hover { color: var(--brand); }
+.crumb em { font-style: normal; color: var(--text-1); font-weight: 600; white-space: nowrap; }
+.top-actions { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.search { position: relative; }
+.search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-3); pointer-events: none; }
+.search input {
+  width: 236px; height: 34px; padding: 0 12px 0 32px;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: var(--bg); font: inherit; color: var(--text-1);
+}
+.search input:hover { border-color: var(--border-strong); }
+.bell {
+  position: relative; width: 34px; height: 34px; display: grid; place-items: center;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface); color: var(--text-2); cursor: pointer;
+}
+.bell:hover { border-color: var(--border-strong); color: var(--text-1); }
+.bell-dot {
+  position: absolute; top: -6px; right: -7px; min-width: 17px; height: 17px; padding: 0 4px;
+  background: var(--danger); color: #fff; border-radius: 999px;
+  font-size: 10px; line-height: 17px; text-align: center;
+}
+.avatar {
+  width: 34px; height: 34px; border-radius: 50%; border: 1px solid transparent; cursor: pointer;
+  background: var(--brand-weak); color: var(--brand-deep);
+  display: grid; place-items: center; font-weight: 600;
+}
+.avatar:hover { border-color: var(--brand); }
+
+/* ===== 内容区与按钮 ===== */
+.main { padding: 20px 24px 44px; display: flex; flex-direction: column; gap: 16px; }
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.page-head h1 { margin: 0; font-size: 20px; }
+.page-desc { margin: 4px 0 0; color: var(--text-3); font-size: 13px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px;
+  border: 1px solid var(--border-strong); border-radius: 8px;
+  background: var(--surface); color: var(--text-1); font-size: 13px; cursor: pointer;
+}
+.btn:hover { border-color: var(--text-3); background: var(--bg); }
+.btn-primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.btn-primary:hover { background: var(--brand-deep); border-color: var(--brand-deep); }
+.btn-sm { height: 28px; padding: 0 10px; font-size: 12px; }
+.btn-link { border: 0; background: none; color: var(--brand); padding: 2px 4px; height: auto; cursor: pointer; font-size: 13px; }
+.btn-link:hover { text-decoration: underline; }
+.btn-link.danger { color: var(--danger); }
+
+/* ===== 概览统计 ===== */
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.stat { padding: 14px 16px; }
+.stat-label { margin: 0; font-size: 12px; color: var(--text-3); }
+.stat-value { margin: 2px 0 0; font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat-foot { margin: 2px 0 0; font-size: 12px; color: var(--text-3); }
+.stat-foot .up { color: var(--ok); }
+.stat-foot .down { color: var(--danger); }
+
+/* ===== 标签页 ===== */
+.tabs { display: flex; flex-direction: column; }
+.tablist { display: flex; gap: 2px; padding: 0 6px; border-bottom: 1px solid var(--border); overflow-x: auto; }
+.tab {
+  appearance: none; border: 0; background: none; padding: 10px 14px;
+  font-size: 13.5px; color: var(--text-2); cursor: pointer; position: relative; white-space: nowrap;
+}
+.tab:hover { color: var(--text-1); }
+.tab[aria-selected="true"] { color: var(--brand-deep); font-weight: 600; }
+.tab[aria-selected="true"]::after {
+  content: ""; position: absolute; left: 12px; right: 12px; bottom: -1px;
+  height: 2px; background: var(--brand); border-radius: 2px;
+}
+.panel { padding: 16px 0 0; display: flex; flex-direction: column; gap: 12px; }
+
+/* ===== 工具条 ===== */
+.toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.inline-field { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-2); }
+.inline-field select, .inline-field input {
+  height: 32px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: 6px;
+  background: var(--surface); color: var(--text-1); font: inherit;
+}
+.toolbar-total { font-size: 12px; color: var(--text-3); margin-left: auto; }
+
+/* ===== 表格（横向滚动兜底） ===== */
+.table-wrap {
+  overflow-x: auto; border: 1px solid var(--border);
+  border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow);
+}
+table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 960px; }
+thead th {
+  text-align: left; font-weight: 600; color: var(--text-3); font-size: 12px;
+  padding: 10px 12px; background: var(--bg); border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+tbody td { padding: 11px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover td { background: rgba(37, 99, 235, 0.035); }
+td.num { font-variant-numeric: tabular-nums; }
+.cell-main { font-weight: 600; }
+.cell-sub { display: block; font-size: 12px; color: var(--text-3); font-weight: 400; }
+.mono { font-family: var(--mono); font-size: 12px; }
+.nowrap { white-space: nowrap; }
+
+/* ===== 状态徽章 ===== */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 9px;
+  border-radius: 999px; font-size: 12px; line-height: 1; border: 1px solid transparent; white-space: nowrap;
+}
+.badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
+.badge-plain::before { display: none; }
+.badge-ok { background: var(--ok-bg); color: var(--ok); }
+.badge-run { background: var(--brand-weak); color: var(--brand-deep); }
+.badge-warn { background: var(--warn-bg); color: var(--warn); }
+.badge-danger { background: var(--danger-bg); color: var(--danger); }
+.badge-muted { background: var(--bg); color: var(--text-3); border-color: var(--border); }
+
+/* ===== 进度条 ===== */
+.progress { display: flex; align-items: center; gap: 8px; min-width: 150px; }
+.progress-track { flex: 1; height: 6px; border-radius: 999px; background: var(--bg); border: 1px solid var(--border); overflow: hidden; }
+.progress-bar { height: 100%; border-radius: 999px; background: var(--brand); }
+.progress-bar.ok { background: var(--ok); }
+.progress-bar.danger { background: var(--danger); }
+.progress-num { font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums; width: 40px; text-align: right; }
+
+/* ===== 批量操作与分页 ===== */
+.batch-bar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 12px;
+  border-radius: var(--radius); background: var(--brand-weak);
+  border: 1px solid rgba(37, 99, 235, 0.25); font-size: 13px;
+}
+.batch-count { color: var(--text-2); margin-right: 4px; }
+.batch-count strong { color: var(--brand-deep); }
+.pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.pager-total { font-size: 12px; color: var(--text-3); }
+.pager-btns { display: flex; gap: 6px; align-items: center; }
+.page-btn {
+  min-width: 30px; height: 30px; padding: 0 8px; border: 1px solid var(--border);
+  border-radius: 6px; background: var(--surface); color: var(--text-2); font-size: 13px; cursor: pointer;
+}
+.page-btn:hover:not(:disabled):not(.is-current) { border-color: var(--brand); color: var(--brand); }
+.page-btn.is-current { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
+.page-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ===== 表单 ===== */
+.form-card { padding: 20px; max-width: 660px; }
+.form-title { margin: 0 0 4px; font-size: 15px; }
+.form-desc { margin: 0 0 16px; color: var(--text-3); font-size: 12.5px; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field.wide { grid-column: 1 / -1; }
+.field label { font-size: 13px; color: var(--text-2); }
+.field .hint { font-size: 12px; color: var(--text-3); }
+.field input, .field select, .field textarea {
+  height: 34px; padding: 0 10px; border: 1px solid var(--border-strong);
+  border-radius: 6px; background: var(--surface); color: var(--text-1); font: inherit;
+}
+.field textarea { height: auto; padding: 8px 10px; resize: vertical; }
+.check-row { display: flex; flex-wrap: wrap; gap: 14px; padding-top: 4px; }
+.check-item { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-2); }
+.form-actions { display: flex; gap: 10px; margin-top: 18px; }
+
+/* ===== 实时执行卡片 ===== */
+.live-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.run-card { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.run-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.run-name { font-weight: 600; }
+.run-meta { font-size: 12px; color: var(--text-3); }
+.run-foot { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-3); }
+.log {
+  background: #111827; color: #d5dde8; border-radius: 6px; padding: 10px 12px;
+  font-family: var(--mono); font-size: 12px; line-height: 1.75;
+}
+.log .lv-info { color: #8ab4f8; }
+.log .lv-warn { color: #f5c26b; }
+
+/* ===== 空态 ===== */
+.empty {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 34px 16px; text-align: center;
+  border: 1px dashed var(--border-strong); border-radius: var(--radius); background: var(--surface);
+}
+.empty-icon { width: 44px; height: 44px; border-radius: 50%; background: var(--bg); color: var(--text-3); display: grid; place-items: center; font-size: 18px; }
+.empty-title { margin: 4px 0 0; color: var(--text-1); font-weight: 600; font-size: 14px; }
+.empty p { margin: 0; color: var(--text-3); font-size: 13px; }
+
+/* ===== 响应式兜底 ===== */
+@media (max-width: 960px) {
+  .layout { grid-template-columns: 60px minmax(0, 1fr); }
+  .logo-text, .nav-title { display: none; }
+  .nav-item { text-align: center; padding: 8px 2px; }
+  .stats, .live-grid, .form-grid { grid-template-columns: 1fr; }
+  .search input { width: 140px; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="logo">
+      <span class="logo-mark" aria-hidden="true">磐</span>
+      <div class="logo-text"><strong>磐石运维平台</strong><span>JOB SCHEDULER</span></div>
+    </div>
+    <nav aria-label="主导航">
+      <div class="nav-group">
+        <p class="nav-title">调度管理</p>
+        <a class="nav-item is-active" href="#" aria-current="page">任务列表</a>
+        <a class="nav-item" href="#">执行历史</a>
+        <a class="nav-item" href="#">失败重试策略</a>
+        <a class="nav-item" href="#">执行器集群</a>
+      </div>
+      <div class="nav-group">
+        <p class="nav-title">监控</p>
+        <a class="nav-item" href="#">实时执行监控</a>
+        <a class="nav-item" href="#">任务告警规则</a>
+      </div>
+      <div class="nav-group">
+        <p class="nav-title">系统</p>
+        <a class="nav-item" href="#">操作审计</a>
+        <a class="nav-item" href="#">系统设置</a>
+      </div>
+    </nav>
+  </aside>
+
+  <div class="frame">
+    <header class="topbar">
+      <nav class="crumb" aria-label="面包屑">
+        <a href="#">运维平台</a><span>/</span><a href="#">调度中心</a><span>/</span><em aria-current="page">任务列表</em>
+      </nav>
+      <div class="top-actions">
+        <div class="search">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="m10.5 10.5 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <label class="vh" for="top-search">搜索任务</label>
+          <input id="top-search" type="search" placeholder="搜索任务名称 / Cron 表达式">
+        </div>
+        <button class="bell" type="button" aria-label="通知：3 条未读">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.8a3.7 3.7 0 0 0-3.7 3.7v2.4L3 11h10l-1.3-3.1V5.5A3.7 3.7 0 0 0 8 1.8Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M6.6 13.2a1.4 1.4 0 0 0 2.8 0" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          <span class="bell-dot" aria-hidden="true">3</span>
+        </button>
+        <button class="avatar" type="button" aria-label="账户菜单：陈明宇">陈</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <div class="page-head">
+        <div>
+          <h1>调度任务</h1>
+          <p class="page-desc">统一管理定时任务的调度、执行历史与失败重试策略 · 当前集群：华东-1 · 执行器 6 / 6 在线</p>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn" type="button">导入任务</button>
+          <button class="btn btn-primary" type="button">新建任务</button>
+        </div>
+      </div>
+
+      <section class="stats" aria-label="今日调度概览">
+        <div class="stat card"><p class="stat-label">运行中任务</p><p class="stat-value">3</p><p class="stat-foot">较昨日 <span class="up">+1</span></p></div>
+        <div class="stat card"><p class="stat-label">今日执行</p><p class="stat-value">246</p><p class="stat-foot">批次 · 成功率 97.9%</p></div>
+        <div class="stat card"><p class="stat-label">今日失败 / 超时</p><p class="stat-value">5 / 2</p><p class="stat-foot"><span class="down">失败 5 起</span>，已自动重试 3 起</p></div>
+        <div class="stat card"><p class="stat-label">平均耗时</p><p class="stat-value">42s</p><p class="stat-foot">P95 耗时 4分12秒</p></div>
+      </section>
+
+      <div class="tabs" data-tabs>
+        <div class="tablist" role="tablist" aria-label="调度任务视图">
+          <button class="tab" role="tab" id="tab-jobs" aria-controls="panel-jobs" aria-selected="true" type="button">任务列表</button>
+          <button class="tab" role="tab" id="tab-history" aria-controls="panel-history" aria-selected="false" tabindex="-1" type="button">执行历史</button>
+          <button class="tab" role="tab" id="tab-retry" aria-controls="panel-retry" aria-selected="false" tabindex="-1" type="button">失败重试策略</button>
+          <button class="tab" role="tab" id="tab-live" aria-controls="panel-live" aria-selected="false" tabindex="-1" type="button">实时执行</button>
+        </div>
+
+        <section class="panel" id="panel-jobs" role="tabpanel" aria-labelledby="tab-jobs">
+          <div class="toolbar">
+            <div class="inline-field">
+              <label for="f-group">任务组</label>
+              <select id="f-group"><option>全部任务组</option><option>数据备份</option><option>数据同步</option><option>报表计算</option></select>
+            </div>
+            <div class="inline-field">
+              <label for="f-state">状态</label>
+              <select id="f-state"><option>全部状态</option><option>运行中</option><option>已暂停</option></select>
+            </div>
+            <button class="btn btn-sm" type="button">查询</button>
+            <span class="toolbar-total">共 42 个任务 · 当前显示 6 个</span>
+          </div>
+          <div class="batch-bar" role="toolbar" aria-label="批量操作">
+            <span class="batch-count">已选 <strong>2</strong> 项</span>
+            <button class="btn btn-sm" type="button">批量暂停</button>
+            <button class="btn btn-sm" type="button">批量启用</button>
+            <button class="btn btn-sm" type="button" style="color:var(--danger)">批量删除</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <caption class="vh">调度任务列表</caption>
+              <thead>
+                <tr>
+                  <th scope="col" style="width:36px"><input type="checkbox" aria-label="全选本页任务"></th>
+                  <th scope="col">任务名</th>
+                  <th scope="col">Cron 表达式</th>
+                  <th scope="col">下次执行时间</th>
+                  <th scope="col">上次结果</th>
+                  <th scope="col">耗时</th>
+                  <th scope="col">状态</th>
+                  <th scope="col">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><input type="checkbox" checked aria-label="选择「订单库全量备份」"></td>
+                  <td><span class="cell-main">订单库全量备份</span><span class="cell-sub mono">order-db-full-backup</span></td>
+                  <td class="mono nowrap">0 30 2 * * ?</td>
+                  <td class="nowrap">2025-06-19 02:30:00</td>
+                  <td><span class="badge badge-ok">成功</span></td>
+                  <td class="num nowrap">4分12秒</td>
+                  <td><span class="badge badge-run">运行中</span></td>
+                  <td class="nowrap"><button class="btn-link" type="button">立即执行</button><button class="btn-link" type="button">暂停</button><button class="btn-link" type="button">日志</button></td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox" checked aria-label="选择「用户行为日志归档」"></td>
+                  <td><span class="cell-main">用户行为日志归档</span><span class="cell-sub mono">user-behavior-log-archive</span></td>
+                  <td class="mono nowrap">0 */15 * * * ?</td>
+                  <td class="nowrap">2025-06-18 16:45:00</td>
+                  <td><span class="badge badge-danger">失败</span></td>
+                  <td class="num nowrap">38 秒</td>
+                  <td><span class="badge badge-run">运行中</span></td>
+                  <td class="nowrap"><button class="btn-link" type="button">立即执行</button><button class="btn-link" type="button">暂停</button><button class="btn-link" type="button">日志</button></td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox" aria-label="选择「风控指标计算」"></td>
+                  <td><span class="cell-main">风控指标离线计算</span><span class="cell-sub mono">risk-metrics-batch</span></td>
+                  <td class="mono nowrap">0 0 8 * * ?</td>
+                  <td class="nowrap">2025-06-19 08:00:00</td>
+                  <td><span class="badge badge-warn">超时</span></td>
+                  <td class="num nowrap">10分00秒</td>
+                  <td><span class="badge badge-muted">已暂停</span></td>
+                  <td class="nowrap"><button class="btn-link" type="button">立即执行</button><button class="btn-link" type="button">启用</button><button class="btn-link" type="button">日志</button></td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox" aria-label="选择「商户对账单拉取」"></td>
+                  <td><span class="cell-main">商户对账单拉取</span><span class="cell-sub mono">merchant-statement-fetch</span></td>
+                  <td class="mono nowrap">0 0 6 * * ?</td>
+                  <td class="nowrap">2025-06-19 06:00:00</td>
+                  <td><span class="badge badge-ok">成功</span></td>
+                  <td class="num nowrap">1分48秒</td>
+                  <td><span class="badge badge-ok">已启用</span></td>
+                  <td class="nowrap"><button class="btn-link" type="button">立即执行</button><button class="btn-link" type="button">暂停</button><button class="btn-link" type="button">日志</button></td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox" aria-label="选择「临时数据清理」"></td>
+                  <td><span class="cell-main">临时表数据清理</span><span class="cell-sub mono">tmp-table-cleaner</span></td>
+                  <td class="mono nowrap">0 0 3 * * 0</td>
+                  <td class="nowrap">2025-06-22 03:00:00</td>
+                  <td><span class="badge badge-ok">成功</span></td>
+                  <td class="num nowrap">26 秒</td>
+                  <td><span class="badge badge-ok">已启用</span></td>
+                  <td class="nowrap"><button class="btn-link" type="button">立即执行</button><button class="btn-link" type="button">暂停</button><button class="btn-link" type="button">日志</button></td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox" aria-label="选择「搜索索引重建」"></td>
+                  <td><span class="cell-main">搜索索引增量重建</span><span class="cell-sub mono">search-index-rebuild</span></td>
+                  <td class="mono nowrap">0 40 1 * * ?</td>
+                  <td class="nowrap">2025-06-19 01:40:00</td>
+                  <td><span class="badge badge-danger">失败</span></td>
+                  <td class="num nowrap">2分31秒</td>
+                  <td><span class="badge badge-muted">已暂停</span></td>
+                  <td class="nowrap"><button class="btn-link" type="button">立即执行</button><button class="btn-link" type="button">启用</button><button class="btn-link" type="button">日志</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <nav class="pager" aria-label="任务分页">
+            <span class="pager-total">共 42 条 · 每页 10 条</span>
+            <div class="pager-btns">
+              <button class="page-btn" type="button">上一页</button>
+              <button class="page-btn" type="button">1</button>
+              <button class="page-btn is-current" type="button" aria-current="page">2</button>
+              <button class="page-btn" type="button">3</button>
+              <span class="pager-total" aria-hidden="true">…</span>
+              <button class="page-btn" type="button">5</button>
+              <button class="page-btn" type="button">下一页</button>
+            </div>
+          </nav>
+        </section>
+
+        <section class="panel" id="panel-history" role="tabpanel" aria-labelledby="tab-history" hidden>
+          <div class="toolbar">
+            <div class="inline-field">
+              <label for="f-trigger">触发方式</label>
+              <select id="f-trigger"><option>全部</option><option>定时触发</option><option>手动触发</option><option>失败补跑</option></select>
+            </div>
+            <div class="inline-field">
+              <label for="f-result">结果</label>
+              <select id="f-result"><option>全部</option><option>成功</option><option>失败</option><option>超时</option></select>
+            </div>
+            <button class="btn btn-sm" type="button">查询</button>
+            <span class="toolbar-total">近 7 天共 1,732 个批次</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <caption class="vh">执行历史批次列表</caption>
+              <thead>
+                <tr>
+                  <th scope="col">批次号</th>
+                  <th scope="col">任务名</th>
+                  <th scope="col">开始时间</th>
+                  <th scope="col">结束时间</th>
+                  <th scope="col">触发方式</th>
+                  <th scope="col" style="min-width:180px">进度</th>
+                  <th scope="col">结果</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="mono">BATCH-0618-0413</td>
+                  <td class="cell-main">订单库全量备份</td>
+                  <td class="nowrap">06-18 02:30:00</td>
+                  <td class="nowrap">06-18 02:34:12</td>
+                  <td><span class="badge badge-muted badge-plain">定时</span></td>
+                  <td><div class="progress" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" aria-label="批次进度"><div class="progress-track"><div class="progress-bar ok" style="width:100%"></div></div><span class="progress-num">100%</span></div></td>
+                  <td><span class="badge badge-ok">成功</span></td>
+                </tr>
+                <tr>
+                  <td class="mono">BATCH-0618-0402</td>
+                  <td class="cell-main">用户行为日志归档</td>
+                  <td class="nowrap">06-18 14:15:00</td>
+                  <td class="nowrap">06-18 14:15:38</td>
+                  <td><span class="badge badge-run badge-plain">手动</span></td>
+                  <td><div class="progress" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" aria-label="批次进度"><div class="progress-track"><div class="progress-bar ok" style="width:100%"></div></div><span class="progress-num">100%</span></div></td>
+                  <td><span class="badge badge-ok">成功</span></td>
+                </tr>
+                <tr>
+                  <td class="mono">BATCH-0618-0399</td>
+                  <td class="cell-main">风控指标离线计算</td>
+                  <td class="nowrap">06-18 08:00:00</td>
+                  <td class="nowrap">06-18 08:10:00</td>
+                  <td><span class="badge badge-muted badge-plain">定时</span></td>
+                  <td><div class="progress" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" aria-label="批次进度"><div class="progress-track"><div class="progress-bar danger" style="width:100%"></div></div><span class="progress-num">100%</span></div></td>
+                  <td><span class="badge badge-warn">超时（重试 2/3）</span></td>
+                </tr>
+                <tr>
+                  <td class="mono">BATCH-0617-0388</td>
+                  <td class="cell-main">商户对账单拉取</td>
+                  <td class="nowrap">06-17 06:00:00</td>
+                  <td class="nowrap">06-17 06:01:48</td>
+                  <td><span class="badge badge-warn badge-plain">补跑</span></td>
+                  <td><div class="progress" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" aria-label="批次进度"><div class="progress-track"><div class="progress-bar ok" style="width:100%"></div></div><span class="progress-num">100%</span></div></td>
+                  <td><span class="badge badge-ok">成功</span></td>
+                </tr>
+                <tr>
+                  <td class="mono">BATCH-0617-0371</td>
+                  <td class="cell-main">搜索索引增量重建</td>
+                  <td class="nowrap">06-17 01:40:00</td>
+                  <td class="nowrap">06-17 01:42:31</td>
+                  <td><span class="badge badge-muted badge-plain">定时</span></td>
+                  <td><div class="progress" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" aria-label="批次进度"><div class="progress-track"><div class="progress-bar danger" style="width:100%"></div></div><span class="progress-num">100%</span></div></td>
+                  <td><span class="badge badge-danger">失败</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <nav class="pager" aria-label="执行历史分页">
+            <span class="pager-total">共 1,732 条 · 每页 20 条</span>
+            <div class="pager-btns">
+              <button class="page-btn" type="button">上一页</button>
+              <button class="page-btn is-current" type="button" aria-current="page">1</button>
+              <button class="page-btn" type="button">2</button>
+              <button class="page-btn" type="button">3</button>
+              <span class="pager-total" aria-hidden="true">…</span>
+              <button class="page-btn" type="button">87</button>
+              <button class="page-btn" type="button">下一页</button>
+            </div>
+          </nav>
+        </section>
+
+        <section class="panel" id="panel-retry" role="tabpanel" aria-labelledby="tab-retry" hidden>
+          <form class="card form-card">
+            <h2 class="form-title">失败重试策略</h2>
+            <p class="form-desc">策略对全部任务组生效，单任务可在「任务详情」中单独覆盖。修改次日 00:00 生效。</p>
+            <div class="form-grid">
+              <div class="field">
+                <label for="r-max">最大重试次数</label>
+                <input id="r-max" type="number" value="3" min="0" max="10">
+                <span class="hint">达到上限后任务标记为失败并触发告警</span>
+              </div>
+              <div class="field">
+                <label for="r-interval">初始重试间隔（秒）</label>
+                <input id="r-interval" type="number" value="30" min="5" max="3600">
+                <span class="hint">按退避策略逐次递增</span>
+              </div>
+              <div class="field">
+                <label for="r-backoff">退避策略</label>
+                <select id="r-backoff">
+                  <option>指数退避（推荐）</option>
+                  <option>固定间隔</option>
+                  <option>线性递增</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="r-budget">重试总时长上限（分钟）</label>
+                <input id="r-budget" type="number" value="30" min="1" max="240">
+              </div>
+              <div class="field">
+                <label for="r-timeout">超时判定阈值（分钟）</label>
+                <input id="r-timeout" type="number" value="10" min="1" max="120">
+                <span class="hint">超过阈值按「超时」处理，与失败分开统计</span>
+              </div>
+              <div class="field">
+                <label id="lbl-notify">失败通知方式</label>
+                <div class="check-row" role="group" aria-labelledby="lbl-notify">
+                  <span class="check-item"><input type="checkbox" id="n-sms" checked><label for="n-sms">站内信</label></span>
+                  <span class="check-item"><input type="checkbox" id="n-mail" checked><label for="n-mail">邮件</label></span>
+                  <span class="check-item"><input type="checkbox" id="n-dt"><label for="n-dt">企业微信群机器人</label></span>
+                  <span class="check-item"><input type="checkbox" id="n-call"><label for="n-call">电话（仅 P0 任务）</label></span>
+                </div>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-primary" type="submit">保存策略</button>
+              <button class="btn" type="reset">恢复默认</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel" id="panel-live" role="tabpanel" aria-labelledby="tab-live" hidden>
+          <div class="live-grid">
+            <article class="card run-card">
+              <div class="run-head">
+                <span class="run-name">订单库全量备份</span>
+                <span class="badge badge-run">运行中</span>
+                <span class="run-meta mono">BATCH-0618-0413</span>
+              </div>
+              <div class="progress" role="progressbar" aria-valuenow="68" aria-valuemin="0" aria-valuemax="100" aria-label="订单库全量备份执行进度">
+                <div class="progress-track"><div class="progress-bar" style="width:68%"></div></div>
+                <span class="progress-num">68%</span>
+              </div>
+              <div class="run-foot"><span>已运行 2分51秒</span><span>预计剩余 1分20秒</span></div>
+              <div class="log" aria-label="实时日志尾部三行">
+                <div><span class="lv-info">[14:32:01 INFO]</span> 开始导出表 order_2025_06，共 189,204 行</div>
+                <div><span class="lv-info">[14:32:47 INFO]</span> 已写入 128,453 行（68%），吞吐 2.1 万行/秒</div>
+                <div><span class="lv-warn">[14:33:12 WARN]</span> order_item 索引扫描 1.2s，已切换批量读取</div>
+              </div>
+            </article>
+            <article class="card run-card">
+              <div class="run-head">
+                <span class="run-name">用户行为日志归档</span>
+                <span class="badge badge-run">运行中</span>
+                <span class="run-meta mono">BATCH-0618-0415</span>
+              </div>
+              <div class="progress" role="progressbar" aria-valuenow="12" aria-valuemin="0" aria-valuemax="100" aria-label="用户行为日志归档执行进度">
+                <div class="progress-track"><div class="progress-bar" style="width:12%"></div></div>
+                <span class="progress-num">12%</span>
+              </div>
+              <div class="run-foot"><span>已运行 18 秒</span><span>预计剩余 2分06秒</span></div>
+              <div class="log" aria-label="实时日志尾部三行">
+                <div><span class="lv-info">[14:33:22 INFO]</span> 拉取 Kafka 分区 behavior-log [0..7]</div>
+                <div><span class="lv-info">[14:33:29 INFO]</span> 已归档 12,904 条（12%）至 HDFS /archive/2025-06-18</div>
+                <div><span class="lv-warn">[14:33:31 WARN]</span> 分区 3 消费延迟 4.2s，落后 8,010 条</div>
+              </div>
+            </article>
+          </div>
+          <div class="empty">
+            <span class="empty-icon" aria-hidden="true">✓</span>
+            <p class="empty-title">暂无更多执行中的任务</p>
+            <p>最近一次队列扫描于 14:33:40 完成，其余 40 个任务均处于等待调度状态</p>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+  // 标签切换：同步 tab 高亮与面板显隐（支持嵌套分组互不干扰）
+  document.querySelectorAll('[data-tabs]').forEach(function (group) {
+    group.addEventListener('click', function (e) {
+      var tab = e.target.closest('[role="tab"]');
+      if (!tab) return;
+      e.stopPropagation();
+      tab.closest('[role="tablist"]').querySelectorAll('[role="tab"]').forEach(function (t) {
+        t.setAttribute('aria-selected', String(t === tab));
+      });
+      group.querySelectorAll(':scope > [role="tabpanel"]').forEach(function (p) {
+        p.hidden = p.id !== tab.getAttribute('aria-controls');
+      });
+    });
+  });
+</script>
+</body>
+</html>

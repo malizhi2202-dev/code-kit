@@ -1,0 +1,2374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>logsearch · 产品设计文档与界面原型</title>
+<meta name="description" content="logsearch 分布式日志搜索平台的产品设计文档：核心概念、架构、时序、模块操作指南与全界面原型（演示数据）。">
+<style>
+/* ============================================================
+   Design tokens —— 与产品源码 web/src/styles/tokens.css 同源
+   Tone: Terminal Clarity（亮色极简画布 + 等宽秩序；单一品牌蓝 ≤3%）
+   先给 hex 兜底，再被 oklch 覆盖（老浏览器退化为 hex）
+   ============================================================ */
+:root{
+  --color-brand:#3B66E8;          --color-brand:oklch(0.55 0.19 262);
+  --color-brand-deep:#2F52BE;     --color-brand-deep:oklch(0.47 0.17 262);
+  --color-brand-hover:#5178EE;    --color-brand-hover:oklch(0.62 0.18 262);
+  --color-brand-subtle:#3B66E814; --color-brand-subtle:oklch(0.55 0.19 262 / .08);
+
+  --color-bg:#F5F6F8;             --color-bg:oklch(0.965 0.003 270);
+  --color-surface:#FCFCFD;        --color-surface:oklch(0.985 0.003 270);
+  --color-surface-hover:#F0F0F3;  --color-surface-hover:oklch(0.945 0.004 270);
+
+  --color-text-primary:#1A1C2E;   --color-text-primary:oklch(0.22 0.02 270);
+  --color-text-secondary:#6C6E80; --color-text-secondary:oklch(0.47 0.02 270);
+  --color-text-tertiary:#ABACBA;  --color-text-tertiary:oklch(0.70 0.02 270);
+  --color-text-invert:#FCFCFD;    --color-text-invert:oklch(0.99 0.002 270);
+
+  --color-border:#E5E5E9;         --color-border:oklch(0.915 0.004 270);
+  --color-border-subtle:#0000000A;
+
+  --color-success:#2E9E5B;        --color-success:oklch(0.62 0.15 150);
+  --color-warning:#C8871A;        --color-warning:oklch(0.70 0.14 55);
+  --color-danger:#D0342C;         --color-danger:oklch(0.58 0.21 27);
+  --color-danger-subtle:#D0342C14;
+
+  --color-logview-bg:#25262B;     --color-logview-bg:oklch(0.19 0.01 270);
+  --color-logview-text:#C9CAD1;   --color-logview-text:oklch(0.82 0.01 270);
+  --color-logview-border:#3B3D45; --color-logview-border:oklch(0.28 0.01 270);
+
+  --space-xs:4px; --space-sm:8px; --space-md:14px; --space-lg:22px; --space-xl:34px; --space-2xl:52px;
+  --radius-sm:4px; --radius-md:8px; --radius-lg:14px;
+  --font-mono:"JetBrains Mono","SF Mono","Fira Code","PingFang SC","Microsoft YaHei",monospace;
+  --font-body:"IBM Plex Sans","PingFang SC","Microsoft YaHei",-apple-system,"Segoe UI",sans-serif;
+  --font-size-xs:11px; --font-size-sm:12px; --font-size-base:14px; --font-size-lg:16px; --font-size-xl:18px; --font-size-2xl:20px;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--color-bg); color:var(--color-text-primary);
+  font:var(--font-size-base)/1.65 var(--font-body);
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--color-brand); text-decoration:none}
+a:hover{text-decoration:underline}
+code,.mono{font-family:var(--font-mono); font-size:.92em}
+:focus-visible{outline:2px solid var(--color-brand); outline-offset:2px; border-radius:var(--radius-sm)}
+
+/* ---------- 文档骨架 ---------- */
+.doc-top{
+  position:sticky; top:0; z-index:30; height:56px; display:flex; align-items:center; gap:var(--space-md);
+  padding:0 var(--space-lg); background:var(--color-surface); border-bottom:1px solid var(--color-border);
+}
+.doc-brand{display:flex; align-items:center; gap:var(--space-sm); font-weight:600; letter-spacing:.2px}
+.doc-brand .mark{width:22px;height:22px;border-radius:var(--radius-sm);background:var(--color-brand);display:grid;place-items:center;color:var(--color-text-invert)}
+.doc-top h1{font-size:var(--font-size-base); font-weight:600; margin:0; color:var(--color-text-primary)}
+.doc-top .sep{color:var(--color-text-tertiary)}
+.doc-top .tools{margin-left:auto; display:flex; align-items:center; gap:var(--space-sm)}
+.doc-shell{display:grid; grid-template-columns:272px minmax(0,1fr); align-items:start}
+.doc-nav{
+  position:sticky; top:56px; height:calc(100vh - 56px); overflow-y:auto;
+  border-right:1px solid var(--color-border); background:var(--color-surface);
+  padding:var(--space-lg) var(--space-sm) var(--space-2xl) var(--space-lg);
+}
+.doc-nav .grp{font-size:var(--font-size-xs); text-transform:uppercase; letter-spacing:.08em; color:var(--color-text-tertiary); margin:var(--space-md) 0 var(--space-xs)}
+.doc-nav .grp:first-child{margin-top:0}
+.doc-nav a{display:block; padding:3px 8px; border-radius:var(--radius-sm); color:var(--color-text-secondary); font-size:13px}
+.doc-nav a:hover{background:var(--color-surface-hover); color:var(--color-text-primary); text-decoration:none}
+.doc-nav a.active{background:var(--color-brand-subtle); color:var(--color-brand)}
+.doc-main{min-width:0; padding:var(--space-lg) var(--space-xl) 96px; max-width:1180px}
+section.doc-sec{padding-top:var(--space-lg); margin-top:var(--space-lg); border-top:1px solid var(--color-border)}
+section.doc-sec:first-of-type{border-top:0; margin-top:0}
+h2{font-size:var(--font-size-2xl); font-weight:600; margin:0 0 var(--space-md); letter-spacing:.1px}
+h3{font-size:var(--font-size-lg); font-weight:600; margin:var(--space-lg) 0 var(--space-sm)}
+h4{font-size:var(--font-size-base); font-weight:600; margin:var(--space-md) 0 var(--space-xs)}
+h5{font-size:var(--font-size-sm); font-weight:600; margin:var(--space-md) 0 var(--space-xs); color:var(--color-text-secondary)}
+p{margin:0 0 var(--space-sm)}
+ul,ol{margin:0 0 var(--space-sm); padding-left:1.25em}
+li{margin:2px 0}
+.lead{font-size:var(--font-size-lg); color:var(--color-text-secondary); max-width:74ch}
+.muted{color:var(--color-text-secondary)}
+.small{font-size:var(--font-size-sm)}
+.tiny{font-size:var(--font-size-xs)}
+hr{border:0; border-top:1px solid var(--color-border); margin:var(--space-lg) 0}
+
+/* ---------- 通用块 ---------- */
+.card{background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:var(--space-md) var(--space-md)}
+.card.pad-lg{padding:var(--space-lg)}
+.grid{display:grid; gap:var(--space-md)}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(168px,1fr))}
+.split{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:var(--space-md)}
+@media (max-width:900px){ .split{grid-template-columns:minmax(0,1fr)} }
+.chip{display:inline-flex; align-items:center; gap:4px; padding:1px 7px; border-radius:999px; font-size:var(--font-size-xs);
+  border:1px solid var(--color-border); color:var(--color-text-secondary); background:var(--color-surface); white-space:nowrap}
+.chip.brand{color:var(--color-brand); border-color:color-mix(in oklch, var(--color-brand) 35%, transparent); background:var(--color-brand-subtle)}
+.chip.ok{color:var(--color-success); border-color:color-mix(in oklch, var(--color-success) 35%, transparent)}
+.chip.warn{color:var(--color-warning); border-color:color-mix(in oklch, var(--color-warning) 35%, transparent)}
+.chip.danger{color:var(--color-danger); border-color:color-mix(in oklch, var(--color-danger) 35%, transparent)}
+.chip.mono{font-family:var(--font-mono)}
+.callout{border-left:2px solid var(--color-brand); background:var(--color-brand-subtle); padding:var(--space-sm) var(--space-md); border-radius:0 var(--radius-sm) var(--radius-sm) 0; margin:var(--space-sm) 0}
+.callout.warn{border-left-color:var(--color-warning); background:color-mix(in oklch, var(--color-warning) 10%, transparent)}
+.callout.danger{border-left-color:var(--color-danger); background:var(--color-danger-subtle)}
+.callout h5{margin-top:0; color:inherit}
+table.tbl{width:100%; border-collapse:collapse; font-size:13px; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-md); overflow:hidden}
+table.tbl th{text-align:left; font-weight:600; font-size:var(--font-size-sm); color:var(--color-text-secondary); padding:8px 10px; border-bottom:1px solid var(--color-border); background:var(--color-surface-hover); white-space:nowrap}
+table.tbl td{padding:8px 10px; border-bottom:1px solid var(--color-border); vertical-align:top}
+table.tbl tr:last-child td{border-bottom:0}
+table.tbl td.mono,table.tbl th.mono{font-family:var(--font-mono); font-size:12px}
+/* 导航分层（A1）：模块总览表的分组行 —— 与侧栏三分域一一对应 */
+table.tbl tr.grp-row td{background:var(--color-surface-hover); font-size:var(--font-size-xs); color:var(--color-text-tertiary); letter-spacing:.02em; padding-top:6px; padding-bottom:6px}
+table.tbl.compact th,table.tbl.compact td{padding:5px 8px}
+.icon{width:15px;height:15px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sprite{display:none}
+.btn{display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 12px; border-radius:var(--radius-sm);
+  border:1px solid var(--color-border); background:var(--color-surface); color:var(--color-text-primary);
+  font:500 13px var(--font-body); cursor:pointer}
+.btn:hover{background:var(--color-surface-hover)}
+.btn.primary{background:var(--color-brand); border-color:var(--color-brand); color:var(--color-text-invert)}
+.btn.primary:hover{background:var(--color-brand-hover); border-color:var(--color-brand-hover)}
+.btn.sm{height:24px; padding:0 8px; font-size:12px}
+.btn.link{border:0; background:none; color:var(--color-brand); padding:0 4px; height:22px}
+.btn[disabled],.btn:disabled{opacity:.5; cursor:not-allowed}
+.kv{display:grid; grid-template-columns:auto 1fr; gap:2px var(--space-md); font-size:13px}
+.kv dt{color:var(--color-text-secondary)}
+.kv dd{margin:0}
+.metric{font-family:var(--font-mono); font-size:var(--font-size-2xl); font-weight:600; letter-spacing:-.5px}
+.metric-label{font-size:var(--font-size-xs); color:var(--color-text-secondary); text-transform:uppercase; letter-spacing:.06em}
+
+/* ---------- 图：分层 / 拓扑 / 能力地图 ---------- */
+.diagram{background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:var(--space-lg)}
+.layer{border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:var(--space-sm) var(--space-md); background:var(--color-bg)}
+.layer.brand{border-color:color-mix(in oklch, var(--color-brand) 40%, transparent); background:var(--color-brand-subtle)}
+.layer h5{margin:0 0 4px; color:var(--color-text-primary); font-size:13px}
+.layer .row{display:flex; flex-wrap:wrap; gap:6px}
+.pill{border:1px solid var(--color-border); border-radius:var(--radius-sm); background:var(--color-surface); padding:2px 8px; font-size:12px}
+.pill.mono{font-family:var(--font-mono)}
+.arrow-v{display:grid; place-items:center; color:var(--color-text-tertiary); font-size:16px; line-height:1; padding:4px 0}
+.arrow-v small{font-size:var(--font-size-xs); color:var(--color-text-secondary); margin-left:6px}
+.node{border:1px solid var(--color-border); border-radius:var(--radius-md); background:var(--color-surface); padding:var(--space-sm) var(--space-md); text-align:center; font-size:13px}
+.node strong{display:block; font-size:13px}
+.node span{color:var(--color-text-secondary); font-size:var(--font-size-xs); font-family:var(--font-mono)}
+.flow{display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-sm)}
+.flow .step{border:1px solid var(--color-border); background:var(--color-surface); border-radius:var(--radius-sm); padding:4px 10px; font-size:13px}
+.flow .to{color:var(--color-text-tertiary)}
+
+/* ---------- 图：时序（table + 虚线生命线） ---------- */
+figure{margin:var(--space-md) 0}
+figure figcaption{font-size:var(--font-size-sm); color:var(--color-text-secondary); margin-top:var(--space-sm)}
+.seq-wrap{overflow-x:auto; border:1px solid var(--color-border); border-radius:var(--radius-md); background:var(--color-surface)}
+table.seq{width:100%; border-collapse:collapse; min-width:620px}
+table.seq thead th{
+  font-size:var(--font-size-sm); font-weight:600; padding:8px 10px; text-align:center;
+  border-bottom:1px solid var(--color-border); background:var(--color-surface-hover); white-space:nowrap;
+}
+table.seq thead th.actor-ext{color:var(--color-text-primary)}
+table.seq thead th.actor-cc{box-shadow:inset 0 -2px 0 var(--color-brand)}
+table.seq tbody td{border-left:1px dashed color-mix(in oklch, var(--color-text-tertiary) 55%, transparent); height:34px; padding:0 10px; font-size:12.5px; vertical-align:middle}
+table.seq tbody td:first-child{border-left:0}
+table.seq tbody td.msg{position:relative; padding:0 10px 0 12px; border-bottom:0}
+table.seq tbody td.msg .arrow{display:block; position:absolute; left:10px; right:10px; bottom:9px; height:1px; background:var(--color-text-secondary)}
+table.seq tbody td.msg .arrow.rtl{left:10px; right:10px}
+table.seq tbody td.msg::after{content:""; position:absolute; bottom:6px; right:9px; width:0; height:0;
+  border-top:3.5px solid transparent; border-bottom:3.5px solid transparent; border-left:6px solid var(--color-text-secondary)}
+table.seq tbody td.msg.rtl::after{right:auto; left:9px; border-left:0; border-right:6px solid var(--color-text-secondary)}
+table.seq tbody td.msg.dash .arrow{background:repeating-linear-gradient(90deg,var(--color-text-secondary) 0 5px,transparent 5px 9px)}
+table.seq tbody td.msg .label{position:relative; z-index:1; background:var(--color-surface); padding-right:6px}
+table.seq tbody td.msg .label b{font-weight:600}
+table.seq tbody td.msg .label .n{color:var(--color-brand); font-family:var(--font-mono); margin-right:4px}
+table.seq tbody td.note{font-size:var(--font-size-xs); color:var(--color-text-secondary); background:var(--color-bg); border-left:1px dashed var(--color-border); font-style:normal}
+
+/* ---------- 界面原型（静态复刻，数据全假） ---------- */
+.proto{border:1px solid var(--color-border); border-radius:var(--radius-lg); overflow:hidden; background:var(--color-bg); margin:var(--space-md) 0}
+.proto-bar{display:flex; align-items:center; gap:var(--space-sm); height:34px; padding:0 var(--space-md); background:var(--color-surface-hover); border-bottom:1px solid var(--color-border)}
+.proto-bar .dots{display:flex; gap:5px}
+.proto-bar .dots i{width:9px;height:9px;border-radius:999px;background:var(--color-border); display:block}
+.proto-bar .url{flex:1; font-family:var(--font-mono); font-size:var(--font-size-xs); color:var(--color-text-secondary);
+  background:var(--color-surface); border:1px solid var(--color-border); border-radius:999px; padding:2px 10px; max-width:520px}
+.proto-bar .fake{font-size:var(--font-size-xs); color:var(--color-warning); white-space:nowrap}
+.app{display:grid; grid-template-columns:200px minmax(0,1fr); height:560px; background:var(--color-bg)}
+.app.tall{height:640px}
+.app-side{background:var(--color-surface); border-right:1px solid var(--color-border); padding:var(--space-md) var(--space-sm); display:flex; flex-direction:column; gap:2px; overflow:hidden}
+.app-brand{display:flex; align-items:center; gap:8px; font-weight:600; padding:0 6px var(--space-sm); color:var(--color-text-primary); font-size:13px}
+.app-brand i{width:20px;height:20px;border-radius:var(--radius-sm);background:var(--color-brand);display:grid;place-items:center;color:var(--color-text-invert);font-size:10px;font-style:normal}
+.app-side .nav-grp{font-size:var(--font-size-xs); color:var(--color-text-tertiary); padding:var(--space-sm) 6px 2px}
+.app-side a{display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:var(--radius-sm); color:var(--color-text-secondary); font-size:13px}
+.app-side a.active{background:var(--color-brand-subtle); color:var(--color-brand)}
+.app-side .spacer{flex:1}
+.app-main{display:flex; flex-direction:column; min-width:0; overflow:hidden}
+.app-top{height:48px; display:flex; align-items:center; gap:var(--space-md); padding:0 var(--space-lg); border-bottom:1px solid var(--color-border); background:var(--color-surface)}
+.app-top .crumb{font-size:13px; color:var(--color-text-secondary)}
+.app-top .crumb b{color:var(--color-text-primary); font-weight:600}
+.app-top .right{margin-left:auto; display:flex; align-items:center; gap:var(--space-sm)}
+.app-body{padding:var(--space-lg); overflow:auto; flex:1; min-height:0}
+.app-body.flush{padding:0; display:flex; flex-direction:column}
+
+.panel{background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:var(--space-md)}
+.panel-title{font-size:13px; font-weight:600; margin:0 0 var(--space-sm)}
+.h1{font-size:var(--font-size-xl); font-weight:600; margin:0 0 var(--space-md)}
+.h2p{font-size:var(--font-size-base); font-weight:600; margin:0 0 var(--space-sm)}
+.field{display:flex; flex-direction:column; gap:4px}
+.field label{font-size:var(--font-size-xs); color:var(--color-text-secondary)}
+.input,.select{height:30px; border:1px solid var(--color-border); border-radius:var(--radius-sm); background:var(--color-surface);
+  padding:0 8px; font:13px var(--font-body); color:var(--color-text-primary); display:flex; align-items:center}
+.input.mono{font-family:var(--font-mono); font-size:12px}
+.input.placeholder{color:var(--color-text-tertiary)}
+.rows{display:grid; gap:var(--space-sm)}
+.tabs{display:flex; gap:2px; border-bottom:1px solid var(--color-border); margin-bottom:var(--space-md)}
+.tabs button{appearance:none; border:0; background:none; padding:8px 12px; font:500 13px var(--font-body); color:var(--color-text-secondary); cursor:pointer; border-bottom:2px solid transparent}
+.tabs button[aria-selected="true"]{color:var(--color-brand); border-bottom-color:var(--color-brand)}
+.tabpanel[hidden]{display:none}
+.logview{background:var(--color-logview-bg); color:var(--color-logview-text); border:1px solid var(--color-logview-border);
+  border-radius:var(--radius-sm); padding:var(--space-sm) var(--space-md); font-family:var(--font-mono); font-size:12px; line-height:1.75; overflow:auto; white-space:pre}
+.logview .lv-err{color:#F08A82}
+.logview .lv-warn{color:#E0B15F}
+.logview .lv-info{color:#7FB2F0}
+.logview .lv-dim{color:#8A8C96}
+.progress{height:6px; border-radius:999px; background:var(--color-surface-hover); overflow:hidden}
+.progress i{display:block; height:100%; background:var(--color-brand)}
+.proto-note{display:flex; gap:var(--space-sm); align-items:flex-start; font-size:var(--font-size-sm); color:var(--color-text-secondary); margin:var(--space-xs) 0 var(--space-sm)}
+.proto-note .chip{flex:0 0 auto}
+footer.doc-foot{margin-top:var(--space-xl); padding-top:var(--space-md); border-top:1px solid var(--color-border); color:var(--color-text-secondary); font-size:var(--font-size-sm)}
+
+@media (max-width:1000px){
+  .doc-shell{grid-template-columns:minmax(0,1fr)}
+  .doc-nav{position:static; height:auto; border-right:0; border-bottom:1px solid var(--color-border)}
+  .doc-main{padding:var(--space-md) var(--space-md) 64px}
+  .doc-top{height:auto; flex-wrap:wrap; padding:var(--space-sm) var(--space-md)}
+  .app{grid-template-columns:minmax(0,1fr); height:auto}
+  .app-side{flex-direction:row; overflow-x:auto; border-right:0; border-bottom:1px solid var(--color-border)}
+  .app-side .nav-grp,.app-brand span{display:none}
+}
+@media (max-width:760px){
+  /* 窄屏下表格独立横滚，避免把整页撑宽 */
+  table.tbl{display:block; overflow-x:auto}
+  table.tbl th{white-space:normal}
+  .proto .app-body{padding:var(--space-md)}
+  .doc-top .tools{flex-wrap:wrap}
+}
+@media print{
+  .doc-top,.doc-nav{display:none} .doc-shell{grid-template-columns:minmax(0,1fr)}
+  .app,.proto{break-inside:avoid} section.doc-sec{break-before:page}
+}
+</style>
+</head>
+<body>
+
+<!-- ===================== 图标精灵（与产品同一套线性图标风格） ===================== -->
+<svg class="sprite" aria-hidden="true"><defs>
+<symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z"/></symbol>
+<symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+<symbol id="i-folder" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></symbol>
+<symbol id="i-scene" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><path d="M14 3h7v7h-7z"/><path d="M3 14h7v7H3z"/><circle cx="17.5" cy="17.5" r="3.5"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.8 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 7.3 19.4l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 3.3 13.9H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.2-2.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 3.3V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.8 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 20.7 10H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></symbol>
+<symbol id="i-audit" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></symbol>
+<symbol id="i-flow" viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h10"/><path d="M4 18h16"/><circle cx="18" cy="12" r="2"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/></symbol>
+<symbol id="i-cpu" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 4 21 10 15 10"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></symbol>
+<symbol id="i-chev" viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></symbol>
+</defs></svg>
+
+<header class="doc-top">
+  <div class="doc-brand"><span class="mark"><svg class="icon" style="width:13px;height:13px"><use href="#i-search"/></svg></span> logsearch</div>
+  <span class="sep">/</span>
+  <h1>产品设计文档 &amp; 界面原型</h1>
+  <div class="tools">
+    <span class="chip mono">v1 · 2026-09-10</span>
+    <span class="chip warn">原型内所有数据均为演示假数据</span>
+    <button class="btn sm" onclick="window.print()">打印 / 存 PDF</button>
+  </div>
+</header>
+
+<div class="doc-shell">
+  <nav class="doc-nav" aria-label="文档目录">
+    <p class="grp">导言</p>
+    <a href="#s0">0 · 这份文档怎么读</a>
+    <p class="grp">产品</p>
+    <a href="#s1">1 · 产品全景</a>
+    <p class="grp">核心概念</p>
+    <a href="#s2-1">2.1 分层架构</a>
+    <a href="#s2-2">2.2 执行模型（任务 / 租约）</a>
+    <a href="#s2-3">2.3 智能体模型（Agent）</a>
+    <a href="#s2-4">2.4 记忆与知识</a>
+    <a href="#s2-5">2.5 审批与人工闸门</a>
+    <p class="grp">架构</p>
+    <a href="#s3">3 · 系统架构</a>
+    <p class="grp">时序</p>
+    <a href="#s4">4 · 核心时序（8 条）</a>
+    <p class="grp">使用指南</p>
+    <a href="#s5-1">5.0 指南总览 &amp; 权限</a>
+    <a href="#s5-login">5.1 登录与全局导航</a>
+    <a href="#s5-workbench">5.2 工作台</a>
+    <a href="#s5-chat">5.3 对话（平台级）</a>
+    <a href="#s5-project">5.4 项目与项目导航</a>
+    <a href="#s5-search">5.5 日志搜索</a>
+    <a href="#s5-sources">5.6 日志文件路径</a>
+    <a href="#s5-commands">5.7 搜索语句模板</a>
+    <a href="#s5-rules">5.8 字段解析配置</a>
+    <a href="#s5-samples">5.9 校验样本</a>
+    <a href="#s5-tasks">5.10 造测试日志</a>
+    <a href="#s5-templates">5.11 模板管理</a>
+    <a href="#s5-clients">5.12 搜索日志客户端</a>
+    <a href="#s5-members">5.13 成员管理</a>
+    <a href="#s5-llm">5.14 日志分析</a>
+    <a href="#s5-scenes">5.15 场景</a>
+    <a href="#s5-download">5.16 客户端下载</a>
+    <a href="#s5-platform">5.17 平台设置</a>
+    <a href="#s5-permissions">5.18 权限矩阵</a>
+    <a href="#s5-audit">5.19 审计日志</a>
+    <p class="grp">界面原型</p>
+    <a href="#p1">6.1 登录</a>
+    <a href="#p2">6.2 工作台</a>
+    <a href="#p3">6.3 对话工作台</a>
+    <a href="#p4">6.4 日志搜索 · 单次</a>
+    <a href="#p5">6.5 日志搜索 · 批量</a>
+    <a href="#p6">6.6 搜索配置 · 日志文件路径</a>
+    <a href="#p7">6.7 搜索配置 · 字段解析配置</a>
+    <a href="#p8">6.8 造测试日志</a>
+    <a href="#p9">6.9 搜索日志客户端</a>
+    <a href="#p10">6.10 日志分析</a>
+    <a href="#p11">6.11 场景</a>
+    <a href="#p12">6.12 平台设置</a>
+    <a href="#p13">6.13 权限矩阵</a>
+    <a href="#p14">6.14 审计日志</a>
+    <p class="grp">附录</p>
+    <a href="#s7">7 · 角色权限矩阵</a>
+    <a href="#s7-perms">7.1 · 权限管理（角色即权限）</a>
+    <a href="#s8">8 · 术语表</a>
+    <a href="#s9">9 · 常见问题</a>
+    <a href="#s10">10 · 附录（枚举 / 接口 / 运行）</a>
+  </nav>
+
+  <main class="doc-main">
+
+  <!-- ============================ §0 ============================ -->
+  <section class="doc-sec" id="s0">
+    <h2>0 · 这份文档怎么读</h2>
+    <p class="lead">这是一份“可当产品讲、可当原型看”的单文件文档：前半部分是产品设计说明（概念 / 架构 / 时序 / 操作指南），后半部分是<b>与真实系统同布局、同配色</b>的界面原型，数据全部是假的。</p>
+    <div class="grid g2">
+      <div class="card">
+        <h4>按目的跳读</h4>
+        <ul class="small">
+          <li><b>第一次接触产品</b> → §1 产品全景 → §2 核心概念 → §6 界面原型</li>
+          <li><b>要对接 / 排查</b> → §3 系统架构 → §4 核心时序 → §10 附录</li>
+          <li><b>要上手操作</b> → §5 使用指南（按左侧导航逐模块，含每个控件的作用）</li>
+          <li><b>要看权限边界</b> → §7 角色权限矩阵</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>三条阅读约定</h4>
+        <ul class="small">
+          <li>§6 原型是<b>静态复刻</b>：标签页、折叠等可点，但不连后端、不落库；所有 ID、IP、日志行都是虚构的。</li>
+          <li>文中 <span class="chip mono">mono</span> 字体表示真实存在的标识符（接口路径、环境变量、状态枚举、表名）。</li>
+          <li>标注 <span class="chip warn">实现边界</span> 的地方，是当前版本的真实行为（含限制），不是目标态。</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout warn">
+      <h5>数据声明</h5>
+      <p class="small" style="margin:0">文档中出现的主机名、IP（<span class="mono">10.16.x.x</span> / <span class="mono">192.168.x.x</span>）、TraceID、appid/secret、用户、项目名，全部为演示占位。任何真实凭据都不应出现在文档与截图中。</p>
+    </div>
+  </section>
+
+  <!-- ============================ §1 ============================ -->
+  <section class="doc-sec" id="s1">
+    <h2>1 · 产品全景</h2>
+    <p class="lead">logsearch 是一套<b>轻量级分布式日志搜索平台</b>：中心侧集中管理“去哪儿搜、搜什么、结果怎么解析”，边缘侧用 Agent 在业务机器上受限执行，日志不出机器；再加一层 LLM 能力，把日志目录发现、字段解析、结果分析、日常操作变成“可确认的智能动作”。</p>
+
+    <h3>1.1 一句话定位</h3>
+    <div class="grid g3">
+      <div class="card"><div class="metric-label">中心</div><div class="h2p" style="margin:4px 0">控制中心 control-center</div><p class="small muted" style="margin:0">HTTP 管理 API + RBAC + 配置版本化 + 任务调度 + gRPC Agent 服务 + 审计。唯一的状态与规则来源。</p></div>
+      <div class="card"><div class="metric-label">边缘</div><div class="h2p" style="margin:4px 0">日志 Agent</div><p class="small muted" style="margin:0">主动外连、HMAC 双向流、领取任务租约、在本机受限执行、截断/脱敏/解析后分批上报。</p></div>
+      <div class="card"><div class="metric-label">智能</div><div class="h2p" style="margin:4px 0">LLM 与记忆</div><p class="small muted" style="margin:0">公共模型与私有模型、分析技能、解析 Agent、剧本、场景模板、对话记忆——把“怎么做”沉淀成资产。</p></div>
+    </div>
+
+    <h3>1.2 目标用户与典型场景</h3>
+    <table class="tbl">
+      <thead><tr><th style="width:130px">角色</th><th style="width:190px">典型身份</th><th>最常做的事</th><th style="width:230px">入口模块</th></tr></thead>
+      <tbody>
+        <tr><td><span class="chip brand">admin</span> 平台管理员</td><td>平台 owner / 运维负责人</td><td>建项目、发 appid、管用户与 API 密钥、配全局模型、看审计</td><td>项目、平台设置、审计日志</td></tr>
+        <tr><td><span class="chip">secops</span> 安全 / 运维</td><td>安全工程师、SRE</td><td>跨项目排障、批量压测、查审计、下发日志源与命令</td><td>工作台、项目（全部）、审计日志</td></tr>
+        <tr><td><span class="chip">proj_admin</span> 项目管理员</td><td>业务线负责人</td><td>配日志源/命令/规则、管项目成员、跑生成任务</td><td>项目全部子页 + 成员管理</td></tr>
+        <tr><td><span class="chip">member</span> 项目成员</td><td>开发 / 测试 / 值班</td><td>搜日志、看结果、用对话问“这条报错怎么回事”</td><td>日志搜索、对话</td></tr>
+      </tbody>
+    </table>
+
+    <h3>1.3 能力地图</h3>
+    <div class="diagram">
+      <div class="grid g4">
+        <div class="layer"><h5>搜 · 找得到</h5><div class="row"><span class="pill">单次搜索</span><span class="pill">批量搜索</span><span class="pill">自然语言搜索</span><span class="pill">语义搜索</span><span class="pill">结果过滤/下载</span><span class="pill">搜索历史</span><span class="pill">批量·多机/命中汇总</span></div></div>
+        <div class="layer"><h5>配 · 说得清</h5><div class="row"><span class="pill">日志源</span><span class="pill">搜索命令</span><span class="pill">提取规则</span><span class="pill">测试数据</span><span class="pill">配置版本/回滚</span></div></div>
+        <div class="layer"><h5>造 · 有数据可试</h5><div class="row"><span class="pill">生成任务</span><span class="pill">自定义模板</span><span class="pill">多机扇出</span><span class="pill">暂停/恢复</span><span class="pill">对话直达</span></div></div>
+        <div class="layer"><h5>接 · 落到机器</h5><div class="row"><span class="pill">Agent 注册</span><span class="pill">心跳/槽位</span><span class="pill">监控指标</span><span class="pill">目录发现</span><span class="pill">二进制下载</span></div></div>
+        <div class="layer"><h5>析 · 读出结论</h5><div class="row"><span class="pill">日志分析</span><span class="pill">分析技能</span><span class="pill">解析 Agent</span><span class="pill">格式识别</span></div></div>
+        <div class="layer"><h5>用 · 变成日常工具</h5><div class="row"><span class="pill">对话工作台</span><span class="pill">对话记忆</span><span class="pill">动作确认执行</span><span class="pill">剧本</span></div></div>
+        <div class="layer"><h5>组 · 一键成项目</h5><div class="row"><span class="pill">场景模板</span><span class="pill">技能/Agent/日志源/命令/剧本打包</span><span class="pill">事务式实例化</span></div></div>
+        <div class="layer"><h5>治 · 可追溯</h5><div class="row"><span class="pill">RBAC</span><span class="pill">CSRF</span><span class="pill">API 密钥</span><span class="pill">审计日志 180d</span></div></div>
+      </div>
+    </div>
+
+    <h3>1.4 这个产品不做什么（边界）</h3>
+    <div class="split">
+      <div class="card"><h4>明确不做</h4><ul class="small" style="margin:0">
+        <li>不做日志<b>采集搬运</b>：只在目标机器上就地搜索，命中行才回传（且完整结果落临时文件、DB 只存摘要）。</li>
+        <li>不做<b>通用任务编排</b>：执行边界固定在“日志目录 + 声明式命令模板”，不允许任意 shell。</li>
+        <li>不做<b>日志存储/检索引擎</b>：不是 ES 替代品，不建全量索引。</li>
+        <li>不做 LLM 的<b>自动落库</b>：模型产出必须经人确认才会变成配置或动作。</li>
+      </ul></div>
+      <div class="card"><h4>安全底线（贯穿全篇）</h4><ul class="small" style="margin:0">
+        <li>命令模板必须含 <span class="mono">{files}</span>；参数只进声明过的槽位，<span class="mono">shell:true</span> 一律拒绝。</li>
+        <li>gRPC 逐消息 HMAC-SHA256 签名 + ±5min 时间窗；agent_secret AES-GCM 落库、Agent 侧 0600 落盘。</li>
+        <li>输出默认脱敏 <span class="mono">authorization / token / password / cookie / secret</span>。</li>
+        <li>Agent 不信任控制中心：租约解析时二次校验 shell、占位符与限制默认值。</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- ============================ §2 ============================ -->
+  <section class="doc-sec" id="s2">
+    <h2>2 · 核心概念</h2>
+    <p class="lead">五页机制说明，每页配一张图。读完这五页，产品内部怎么运转就清楚了。</p>
+
+    <h3 id="s2-1">2.1 分层架构</h3>
+    <p><b>一句话</b>：把“决定做什么”（中心）和“真正碰数据”（边缘）彻底分开，中间只用一条可验签的长连接通信。</p>
+    <div class="diagram">
+      <div class="layer brand"><h5>浏览器 · 控制台（Vue 3 + Vite，base <span class="mono">/loggen/</span>）</h5>
+        <div class="row"><span class="pill">工作台</span><span class="pill">项目子页</span><span class="pill">对话工作台</span><span class="pill">场景</span><span class="pill">平台设置</span><span class="pill">审计</span></div>
+      </div>
+      <div class="arrow-v">▼ <small>HTTP/JSON（SameSite Session + X-CSRF-Token）</small></div>
+      <div class="layer"><h5>控制中心 control-center（Go / gin + gRPC + gorm）</h5>
+        <div class="row"><span class="pill">auth + RBAC</span><span class="pill">projects</span><span class="pill">config（版本/回滚）</span><span class="pill">jobs（调度/超时）</span><span class="pill">agentconn（长连接注册表）</span><span class="pill">llm</span><span class="pill">scenes</span><span class="pill">audit</span><span class="pill mono">:20006</span></div>
+      </div>
+      <div class="arrow-v">▼ <small>gRPC 双向流（TLS + 逐消息 HMAC-SHA256 + ±5min 时间窗）</small></div>
+      <div class="layer"><h5>日志 Agent（Go，主动外连，无入向端口）</h5>
+        <div class="row"><span class="pill">secretStore</span><span class="pill">resolver</span><span class="pill">renderer</span><span class="pill">runner</span><span class="pill">pipeline</span><span class="pill">loggen</span></div>
+      </div>
+      <div class="arrow-v">▼ <small>进程内受限执行（argv 传参、<b>禁</b> sh -c、默认脱敏、截断 10MB/10 万行）</small></div>
+      <div class="layer"><h5>业务机器上的日志文件</h5>
+        <div class="row"><span class="pill mono">/var/log/nginx/*.log</span><span class="pill mono">/data/app/logs/*.log</span><span class="pill mono">{files} 由 Agent 注入</span></div>
+      </div>
+      <div class="arrow-v">▼ <small>结果回传：命中行分批上报 → 完整结果写临时 jsonl（24h TTL），DB 只存摘要</small></div>
+      <div class="layer"><h5>存储（gorm）：MySQL 8（生产）/ SQLite（开发）；结果目录 <span class="mono">/tmp/logsearch-results</span></h5>
+        <div class="row"><span class="pill">30+ 张表</span><span class="pill">配置版本 ConfigVersion</span><span class="pill">审计 180d TTL</span><span class="pill">对话记忆</span></div>
+      </div>
+    </div>
+    <div class="callout"><p class="small" style="margin:0"><b>为什么这么切</b>：日志量在边缘、权限与规则在中心。Agent 只接受“租约”这种可校验的结构化指令，因此中心被攻破也不等于边缘可任意执行；反过来，边缘断网也只是“搜不到”，不会污染中心状态。</p></div>
+
+    <h3 id="s2-2">2.2 执行模型（任务 / 租约）</h3>
+    <p><b>一句话</b>：一次搜索 = 一个 <b>Job</b>（中心侧的状态机）+ 每个 Agent 一份 <b>Lease</b>（带时限的执行许可）。</p>
+    <div class="split">
+      <div>
+        <h4>Job 状态机</h4>
+        <div class="flow">
+          <span class="step mono">created</span><span class="to">→</span>
+          <span class="step mono">dispatching</span><span class="to">→</span>
+          <span class="step mono">running</span><span class="to">→</span>
+          <span class="step mono">completed</span>
+        </div>
+        <p class="small muted" style="margin-top:var(--space-sm)">分支终态：<span class="mono">partial_success</span>（部分 Agent 成功）、<span class="mono">failed</span>、<span class="mono">canceled</span>、<span class="mono">timed_out</span>。</p>
+        <h4>单 Agent 结果语义</h4>
+        <ul class="small">
+          <li><span class="mono">success</span>：有命中行</li>
+          <li><span class="mono">no_match</span>：搜到了但没命中</li>
+          <li><span class="mono">no_files</span> / <span class="mono">no_source_matched</span>：<b>按成功统计</b>（空文件集合 ≠ 失败）</li>
+          <li><span class="mono">source_missing</span>：日志源路径已不存在 → 提示回滚或改配置</li>
+          <li><span class="mono">partial_success</span>：输出被截断（10MB / 10 万行上限）</li>
+          <li><span class="mono">timed_out</span> / <span class="mono">canceled</span> / <span class="mono">failed</span></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>租约里有什么</h4>
+        <table class="tbl compact">
+          <tbody>
+            <tr><td class="mono">job_id / lease_id</td><td>幂等与去重键</td></tr>
+            <tr><td class="mono">deadline</td><td>过期即作废，Agent 自行放弃</td></tr>
+            <tr><td class="mono">files / source</td><td>已解析的日志源与文件集合</td></tr>
+            <tr><td class="mono">argv</td><td>渲染后的参数数组（占位符已注入）</td></tr>
+            <tr><td class="mono">limits</td><td>截断行数/字节、超时、脱敏开关</td></tr>
+            <tr><td class="mono">parse</td><td>提取规则（正则 / JSON / 分隔符）</td></tr>
+          </tbody>
+        </table>
+        <p class="small muted" style="margin:var(--space-sm) 0 0">回传：<span class="mono">JobResultBatch</span>（命中行分批）→ <span class="mono">JobFinished</span>（终态 + 元信息）。</p>
+      </div>
+    </div>
+    <div class="callout"><p class="small" style="margin:0"><b>断线补偿</b>：Agent 重连后上报 <span class="mono">running_jobs</span>，中心对未过期任务补发租约、对已取消/超时任务补发取消；Agent 按 <span class="mono">job_id</span> 去重，保证“最多执行一次上报、绝不重复计费式重跑”。</p></div>
+
+    <h3 id="s2-3">2.3 智能体模型（Agent）</h3>
+    <p><b>一句话</b>：Agent 是“一台机器上的执行者”，通过项目绑定获得配置上下文；中心只保存它的身份、状态与能力，不保存它的业务数据。</p>
+    <div class="diagram">
+      <div class="grid g2">
+        <div class="layer"><h5>身份（一次性）</h5><div class="row"><span class="pill mono">AGENT_INSTALL_TOKEN</span><span class="pill mono">Register</span><span class="pill mono">agent_secret</span><span class="pill mono">RotateSecret</span></div><p class="small muted" style="margin:6px 0 0">注册换 secret；secret AES-GCM 加密落库，Agent 侧 0600 存盘。</p></div>
+        <div class="layer"><h5>活性（持续）</h5><div class="row"><span class="pill mono">Heartbeat</span><span class="pill mono">LoadSnapshot</span><span class="pill mono">concurrency_slots</span><span class="pill mono">last_seen</span></div><p class="small muted" style="margin:6px 0 0">心跳驱动在线状态与槽位；monitor 后台判离线/超时。</p></div>
+      </div>
+      <div class="arrow-v">▼ <small>项目绑定（多对多）：一个 Agent 可服务多个项目，一个项目可用多台 Agent</small></div>
+      <div class="grid g3">
+        <div class="layer"><h5>Agent 状态</h5><div class="row"><span class="pill mono">registered</span><span class="pill mono">online</span><span class="pill mono">offline</span><span class="pill mono">draining</span><span class="pill mono">unhealthy</span><span class="pill mono">rejected</span></div></div>
+        <div class="layer"><h5>能力上报</h5><div class="row"><span class="pill">OS / 架构 / 版本</span><span class="pill">CPU / 内存 / 网络</span><span class="pill">日志目录发现</span></div></div>
+        <div class="layer"><h5>人看的视图</h5><div class="row"><span class="pill">项目 · 客户端</span><span class="pill">监控详情</span><span class="pill">发现面板</span></div></div>
+      </div>
+    </div>
+
+    <h3 id="s2-4">2.4 记忆与知识</h3>
+    <p><b>一句话</b>：把“一个人的经验”变成“项目的资产”——对话有记忆、解析有技能、流程有剧本、整套配置可以打包成场景。</p>
+    <div class="grid g4">
+      <div class="card"><h4>对话记忆</h4><p class="small muted" style="margin:0">会话 <span class="mono">ChatSession</span> + 消息 <span class="mono">ChatMessage</span> 服务端落库；可在项目内或平台级（跨项目）查看历史，回放当时的建议与结论。</p></div>
+      <div class="card"><h4>分析技能 / 解析 Agent</h4><p class="small muted" style="margin:0">技能=分析提示词资产；解析 Agent=针对某类日志格式的解析器资产。均可在项目内建私有、由平台下发公共。</p></div>
+      <div class="card"><h4>剧本 Playbook</h4><p class="small muted" style="margin:0">把多步操作固化成可执行流程，可分配给指定项目；对话里可直接“跑剧本”。</p></div>
+      <div class="callout"><p class="small" style="margin:0"><b>两种分发模型不一样，这是设计选择不是缺陷</b>：<br>
+      ① <b>公共技能 / 公共解析 Agent</b>（<span class="mono">project_id = 0</span>）：<b>全局可见</b>——所有项目都能直接引用，没有“逐个分配”这一步（项目侧查询是 <span class="mono">本项目 ∪ 公共</span>）。<br>
+      ② <b>剧本</b>：<b>分配制</b>——可见范围 = <span class="mono">enabled_for_all</span>（对所有项目开放）<b>∪</b> 被显式分配到的项目；未开放也未分配的剧本，项目里看不到。<br>
+      ③ <b>模型配置</b>：平台默认（<span class="mono">project_id = 0</span>）+ 项目私有可覆盖。<br>
+      需要“只给某些项目用”时用剧本；需要“人人都能用”时用公共技能。</p></div>
+      <div class="card"><h4>场景 Scene</h4><p class="small muted" style="margin:0">可复用工作模板：技能 + Agent + 日志源 + 命令 + 剧本打包，一键事务式实例化为一个新项目（技能名→ID 自动重映射）。</p></div>
+    </div>
+    <div class="callout"><p class="small" style="margin:0"><b>两处“记忆”别混淆</b>：① 会话记忆（人机对话历史，回答“我们上次聊到哪”）；② 配置资产（技能/解析器/剧本/场景，回答“这类日志我们怎么处理”）。前者是记录，后者是可执行资产。</p></div>
+
+    <h3 id="s2-5">2.5 审批与人工闸门</h3>
+    <p><b>一句话</b>：所有会让模型“改系统”的路径都设了人确认——模型可以建议，只有人能生效。</p>
+    <table class="tbl">
+      <thead><tr><th style="width:210px">闸门</th><th>模型可以做的</th><th>必须人确认的</th><th style="width:190px">机制</th></tr></thead>
+      <tbody>
+        <tr><td>提取规则 · 按样本生成草稿</td><td>按样本行做确定性启发式推断，生成正则/JSON 规则与字段映射草稿（不调用大模型）</td><td>点「校验预览」看解析结果，再「提交生效」（生成新版本，可回滚）</td><td>规则版本化，可回滚</td></tr>
+        <tr><td>日志目录发现</td><td>给出目录是否符合标准、日志格式识别结论</td><td>批准 / 拒绝（有效性确认标记）；建为日志源是<b>独立动作</b>，不要求先批准</td><td>发现记录状态机</td></tr>
+        <tr><td>日志分析</td><td>对命中日志给出结论、可疑项、建议</td><td>结论只进分析记录，不自动改配置</td><td>分析记录 + 人工采用</td></tr>
+        <tr><td>对话中的动作</td><td>生成“建议动作卡”（如添加日志源、跑剧本）</td><td>点「确认执行」才真正调用写接口</td><td><span class="mono">/chat/execute</span> + CSRF</td></tr>
+        <tr><td>场景实例化</td><td>—</td><td>人点「从场景创建项目」，事务式落地</td><td>审计 <span class="mono">scene.instantiate</span></td></tr>
+      </tbody>
+    </table>
+    <div class="callout warn"><p class="small" style="margin:0"><b>实现边界</b>：模型不可用时（未配 LLM / 调用失败），页面必须给出明确引导而不是空白——自然语言搜索走本地规则解析，<b>不依赖大模型</b>即可用。</p></div>
+  </section>
+
+  <!-- ============================ §3 ============================ -->
+  <section class="doc-sec" id="s3">
+    <h2>3 · 系统架构</h2>
+
+    <h3>3.1 部署拓扑</h3>
+    <div class="diagram">
+      <div class="grid g2" style="align-items:start">
+        <div>
+          <div class="node" style="margin-bottom:var(--space-sm)"><strong>运维 / 开发浏览器</strong><span>http(s)://&lt;host&gt;/loggen/</span></div>
+          <div class="arrow-v">▼ <small>静态资源（dev: Vite :20007；生产: 内嵌 dist 由控制中心托管）</small></div>
+          <div class="node"><strong>控制中心 control-center</strong><span>HTTP :20006 · gRPC :8443(TLS) · monitor 后台协程</span></div>
+          <div class="arrow-v">▼</div>
+          <div class="grid g2">
+            <div class="node"><strong>MySQL 8</strong><span>生产 · AutoMigrate</span></div>
+            <div class="node"><strong>SQLite 文件</strong><span>开发/测试</span></div>
+          </div>
+          <div class="arrow-v">▼ <small>结果临时目录 24h TTL</small></div>
+          <div class="node"><strong>/tmp/logsearch-results</strong><span>完整命中行 jsonl（DB 只存摘要）</span></div>
+        </div>
+        <div>
+          <div class="node" style="margin-bottom:var(--space-sm)"><strong>业务机器 A / B / C …</strong><span>无需入向端口</span></div>
+          <div class="arrow-v">▼</div>
+          <div class="grid rows" style="gap:var(--space-sm)">
+            <div class="node"><strong>日志 Agent</strong><span>出向 gRPC 长连接 + HMAC</span></div>
+            <div class="node"><strong>受限执行器</strong><span>resolver → renderer → runner → pipeline</span></div>
+            <div class="node"><strong>loggen 日志生成器</strong><span>按格式/模板批量造日志</span></div>
+            <div class="node"><strong>本机日志目录</strong><span>/var/log/**、/data/**/logs/**</span></div>
+          </div>
+          <div class="callout" style="margin-top:var(--space-md)"><p class="small" style="margin:0"><b>网络方向</b>：只有 Agent → 控制中心。业务机不需要开任何入向端口，NAT/内网环境即可接入。</p></div>
+        </div>
+      </div>
+    </div>
+
+    <h3>3.2 组件职责</h3>
+    <table class="tbl">
+      <thead><tr><th style="width:220px">组件 / 包</th><th>职责</th><th style="width:210px">关键约束</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">cmd/control-center</td><td>HTTP + gRPC + monitor 三入口合一</td><td>单二进制部署</td></tr>
+        <tr><td class="mono">internal/ccapi</td><td>gin 路由与中间件：Session、RBAC、CSRF、审计埋点</td><td>写操作必须带 <span class="mono">X-CSRF-Token</span></td></tr>
+        <tr><td class="mono">internal/auth</td><td>用户认证、角色判定、会话</td><td>四角色 A/S/PA/M</td></tr>
+        <tr><td class="mono">internal/cc</td><td>Agent 注册表、配置服务（版本化/回滚）、任务调度</td><td>配置不可变，改动即新版本</td></tr>
+        <tr><td class="mono">internal/grpcsvc</td><td>握手验签、消息分发、断线补偿</td><td>±5min 时间窗防重放</td></tr>
+        <tr><td class="mono">internal/agentconn</td><td>在线 Agent 长连接注册表</td><td>内存态，重启后由 Agent 重连恢复</td></tr>
+        <tr><td class="mono">internal/hmacauth</td><td>HMAC-SHA256 签名 / SecretBox 加密</td><td>AES-GCM 存 agent_secret</td></tr>
+        <tr><td class="mono">internal/agent/…</td><td>fileresolver / renderer / runner / pipeline / executor / client</td><td>禁 <span class="mono">sh -c</span>，参数只进 argv</td></tr>
+        <tr><td class="mono">internal/loggen</td><td>日志生成器与模板引擎（nginx / syslog / json / stacktrace / edge）</td><td>与搜索链路解耦</td></tr>
+        <tr><td class="mono">internal/store</td><td>gorm 存储层（30+ 表，MySQL / SQLite 双方言）</td><td>AutoMigrate</td></tr>
+        <tr><td class="mono">web/src</td><td>Vue 3 控制台：页面 + 组件 + 设计 token</td><td>单一品牌色 ≤3% 占比</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.3 数据模型（按域）</h3>
+    <p class="small muted">表名与后端一致，便于对照排查。命名约定：<span class="mono">users</span> / <span class="mono">projects</span> / <span class="mono">*_versions</span>（版本快照）/ <span class="mono">*_records</span>（过程记录）。</p>
+    <div class="grid g2">
+      <div class="card"><h4>身份与治理</h4>
+        <div class="row" style="display:flex;flex-wrap:wrap;gap:6px">
+          <span class="chip mono">users</span><span class="chip mono">project_members</span><span class="chip mono">api_keys</span>
+          <span class="chip mono">audit_logs</span><span class="chip mono">config_versions</span><span class="chip mono">schema_migrations</span>
+        </div>
+        <p class="small muted" style="margin:var(--space-sm) 0 0">审计 180 天 TTL；API 密钥带 scopes（如 <span class="mono">["query","read","download"]</span>）与过期时间，仅创建时显示一次明文。</p>
+      </div>
+      <div class="card"><h4>项目与资源配置</h4>
+        <div class="row" style="display:flex;flex-wrap:wrap;gap:6px">
+          <span class="chip mono">projects</span><span class="chip mono">agents</span><span class="chip mono">agent_heartbeats</span><span class="chip mono">project_agents</span>
+          <span class="chip mono">log_sources</span><span class="chip mono">search_commands</span><span class="chip mono">extract_rules</span><span class="chip mono">test_samples</span>
+        </div>
+        <p class="small muted" style="margin:var(--space-sm) 0 0">日志源 / 命令 / 规则均<b>版本化</b>，每次改动生成新版本，可一键回滚到上一版本。</p>
+      </div>
+      <div class="card"><h4>任务与结果</h4>
+        <div class="row" style="display:flex;flex-wrap:wrap;gap:6px">
+          <span class="chip mono">search_jobs</span><span class="chip mono">search_job_agent_results</span><span class="chip mono">config_snapshots</span>
+          <span class="chip mono">search_request_batches</span><span class="chip mono">query_plans</span><span class="chip mono">discovery_records</span>
+        </div>
+        <p class="small muted" style="margin:var(--space-sm) 0 0"><span class="mono">config_snapshots</span> 冻结“这次搜索用的是哪版配置”，保证结果可复现。</p>
+      </div>
+      <div class="card"><h4>LLM 资产与记忆</h4>
+        <div class="row" style="display:flex;flex-wrap:wrap;gap:6px">
+          <span class="chip mono">llm_configs</span><span class="chip mono">llm_skills</span><span class="chip mono">llm_agents</span>
+          <span class="chip mono">llm_analyses</span><span class="chip mono">llm_analysis_jobs</span><span class="chip mono">chat_sessions</span><span class="chip mono">chat_messages</span><span class="chip mono">scenes</span>
+        </div>
+        <p class="small muted" style="margin:var(--space-sm) 0 0">模型配置支持多提供方、多模型，平台级默认 + 项目级覆盖；密钥字段只回显掩码。</p>
+      </div>
+      <div class="card"><h4>生成工具</h4>
+        <div class="row" style="display:flex;flex-wrap:wrap;gap:6px">
+          <span class="chip mono">generation_tasks</span><span class="chip mono">log_templates</span>
+        </div>
+        <p class="small muted" style="margin:var(--space-sm) 0 0">任务可暂停 / 恢复 / 取消，进度按“已生成文件数 / 总文件数”回传。</p>
+      </div>
+      <div class="card"><h4>平台公共资产</h4>
+        <div class="row" style="display:flex;flex-wrap:wrap;gap:6px">
+          <span class="chip mono">llm_skills(public)</span><span class="chip mono">llm_agents(public)</span><span class="chip mono">playbooks</span><span class="chip mono">catalog_tools</span>
+        </div>
+        <p class="small muted" style="margin:var(--space-sm) 0 0">剧本可分配到指定项目；工具目录决定对话里允许出现的系统动作清单。</p>
+      </div>
+    </div>
+
+    <h3>3.4 技术栈</h3>
+    <table class="tbl compact">
+      <thead><tr><th style="width:130px">层</th><th>选型</th><th style="width:260px">说明</th></tr></thead>
+      <tbody>
+        <tr><td>前端</td><td>Vue 3.5 + vue-router + Vite + TypeScript（<span class="mono">vue-tsc</span> 严格校验）</td><td>无 UI 框架依赖，自建设计 token + <b>全局控件基线</b>（<span class="mono">web/src/styles/global.css</span> 控件段，见 §10.6）</td></tr>
+        <tr><td>端到端测试</td><td>Playwright（<span class="mono">web/e2e/*.spec.ts</span>）</td><td>真实登录 + 真实接口，不 mock</td></tr>
+        <tr><td>后端</td><td>Go + gin（HTTP）+ gRPC（Agent 通道）+ gorm（存储）</td><td>单二进制 control-center / agent / loggen</td></tr>
+        <tr><td>存储</td><td>MySQL 8（生产）/ SQLite（开发与单测）</td><td>同一套 model，双方言 AutoMigrate</td></tr>
+        <tr><td>安全</td><td>TLS + Session/CSRF + RBAC + HMAC-SHA256 + AES-GCM</td><td>dev 自签证书由 <span class="mono">scripts/dev-certs.sh</span> 生成</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.5 接口一览</h3>
+    <div class="split">
+      <div class="card"><h4>HTTP（浏览器与自动化调用）</h4>
+        <table class="tbl compact">
+          <tbody>
+            <tr><td class="mono">POST /api/auth/login · logout</td><td class="mono">GET /api/auth/me</td></tr>
+            <tr><td class="mono">GET/POST /api/projects</td><td class="mono">GET /api/projects/:id</td></tr>
+            <tr><td class="mono">GET/POST/DELETE …/members</td><td class="mono">GET/POST …/:id/agents</td></tr>
+            <tr><td class="mono">…/log-sources (+ /:id/rollback)</td><td class="mono">…/search-commands (+ rollback)</td></tr>
+            <tr><td class="mono">…/extract-rules (+ /test · /rollback)</td><td class="mono">…/test-samples (+ /import-auto)</td></tr>
+            <tr><td class="mono">GET/POST …/search-jobs</td><td class="mono">…/:jobId/cancel · /hits · /download</td></tr>
+          <tr><td class="mono">/api/v1/loggen/search-requests</td><td class="mono">…/:id/hits · /download（批量结果汇总）</td></tr>
+          <tr><td class="mono">/api/v1/loggen/gen-tasks</td><td class="mono">…/:id/pause · /resume · /cancel</td></tr>
+            <tr><td class="mono">POST /api/llm/analyze</td><td class="mono">POST /api/llm/semantic-search</td></tr>
+            <tr><td class="mono">POST /api/llm/chat · /chat/execute</td><td class="mono">GET /api/chat/sessions/all</td></tr>
+            <tr><td class="mono">GET/POST /api/scenes · /:id/instantiate</td><td class="mono">GET/POST /api/playbooks</td></tr>
+            <tr><td class="mono">GET /api/agents · /metrics</td><td class="mono">POST /:id/bind · /unbind · /disable</td></tr>
+            <tr><td class="mono">GET /api/audit · /config-versions</td><td class="mono">GET /healthz · /livez · /readyz · /metrics</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card"><h4>gRPC（Agent 通道，<span class="mono">proto/agent.proto</span>）</h4>
+        <table class="tbl compact">
+          <tbody>
+            <tr><td class="mono">Register</td><td>安装令牌换 agent_id + secret</td></tr>
+            <tr><td class="mono">RotateSecret</td><td>定期/按提示轮换</td></tr>
+            <tr><td class="mono">AgentStream</td><td>双向流：上行为心跳/结果，下行为租约/取消</td></tr>
+            <tr><td class="mono">AgentToControl</td><td class="mono">Hello · Heartbeat · LoadSnapshot · ReconnectState · JobResultBatch · JobFinished · AckCancel · DiscoveryReport · SampleResponse · CleanupResult</td></tr>
+            <tr><td class="mono">ControlToAgent</td><td class="mono">Lease · CancelJob · RotateSecretHint · SampleRequest · CleanupCommand</td></tr>
+          </tbody>
+        </table>
+        <p class="small muted" style="margin:var(--space-sm) 0 0">每条消息独立签名：<span class="mono">agent_id + seq + timestamp + payload</span>，时间窗 ±5 分钟。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ §4 ============================ -->
+  <section class="doc-sec" id="s4">
+    <h2>4 · 核心时序</h2>
+    <p class="lead">八条主流程。虚线右侧的方框是中心内部处理；带编号的箭头是跨组件消息。全部为当前实现的真实顺序。</p>
+
+    <figure>
+      <figcaption><b>4.1 登录与鉴权</b> —— 会话 + CSRF 是所有写操作的前提。</figcaption>
+      <div class="seq-wrap"><table class="seq">
+        <thead><tr><th class="actor-ext">用户</th><th class="actor-ext">浏览器</th><th class="actor-cc">控制中心</th><th>存储</th></tr></thead>
+        <tbody>
+          <tr><td class="msg" colspan="2"><span class="label"><span class="n">①</span>输入用户名 / 密码，提交登录</span><span class="arrow"></span></td><td></td><td></td></tr>
+          <tr><td></td><td class="msg" colspan="2"><span class="label"><span class="n">②</span><b>POST /api/auth/login</b>（JSON）</span><span class="arrow"></span></td><td></td></tr>
+          <tr><td></td><td class="note">校验口令（bcrypt）</td><td class="note">签发 Session + csrf_token</td><td class="note">users / audit_logs 写入</td></tr>
+          <tr><td></td><td class="msg rtl" colspan="2"><span class="label"><span class="n">③</span>Set-Cookie(Session) + user + csrf_token</span><span class="arrow rtl"></span></td><td></td></tr>
+          <tr><td class="msg rtl" colspan="2"><span class="label"><span class="n">④</span>进入对话助手（/chat，按角色渲染导航）</span><span class="arrow rtl"></span></td><td></td><td></td></tr>
+          <tr><td></td><td class="msg" colspan="2"><span class="label"><span class="n">⑤</span><b>写操作</b>：带 Cookie + <b>X-CSRF-Token</b>；RBAC 中间件判角色</span><span class="arrow"></span></td><td></td></tr>
+          <tr><td></td><td class="note">守卫：未登录 → /login；越权 → 对话助手</td><td class="note">403 越权 / 401 未登录</td><td class="note">审计记录动作与目标</td></tr>
+        </tbody>
+      </table></div>
+    </figure>
+
+    <figure>
+      <figcaption><b>4.2 Agent 接入：注册 → 建流 → 心跳 → 绑定项目</b></figcaption>
+      <div class="seq-wrap"><table class="seq">
+        <thead><tr><th class="actor-ext">Agent</th><th class="actor-cc">控制中心</th><th>存储</th><th class="actor-ext">管理员</th></tr></thead>
+        <tbody>
+          <tr><td class="msg" colspan="2"><span class="label"><span class="n">①</span><b>Register</b>：appid + secret（或 install_token）+ agent_id + 能力（OS/架构/版本）</span><span class="arrow"></span></td><td></td><td></td></tr>
+          <tr><td></td><td class="note">校验凭据 → 解析所属项目；生成 agent_secret</td><td class="note">agents 落库（secret AES-GCM）+ 自动绑定项目</td><td></td></tr>
+          <tr><td class="msg rtl" colspan="2"><span class="label"><span class="n">②</span>返回 agent_secret（仅此一次）</span><span class="arrow rtl"></span></td><td></td><td></td></tr>
+          <tr><td class="note">0600 落盘 secret</td><td></td><td></td><td></td></tr>
+          <tr><td class="msg" colspan="2"><span class="label"><span class="n">③</span><b>AgentStream</b>：Hello 握手（HMAC 签名 + 时间戳）</span><span class="arrow"></span></td><td></td><td></td></tr>
+          <tr><td></td><td class="note">验签 → 注册长连接（状态 online）</td><td class="note">agent_heartbeats</td><td></td></tr>
+          <tr><td class="msg" colspan="3"><span class="label"><span class="n">④</span>周期 <b>Heartbeat</b> + <b>LoadSnapshot</b>（CPU/内存/并发槽位）</span><span class="arrow dash"></span></td><td></td></tr>
+          <tr><td class="msg rtl" colspan="3"><span class="label"><span class="n">⑤</span>未绑定则无任务；monitor 超时判定 → offline</span><span class="arrow rtl"></span></td><td></td></tr>
+          <tr><td></td><td class="msg rtl" colspan="2"><span class="label"><span class="n">⑥</span>项目 · 客户端页可见该 Agent</span><span class="arrow rtl"></span></td><td class="msg rtl"><span class="label">点击「绑定到本项目」</span><span class="arrow rtl"></span></td></tr>
+          <tr><td></td><td class="note">写入 project_agents（多对多）</td><td class="note">project_agents</td><td></td></tr>
+        </tbody>
+      </table></div>
+    </figure>
+
+    <figure>
+      <figcaption><b>4.3 单次搜索</b> —— 从“点搜索”到“看到命中行”。</figcaption>
+      <div class="seq-wrap"><table class="seq">
+        <thead><tr><th class="actor-ext">用户</th><th class="actor-cc">控制中心</th><th class="actor-ext">Agent</th><th>存储 / 结果</th></tr></thead>
+        <tbody>
+          <tr><td class="msg" colspan="2"><span class="label"><span class="n">①</span>选命令 + 关键词 + 时间范围 → <b>POST /api/projects/:id/search-jobs</b></span><span class="arrow"></span></td><td></td><td></td></tr>
+          <tr><td></td><td class="note">解析配置：日志源 + 命令 + 规则（冻结 <b>config_snapshot</b>）</td><td></td><td class="note">search_jobs + config_snapshots</td></tr>
+          <tr><td></td><td class="note">挑选在线且已绑定的 Agent（按槽位）</td><td></td><td></td></tr>
+          <tr><td></td><td class="msg" colspan="2"><span class="label"><span class="n">②</span>下发 <b>Lease</b>（job_id / deadline / files / argv / limits / parse）</span><span class="arrow"></span></td><td></td></tr>
+          <tr><td></td><td></td><td class="note">租约二次校验：shell / {files} / 限制</td><td></td></tr>
+          <tr><td></td><td></td><td class="note">resolver → renderer → runner（argv，无 shell）</td><td class="note">读取本机日志文件</td></tr>
+          <tr><td></td><td class="msg rtl" colspan="2"><span class="label"><span class="n">③</span><b>JobResultBatch</b>：命中行分批上报（截断 + 脱敏 + 解析）</span><span class="arrow rtl"></span></td><td></td></tr>
+          <tr><td></td><td class="note">聚合摘要；完整 jsonl 落临时目录</td><td></td><td class="note">search_job_agent_results / jsonl</td></tr>
+          <tr><td class="msg rtl" colspan="2"><span class="label"><span class="n">④</span>结果区渲染：级别/Agent 过滤、行上下文、解析字段</span><span class="arrow rtl"></span></td><td></td><td></td></tr>
+          <tr><td class="msg" colspan="2"><span class="label"><span class="n">⑤</span>点「下载」→ 取完整结果 jsonl</span><span class="arrow"></span></td><td></td><td class="note">/jobId/download（24h 内有效）</td></tr>
+          <tr><td class="note">终态：completed / partial_success / no_files…</td><td class="note">超时或取消 → CancelJob</td><td class="note">AckCancel</td><td class="note">search_jobs 终态</td></tr>
+        </tbody>
+      </table></div>
+    </figure>
+
+    <figure>
+      <figcaption><b>4.4 批量搜索</b> —— 一个批次 = N 个子请求，按并发数摊给 Agent。</figcaption>
+      <div class="seq-wrap"><table class="seq">
+        <thead><tr><th class="actor-ext">用户</th><th class="actor-cc">控制中心</th><th class="actor-ext">Agent 池</th><th>存储</th></tr></thead>
+        <tbody>
+          <tr><td class="msg" colspan="2"><span class="label"><span class="n">①</span>创建批次：命令 + 并发数 + Req/Worker + 关键词集</span><span class="arrow"></span></td><td></td><td></td></tr>
+          <tr><td></td><td class="note">展开为 N 个子请求，写批次与子请求</td><td></td><td class="note">search_request_batches</td></tr>
+          <tr><td></td><td class="msg" colspan="2"><span class="label"><span class="n">②</span>按并发循环下发子任务（复用 Job/Lease 通道）</span><span class="arrow"></span></td><td></td></tr>
+          <tr><td></td><td class="msg rtl" colspan="2"><span class="label"><span class="n">③</span>子结果陆续回传 → 进度 = 已完成 / 总计</span><span class="arrow rtl"></span></td><td></td></tr>
+          <tr><td class="msg rtl" colspan="2"><span class="label"><span class="n">④</span>批次详情页：子请求结果表 + 每子请求命中数</span><span class="arrow rtl"></span></td><td></td><td></td></tr>
+          <tr><td class="msg" colspan="2"><span class="label"><span class="n">⑤</span>可「取消」未完成子请求</span><span class="arrow"></span></td><td class="note">CancelJob</td><td class="note">批次终态</td></tr>
+          <tr><td class="note">用途：容量压测、多关键词扫描、回归对比</td><td colspan="3" class="note">与单次搜索共用执行链，因此限制、脱敏、截断语义完全一致</td></tr>
+        </tbody>
+      </table></div>
+    </figure>
+
+    <figure>
+      <figcaption><b>4.5 日志目录发现 → 人工批准 → 建成日志源</b>（批准是有效性确认标记，建源是独立动作；两者不做前后置校验）</figcaption>
+      <div class="seq-wrap"><table class="seq">
+        <thead><tr><th class="actor-ext">Agent</th><th class="actor-cc">控制中心</th><th class="actor-ext">审核者</th><th>存储</th></tr></thead>
+        <tbody>
+          <tr><td class="msg" colspan="2"><span class="label"><span class="n">①</span><b>DiscoveryReport</b>：扫描到的候选目录/文件模式/文件数</span><span class="arrow"></span></td><td></td><td></td></tr>
+          <tr><td></td><td class="note">按项目落发现记录（状态：待处理）</td><td></td><td class="note">discovery_records</td></tr>
+          <tr><td></td><td class="msg rtl" colspan="2"><span class="label"><span class="n">②</span>客户端 → 发现面板：路径 / 模式 / 类别 / 文件数</span><span class="arrow rtl"></span></td><td></td></tr>
+          <tr><td></td><td class="msg rtl" colspan="2"><span class="label"><span class="n">③</span>可选「日志分析」：判断目录是否符合规范、格式识别</span><span class="arrow rtl"></span></td><td></td></tr>
+          <tr><td></td><td class="msg rtl" colspan="2"><span class="label"><span class="n">④</span>审核者决定：批准 / 拒绝 / 建为日志源</span><span class="arrow rtl"></span></td><td></td></tr>
+          <tr><td class="msg rtl" colspan="2"><span class="label"><span class="n">⑤</span>批准后下发新配置（可用范围对齐发现结果）</span><span class="arrow rtl"></span></td><td></td><td class="note">log_sources + config_versions</td></tr>
+          <tr><td class="note">本地 resolver 再次展开文件集合</td><td colspan="3" class="note">拒绝也是有效结论：保留记录与理由，避免重复上报</td></tr>
+        </tbody>
+      </table></div>
+    </figure>
+
+    <figure>
+      <figcaption><b>4.6 日志分析</b>（审批闸门二）—— 结论只进记录，不自动改配置。</figcaption>
+      <div class="seq-wrap"><table class="seq">
+        <thead><tr><th class="actor-ext">用户</th><th class="actor-cc">控制中心</th><th>LLM 提供方</th><th>存储</th></tr></thead>
+        <tbody>
+          <tr><td class="msg" colspan="2"><span class="label"><span class="n">①</span>选命令 + 时间范围（或从搜索命中直接发起）→ <b>POST /api/llm/analyze</b></span><span class="arrow"></span></td><td></td><td></td></tr>
+          <tr><td></td><td class="note">取项目级配置，缺省回落平台级默认模型</td><td></td><td class="note">llm_configs</td></tr>
+          <tr><td></td><td class="msg" colspan="2"><span class="label"><span class="n">②</span>拼装提示词（分析技能 + 格式识别 + 采样日志）</span><span class="arrow"></span></td><td></td></tr>
+          <tr><td></td><td class="msg rtl" colspan="2"><span class="label"><span class="n">③</span>模型返回：结论 / 可疑项 / 建议动作</span><span class="arrow rtl"></span></td><td></td></tr>
+          <tr><td></td><td class="note">落分析记录（含耗时、用量、模型、提示词版本）</td><td></td><td class="note">llm_analyses / llm_analysis_jobs</td></tr>
+          <tr><td class="msg rtl" colspan="2"><span class="label"><span class="n">④</span>分析记录列表：展开看结论与证据行</span><span class="arrow rtl"></span></td><td></td><td></td></tr>
+          <tr><td class="note">人决定是否照建议改配置（另走配置页 + 审计）</td><td colspan="3" class="note">模型不可用 → 页面给出配置引导，不静默失败</td></tr>
+        </tbody>
+      </table></div>
+    </figure>
+
+    <figure>
+      <figcaption><b>4.7 场景实例化</b> —— 一次事务，把模板变成可用项目。</figcaption>
+      <div class="seq-wrap"><table class="seq">
+        <thead><tr><th class="actor-ext">管理员</th><th class="actor-cc">控制中心</th><th>存储</th><th class="actor-ext">新建项目</th></tr></thead>
+        <tbody>
+          <tr><td class="msg" colspan="2"><span class="label"><span class="n">①</span>「＋ 新建场景模板」：填技能 / Agent / 日志源 / 命令 / 剧本</span><span class="arrow"></span></td><td></td><td></td></tr>
+          <tr><td></td><td class="note">校验可见范围（公共资产 / 项目私有）</td><td class="note">scenes</td><td></td></tr>
+          <tr><td class="msg" colspan="3"><span class="label"><span class="n">②</span>「从场景创建项目」：项目名 + 目标 Agent</span><span class="arrow dash"></span></td><td></td></tr>
+          <tr><td></td><td class="note"><b>事务</b>：建项目 → 复制技能/解析 Agent/日志源/命令/剧本 → <b>技能名 → 新 ID 重映射</b></td><td class="note">projects + log_sources + search_commands + llm_skills…</td><td></td></tr>
+          <tr><td></td><td class="note">写审计 scene.instantiate</td><td class="note">audit_logs</td><td></td></tr>
+          <tr><td class="msg rtl" colspan="3"><span class="label"><span class="n">③</span>返回项目 ID，跳转项目详情（配置已就绪）</span><span class="arrow rtl"></span></td><td class="msg rtl"><span class="label">立即可搜</span><span class="arrow rtl"></span></td></tr>
+          <tr><td class="note">失败整体回滚，不产生半个项目</td><td colspan="3" class="note">适用：新业务线接入、演练环境、客户演示</td></tr>
+        </tbody>
+      </table></div>
+    </figure>
+
+    <figure>
+      <figcaption><b>4.8 对话中的动作执行</b>（审批闸门三）+ 4.9 断线补偿</figcaption>
+      <div class="seq-wrap"><table class="seq">
+        <thead><tr><th class="actor-ext">用户</th><th class="actor-cc">控制中心</th><th class="actor-ext">Agent</th><th>存储</th></tr></thead>
+        <tbody>
+          <tr><td class="msg" colspan="2"><span class="label"><span class="n">①</span>对话里说「给这个项目加一个日志源」</span><span class="arrow"></span></td><td></td><td></td></tr>
+          <tr><td></td><td class="note">平台级：无项目上下文时降级为引导对话；项目级：带项目上下文</td><td></td><td class="note">chat_sessions / chat_messages</td></tr>
+          <tr><td class="msg rtl" colspan="2"><span class="label"><span class="n">②</span>返回<b>建议动作卡</b>（参数已填好，等待人确认）</span><span class="arrow rtl"></span></td><td></td><td></td></tr>
+          <tr><td class="msg" colspan="2"><span class="label"><span class="n">③</span>点「确认执行」→ <b>POST /api/llm/chat/execute</b>（CSRF）</span><span class="arrow"></span></td><td></td><td></td></tr>
+          <tr><td></td><td class="note">按动作类型调用正规写接口（等同人在页面操作，同样受 RBAC 与审计约束）</td><td></td><td class="note">目标表 + audit_logs</td></tr>
+          <tr><td class="msg rtl" colspan="2"><span class="label"><span class="n">④</span>执行结果回填对话（含失败原因与重试入口）</span><span class="arrow rtl"></span></td><td></td><td></td></tr>
+          <tr><td colspan="4" class="note" style="background:var(--color-surface-hover); font-style:normal"><b>4.9 断线补偿</b>：Agent 重连 → 上报 <span class="mono">ReconnectState{running_jobs}</span> → 中心补发未过期 Lease + 对已取消/超时任务补发 CancelJob → Agent 按 job_id 去重 → 无重复结果、无“孤儿任务”。</td></tr>
+        </tbody>
+      </table></div>
+    </figure>
+  </section>
+
+  <!-- ============================ §5 ============================ -->
+  <section class="doc-sec" id="s5">
+    <h2>5 · 使用指南（模块级操作手册）</h2>
+    <p class="lead">每个模块统一四段：<b>它是什么 / 数据概念 / 界面与操作（逐控件）/ 权限与注意</b>。照着做就能完成一次真实操作。</p>
+
+    <h3 id="s5-1">5.0 指南总览与角色可见性</h3>
+    <table class="tbl">
+      <thead><tr><th style="width:180px">导航入口</th><th>页面</th><th style="width:170px">谁可见</th><th>一句话</th></tr></thead>
+            <tbody>
+        <tr class="grp-row"><td colspan="4">工作区 · 跨项目入口（侧栏分组 1/3）</td></tr>
+        <tr><td>对话</td><td class="mono">/chat</td><td>A / S / PA / M</td><td>平台级对话工作台（登录首页）：跨项目问问题、跑剧本、确认执行动作</td></tr>
+        <tr><td>项目</td><td class="mono">/projects</td><td>全部（可见范围按成员关系）</td><td>项目列表 / 新建项目</td></tr>
+        <tr><td>场景</td><td class="mono">/scenes</td><td>A / S / PA</td><td>可复用工作模板，一键实例化项目</td></tr>
+        <tr><td>工作台</td><td class="mono">/workbench</td><td>全部</td><td>项目总览：项目瓦片 + 最近任务 + 对话入口卡</td></tr>
+        <tr class="grp-row"><td colspan="4">平台 · 治理入口（侧栏分组 2/3）</td></tr>
+        <tr><td>权限矩阵</td><td class="mono">/permissions</td><td>全部</td><td>角色 → 权限的只读说明页：左选角色、右看该角色拥有的权限与作用</td></tr>
+        <tr><td>平台设置</td><td class="mono">/platform/users · llm · assets</td><td>仅 A</td><td>用户与 API 密钥、公共模型配置、公共资产（页签由路由 <span class="mono">meta.nav</span> 派生，见 §10.7）</td></tr>
+        <tr><td>审计日志</td><td class="mono">/audit</td><td>仅 A / S</td><td>全平台动作追溯</td></tr>
+        <tr class="grp-row"><td colspan="4">更多 · 一次性动作（侧栏分组 3/3）</td></tr>
+        <tr><td>客户端下载</td><td class="mono">/client-download</td><td>全部</td><td>按架构下载 Agent 二进制 + 接入步骤</td></tr>
+        <tr class="grp-row"><td colspan="4">项目内二级导航（<b>不在</b>全局侧栏：进入项目后由 ProjectNav 水平页签承载）</td></tr>
+        <tr><td>项目 · 搜日志</td><td class="mono">/projects/:id/search</td><td>项目成员</td><td>单次 / 批量 / 历史回看（对话在全局 /chat）</td></tr>
+        <tr><td>项目 · 搜索配置</td><td class="mono">…/search-config?sub=sources|commands|rules</td><td>项目成员（写多为 PA）</td><td>日志文件路径 / 搜索语句模板 / 字段解析配置（含校验样本）</td></tr>
+        <tr><td>项目 · 造测试日志</td><td class="mono">…/tasks（按 E4 不设并列导航项）</td><td>项目成员</td><td>任务生成 + 暂停/恢复/取消；搜日志流程内的验证步骤，上下文入口见 §10.9</td></tr>
+        <tr><td>项目 · 搜索日志客户端</td><td class="mono">…/clients</td><td>项目成员</td><td>客户端列表 / 监控详情 / 目录发现</td></tr>
+        <tr><td>项目 · 成员管理</td><td class="mono">…/members</td><td>仅 PA（+ A/S）</td><td>加成员（添加时定角色）、移除</td></tr>
+        <tr><td>项目 · 审计日志</td><td class="mono">…/audit</td><td>仅 PA（A/S 用侧栏的全局审计）</td><td>只看本项目范围的审计流水；A/S 已有跨项目的侧栏全局入口，同一人不再看到两处同名「审计日志」</td></tr>
+        <tr><td>项目详情 · 日志分析</td><td class="mono">…/llm</td><td>项目成员</td><td>项目级模型、分析、技能、解析 Agent</td></tr>
+      </tbody>
+    </table>
+    <p class="small muted">角色缩写：<span class="chip brand">A</span> admin · <span class="chip">S</span> secops · <span class="chip">PA</span> proj_admin · <span class="chip">M</span> member。</p>
+
+    <h3 id="s5-login">5.1 登录与全局导航</h3>
+    <p><b>它是什么</b>：唯一的进入口。平台没有自助注册，账号由平台管理员创建；登录后按角色渲染左导航。</p>
+    <div class="split">
+      <div class="card"><h4>数据概念</h4><dl class="kv">
+        <dt>用户</dt><dd>用户名 + 口令（bcrypt）+ 角色 + 状态（<span class="mono">active</span> / <span class="mono">disabled</span>）</dd>
+        <dt>会话</dt><dd>服务端 Session；写操作额外要求 <span class="mono">X-CSRF-Token</span></dd>
+        <dt>审计</dt><dd>登录成功/失败都留痕</dd>
+      </dl></div>
+      <div class="card"><h4>界面与操作</h4><ol class="small" style="margin:0">
+        <li>打开 <span class="mono">/loggen/</span> → 未登录自动跳登录页。</li>
+        <li>输入用户名 / 密码 → 点「登录」。</li>
+        <li>成功后进入<b>对话助手（/chat，默认首页）</b>；需要项目总览走侧栏「工作台」。顶栏右侧「文档资料」可页内打开本产品设计文档与界面原型（弹窗右上角另有「在新标签打开」）。<b>未登录也能看</b>：登录页卡片下方即有此入口，或直接访问 <span class="mono">/loggen/docs/product-design.html</span>。</li>
+        <li>左下角「退出登录」结束会话。</li>
+      </ol></div>
+    </div>
+    <div class="callout"><p class="small" style="margin:0"><b>注意</b>：被禁用（<span class="mono">disabled</span>）的账号即使口令正确也会被拒；连续失败不锁定账号，但会持续写审计，排查时按“操作者 + 动作”筛审计日志。</p></div>
+
+    <h3 id="s5-workbench">5.2 工作台</h3>
+    <p><b>它是什么</b>：<b>项目总览</b>（巡检视角）——每块项目瓦片带活动数据（N 台 Agent · 在线 / 离线 · 会话数 · 最近活动时间），下方是跨项目「最近任务」。登录默认落在对话助手，本页是「我的项目们现在怎么样」的第二落点。</p>
+    <p class="small muted"><b>与「项目管理」页的分工（A2 裁定）</b>：本页负责<b>巡检</b>（谁在线、最近发生了什么），§5.4 项目管理页负责<b>清单</b>（创建 / 按名称·appid·描述搜索 / 分页）。两页都列项目但形态不同，因此分工写进标题即可自解释。</p>
+    <p class="small"><span class="chip warn">⏳ 待实施</span> ①本页「对话助手入口卡」与侧栏「对话」重复，A2/D3 已决策<b>移除</b>（代码尚未改动）；②瓦片上的「0 Agent / 离线 0」将改为<b>「无活动」态</b>（A2/Sally：零值不应作为数据展示）。详见 §10.8。</p>
+    <table class="tbl compact">
+      <thead><tr><th style="width:170px">区域 / 控件</th><th>作用</th><th style="width:250px">操作结果</th></tr></thead>
+      <tbody>
+        <tr><td>项目瓦片</td><td>你可见的项目（按成员关系），带最近活动时间</td><td>点击 → 项目详情「搜索工作区」</td></tr>
+        <tr><td>项目列表（右侧）</td><td>同上，列表视图，便于扫读</td><td>点击进入项目</td></tr>
+        <tr><td>对话助手入口卡</td><td>直达全屏对话工作台（/chat）</td><td>点击跳转；会话记忆在 /chat 左栏</td></tr>
+        <tr><td>平台级入口</td><td>侧栏「对话」进入全屏对话工作台（跨项目）</td><td>跳转 <span class="mono">/chat</span></td></tr>
+      </tbody>
+    </table>
+    <p class="small muted"><b>权限</b>：成员只能看到自己参与的项目；A/S 可见全部项目。「新建项目」只在项目管理页，需要平台管理员。</p>
+
+    <h3 id="s5-chat">5.3 对话（平台级 <span class="mono">/chat</span>）</h3>
+    <p><b>它是什么</b>：把“搜日志、看配置、动配置”用自然语言串起来的入口。既能问（只读分析），也能改（生成动作卡，人确认后执行）。</p>
+    <div class="split">
+      <div class="card"><h4>数据概念</h4>
+        <dl class="kv">
+          <dt>会话</dt><dd><span class="mono">chat_sessions</span>：属于某个项目，或平台级（<span class="mono">project_id = 0</span>）</dd>
+          <dt>消息</dt><dd><span class="mono">chat_messages</span>：角色（user/assistant）、内容、附带的动作卡与执行结果</dd>
+          <dt>范围</dt><dd>顶栏右侧「范围」选择器 + 输入卡左侧 ✦ 快捷切换：<b>平台</b>=跨项目总览；<b>具体项目</b>=直接调用项目功能</dd>
+        </dl>
+      </div>
+      <div class="card"><h4>界面与操作</h4><ol class="small" style="margin:0">
+        <li>左栏顶部范围条显示当前范围（平台 · 全部项目 / 项目 · X（仅本项目））。</li>
+        <li>「＋ 新建对话」开新会话；历史会话按项目分组、可折叠，搜索会穿透折叠直达命中会话。</li>
+        <li>平台模式下：左栏按项目分组，平台组置顶；切到具体项目后，左栏只列本项目，项目层级消失。</li>
+        <li>底部悬浮输入卡输入问题，回车发送；回答里出现「建议动作卡」时，点「确认执行」才真正落库。</li>
+        <li>确认执行的<b>回执（含任务号 / 批次号 / 项目号）会留在对话流里</b>：接着说「取消刚才那个任务」这类多轮指代可直接解析执行。</li>
+        <li>回执卡带深链：搜索作业 →「在单次搜索中查看」直达结果区；压测批次 →「查看批次结果」直达批次详情（命中汇总 + 下载）。</li>
+        <li>复合需求出「一次完成多步」<b>计划卡</b>（如一句话新建项目 + 连建日志路径 / 命令 / 规则，确认一次全部落位）。</li>
+        <li>「📖 示例」面板：八轮完整演示话术，一键填入。</li>
+        <li>长回复折叠为 8 行，可「展开全文」；超过 60 条的历史按窗口回放，向上滚动「载入更早」。</li>
+      </ol></div>
+    </div>
+    <div class="callout warn"><p class="small" style="margin:0"><b>实现边界</b>：平台级对话在没有项目上下文时，涉及改配置的动作会降级为“引导式回答”，不会猜一个项目去改。未配置 LLM 时页面给出配置引导（前往平台设置 · 公共模型配置）。</p></div>
+
+    <h3 id="s5-project">5.4 项目与项目导航</h3>
+    <p><b>它是什么</b>：项目是<b>所有配置的隔离边界</b>——日志源、命令、规则、样本、Agent 绑定、成员、LLM 资产全部挂在项目下。</p>
+    <p class="small muted"><b>与「工作台」的分工</b>：本页是<b>清单</b>（创建含 appid/secret 一次性下发 · 按名称/appid/描述搜索 · 分页），<b>不含</b>活动数据与最近任务；要看「哪个项目离线了 / 最近发生了什么」去 §5.2 工作台。</p>
+    <div class="split">
+      <div class="card"><h4>项目管理页（A / S）</h4><ol class="small" style="margin:0">
+        <li>「创建新项目」：填项目名与描述 → 创建。</li>
+        <li>创建成功后<b>一次性显示 appid / secret</b>：立刻保存，页面刷新后不再展示。</li>
+        <li>列表显示项目、描述、appid、状态、创建时间；点击进入项目详情。</li>
+      </ol></div>
+      <div class="card"><h4>项目页顶部标签条（二级导航）</h4><ul class="small" style="margin:0">
+        <li><b>搜日志</b>（单次 / 批量 / 历史三个页签）</li>
+        <li><b>搜索配置</b>：日志文件路径 / 搜索语句模板 / 字段解析配置（含校验样本；<span class="mono">?sub=</span> 深链）</li>
+        <li><b>搜索日志客户端</b>：列表 / 监控 / 发现</li>
+        <li><b>成员管理</b>（仅 PA 可见）</li>
+        <li><b>日志分析</b></li>
+      </ul>
+      <p class="small muted" style="margin:8px 0 0">造测试日志（…/tasks）<b>不</b>在标签条上，这是 <b>A3/E4 的决策</b>而非遗漏：标签条承载<b>并列功能</b>，而造测试日志是<b>搜日志的前置步骤</b>（先造数据才能验证配置），因此用流程内的上下文入口而非并列项。模板管理页已下线。旧路径 /sources · /commands · /rules 自动跳到搜索配置对应子页签。</p>
+      <p class="small"><span class="chip warn">⏳ 待实施</span> 恢复标签条项的判据（A3/E4）：①走查任务「找到造测试日志」失败或需手输 URL；②上下文入口上线后 <span class="mono">/tasks</span> 的到达仍主要来自手输。满足任一即恢复第 6 项。</p></div>
+    </div>
+    <p class="small muted"><b>appid / secret 的用途</b>：Agent 首次注册时用它表明“我属于哪个项目”。secret 只显示一次、只存哈希/密文，丢了只能重新生成。</p>
+
+    <h3 id="s5-search">5.5 日志搜索</h3>
+    <p><b>它是什么</b>：产品的心脏。四种用法覆盖从“我大概知道要搜什么”到“我只想描述现象”。</p>
+    <div class="grid g4">
+      <div class="card"><h5 style="margin-top:0">单次搜索</h5><p class="small muted" style="margin:0">选命令 + 关键词 + 时间范围，立刻拿到结果。最常用。</p></div>
+      <div class="card"><h5 style="margin-top:0">自然语言搜索</h5><p class="small muted" style="margin:0">如“过去 7 天 heimdallr 的 ERROR 日志”，<b>本地规则解析</b>成命令参数后执行，无需大模型。</p></div>
+      <div class="card"><h5 style="margin-top:0">语义搜索</h5><p class="small muted" style="margin:0">一句话描述现象，由 LLM 规划检索（需先配置模型）。</p></div>
+      <div class="card"><h5 style="margin-top:0">批量搜索</h5><p class="small muted" style="margin:0">指定命令、并发、每 Worker 请求数与<b>执行机器</b>（默认全部在线、可勾子集），创建批次做扫描或压测。</p></div>
+    </div>
+    <table class="tbl compact">
+      <thead><tr><th style="width:190px">控件</th><th>作用</th><th style="width:250px">说明</th></tr></thead>
+      <tbody>
+        <tr><td>页签：单次 / 批量 / 历史</td><td>切换搜索模式 / 回看历史</td><td>对话搜索在全局对话工作台（/chat），不在本页</td></tr>
+        <tr><td>命令选择</td><td>选择搜索命令模板</td><td>模板内 <span class="mono">{files}</span> 由 Agent 注入文件集合</td></tr>
+        <tr><td>关键词</td><td>作为参数进入命令槽位</td><td>只进 argv，不做 shell 拼接</td></tr>
+        <tr><td>时间范围</td><td>限定日志时间窗</td><td>影响 Agent 侧文件与行筛选</td></tr>
+        <tr><td>「搜索」按钮</td><td>创建 Job 并等待结果</td><td>结果分批回传，页面流式增量渲染</td></tr>
+        <tr><td>结果区 · 级别 / Agent 过滤</td><td>缩小视野</td><td>过滤在前端进行，不重新下发任务</td></tr>
+        <tr><td>结果行 · 点击展开</td><td>看上下文与解析字段</td><td>解析字段来自该项目的提取规则</td></tr>
+        <tr><td>「下载」</td><td>取完整命中行</td><td>临时 jsonl，24h 内有效</td></tr>
+        <tr><td>批量面板「详情」/「取消」</td><td>看子请求结果 / 终止批次</td><td>取消会向各 Agent 下发 <span class="mono">CancelJob</span></td></tr>
+        <tr><td>批量详情 · 命中日志汇总</td><td>批次全部子请求命中去重展示</td><td>默认前 100 条；「下载全部」得完整 jsonl（24h）</td></tr>
+        <tr><td>「历史」页签</td><td>单次作业与批量批次统一回看</td><td>单次点行重开结果区（<span class="mono">?job=</span>）；批次点行进详情</td></tr>
+      </tbody>
+    </table>
+    <div class="callout"><p class="small" style="margin:0"><b>结果为什么可能不完整</b>：Agent 侧输出上限 <span class="mono">10MB / 100,000 行</span>，触顶即标记 <span class="mono">partial_success</span>——请缩小时间范围或加关键词，而不是反复重跑。</p></div>
+
+    <h3 id="s5-sources">5.6 日志文件路径（搜索配置 · 子页签）</h3>
+    <p><b>它是什么</b>：告诉 Agent“去哪找日志”。它是路径与匹配模式，不是日志内容。<b>入口</b>：项目页「搜索配置」页签 → 子页签「日志文件路径」（<span class="mono">?sub=sources</span>，可深链）。</p>
+    <table class="tbl compact">
+      <thead><tr><th style="width:120px">字段</th><th>含义</th><th style="width:250px">示例</th></tr></thead>
+      <tbody>
+        <tr><td>路径</td><td>目录或文件绝对路径</td><td class="mono">/var/log/nginx</td></tr>
+        <tr><td>模式</td><td>文件名匹配（glob）</td><td class="mono">*.log · access.log*</td></tr>
+        <tr><td>描述</td><td>给人看的用途说明</td><td class="mono">网关访问日志（含 trace）</td></tr>
+        <tr><td>状态</td><td>启用 / 禁用</td><td>禁用后不参与搜索，配置保留</td></tr>
+        <tr><td>版本</td><td>每次修改 +1</td><td>可「回滚」到上一版本</td></tr>
+      </tbody>
+    </table>
+    <p class="small muted"><b>操作</b>：添加（路径 + 模式 + 描述）→ 提交生效（= 生成新版本，可回滚）→ 需要时禁用/删除/回滚。<b>权限</b>：查看为项目成员，写操作需项目管理员。<b>注意</b>：路径不存在时结果会出现 <span class="mono">source_missing</span>，应改配置或回滚，而不是反复重试。</p>
+
+    <h3 id="s5-commands">5.7 搜索语句模板（搜索配置 · 子页签）</h3>
+    <p><b>它是什么</b>：把“怎么搜”固化成模板，避免每个人写不一样的命令。</p>
+    <div class="split">
+      <div class="card"><h4>关键规则</h4><ul class="small" style="margin:0">
+        <li>命令模板<b>必须</b>包含 <span class="mono">{files}</span> 占位符，由 Agent 注入解析出的文件集合。</li>
+        <li>参数只进<b>声明过的槽位</b>（如 <span class="mono">{keyword}</span>、<span class="mono">{since}</span>），不做字符串拼接。</li>
+        <li><span class="mono">shell:true</span> 一律被拒绝——这是平台的硬约束。</li>
+        <li>同样版本化，可回滚。</li>
+      </ul></div>
+      <div class="card"><h4>操作步骤</h4><ol class="small" style="margin:0">
+        <li>「添加命令」：填名称、命令模板、参数列表（参数名 / 类型 / 是否必填 / 白名单 / 长度上限）。</li>
+        <li>「＋ 添加参数」按需增加槽位。</li>
+        <li>「提交生效」= 生成一个新版本（可回滚），之后即可在日志搜索里被选中；不是"直接覆盖当前配置"。</li>
+        <li>命令列表显示名称、命令、参数、版本；可删除或回滚。</li>
+      </ol></div>
+    </div>
+
+    <h3 id="s5-rules">5.8 字段解析配置（搜索配置 · 子页签）</h3>
+    <p><b>它是什么</b>：把非结构化日志行变成结构化字段（TraceID、状态码、耗时、上游地址…），搜索结果的“解析字段”就来自这里。</p>
+    <table class="tbl compact">
+      <thead><tr><th style="width:130px">字段</th><th>含义</th><th style="width:230px">取值</th></tr></thead>
+      <tbody>
+        <tr><td>名称</td><td>规则用途</td><td class="mono">nginx access 标准解析</td></tr>
+        <tr><td>类型</td><td>解析方式</td><td class="mono">正则 / JSON / 分隔符</td></tr>
+        <tr><td>模式</td><td>正则表达式或分隔符定义</td><td class="mono">^(?&lt;ip&gt;\S+) - - \[(?&lt;time&gt;[^\]]+)\]</td></tr>
+        <tr><td>字段</td><td>从捕获组映射出的字段名</td><td class="mono">ip, time, method, status, rt</td></tr>
+        <tr><td>时间字段</td><td>用于时间筛选的字段</td><td class="mono">time</td></tr>
+        <tr><td>版本</td><td>每次改动 +1</td><td>可回滚</td></tr>
+        <tr><td>状态</td><td><b>每个项目恰有一条「生效中」</b>，决定搜索快照用哪条规则解析字段；首条规则创建即自动生效，其余用行内「设为生效」切换（切换写审计 <span class="mono">extract_rule.set_effective</span>，只影响之后新建的快照）。从未跑过「校验预览」的生效规则会标<b>「未校验」</b>提醒（不强制）</td><td class="mono">生效中 / 未生效 / +未校验</td></tr>
+      </tbody>
+    </table>
+    <p class="small muted"><b>操作</b>：填规则 → 「校验预览」（左列日志行 / 右列解析结果对照，含状态）→ 满意后「提交生效」。多条规则并存时，解析实际用的是「生效中」那条——不是列表第一条。样本不够时可先在「测试数据」上传片段，或点「按样本生成草稿」由内置启发式（规则/字段推断，<b>不调用大模型</b>）给出初稿，再人工校验。</p>
+
+    <h3 id="s5-samples">5.9 校验样本（字段解析配置内）</h3>
+    <p><b>它是什么</b>：规则验证的“试验台”。把真实日志片段存成样本，反复试规则而不影响线上搜索。<b>入口</b>：「搜索配置 → 字段解析配置」内的样本管理区（不再单独成页）。</p>
+    <table class="tbl compact">
+      <thead><tr><th style="width:150px">控件</th><th>作用</th><th style="width:230px">说明</th></tr></thead>
+      <tbody>
+        <tr><td>上传测试数据</td><td>粘贴或上传日志片段</td><td>列表显示名称、类型、来源、内容预览、行数</td></tr>
+        <tr><td>从发现记录导入随机样本</td><td>把发现面板里看到的真实目录样本一键入库</td><td>来源标记为“发现记录”</td></tr>
+        <tr><td>删除</td><td>清理样本</td><td>样本不属于配置版本，删除不可回滚</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="s5b">
+    <h3 id="s5-tasks">5.10 任务生成（loggen）</h3>
+    <p><b>它是什么</b>：<b>搜日志流程内的验证步骤</b>——先造一批样本日志，才能验证搜索配置（日志文件路径 / 语句模板 / 字段解析）是否真的生效。按格式或自定义模板批量生成日志文件。</p>
+    <p class="small muted"><b>可发现性现状（A3 实测）</b>：本页不在项目导航（按决策 E4 不设并列项，理由见 §10.9）；工作台「最近任务」在最近 8 条含生成类任务时可达<b>详情</b>，但到不了列表；<b>对话不能到达本页</b>——生成类回执是纯文本「任务 #N 已创建」，无跳转（全站唯一回执深链是批次）。⇒ 当前 <span class="mono">/tasks</span> 的稳定入口只有手输 URL / 收藏。</p>
+    <p class="small"><span class="chip warn">⏳ 待实施</span> 按 A3/E2+E3 补三个上下文入口（搜日志空态「先造测试日志」<b>优先</b> · 搜索配置保存后「造一批样本验证」（文案需含原因）· 对话任务回执「查看任务 →」）+ 工作台最近任务「查看全部任务 →」；任务页 URL 统一到一处 helper。</p>
+    <div class="split">
+      <div class="card"><h4>创建任务</h4><dl class="kv">
+        <dt>Agent</dt><dd>在哪些机器上生成（多选）</dd>
+        <dt>Format</dt><dd><span class="mono">nginx · syslog · json · stacktrace · edge</span></dd>
+        <dt>文件数 / 每文件行数</dt><dd>决定数据规模，影响生成时长与磁盘占用</dd>
+        <dt>输出目录</dt><dd>Agent 本机绝对路径</dd>
+        <dt>模板</dt><dd>可选：用「模板管理」里的自定义模板替代内置格式</dd>
+      </dl></div>
+      <div class="card"><h4>任务列表与详情</h4>
+        <ul class="small" style="margin:0">
+          <li>列表列：ID / Agent / Format / <b>Progress</b> / Status / Created At / Actions。</li>
+          <li>进度按“已生成文件数 ÷ 总文件数”回传，进度条实时推进。</li>
+          <li>详情页可 <b>暂停 / 恢复 / 取消</b>，并预览已生成的 <span class="mono">Generated Files</span> 内容。</li>
+          <li>对话助手同样支持 <span class="mono">task_pause / task_resume / task_cancel</span>：回执带任务号，接着说「把刚才那个任务暂停 / 恢复」即可（写操作同样走确认卡 + RBAC）。</li>
+          <li>状态：<span class="mono">created · running · paused · completed · failed · canceled</span>。</li>
+        </ul>
+      </div>
+    </div>
+    <p class="small muted"><b>注意</b>：生成任务会真实占磁盘；生产机器上请只生成到临时目录，用完清理。</p>
+
+    <h3 id="s5-templates">5.11 模板管理（造测试日志页内）</h3>
+    <p><b>它是什么</b>：自定义日志模板，让生成的数据长得像你的业务日志。独立「模板管理」页已随导航收敛移除，能力内聚在「造测试日志」页的「⚙ 模板管理」面板（2026-09）。</p>
+    <div class="split">
+      <div class="card"><h4>可用能力</h4><ul class="small" style="margin:0">
+        <li>字段引用：<span class="mono">{{.remote_addr}}</span>、<span class="mono">{{.status}}</span> 等</li>
+        <li>函数：<span class="mono">{{randIP}}</span>、<span class="mono">{{randLevel}}</span>、时间/随机数等</li>
+        <li>多行结构：适合堆栈（stacktrace）类日志</li>
+        <li>保存时即做语法校验；本项目模板可编辑 / 删除，全局模板只可选用</li>
+      </ul></div>
+      <div class="card"><h4>操作</h4><ol class="small" style="margin:0">
+        <li>造测试日志 →「⚙ 模板管理」：填名称与模板内容 →「存为模板」。</li>
+        <li>回「创建任务」的 Format 下拉，「自定义模板」组里选它。</li>
+        <li>列表可「用于任务」一键回填；本项目模板可编辑 / 删除（删除有确认）。</li>
+      </ol></div>
+    </div>
+
+    <h3 id="s5-clients">5.12 搜索日志客户端（客户端与发现）</h3>
+    <p><b>它是什么</b>：Agent 在项目里的视图。列表看“谁在线”，详情看“它在干什么”，发现面板处理“它看到了什么日志”。</p>
+    <table class="tbl compact">
+      <thead><tr><th style="width:150px">区域</th><th>关键列 / 控件</th><th style="width:250px">说明</th></tr></thead>
+      <tbody>
+        <tr><td>客户端列表</td><td>Agent ID · 机器名 · IP · 状态 · 系统 · 版本 · 标签 · 最后心跳 · 注册时间 · 操作</td><td>「刷新」拉最新心跳；「监控详情」进入单机页</td></tr>
+        <tr><td>监控 Tab</td><td>CPU / 内存 / 网络等指标曲线</td><td>数据来自心跳里的 <span class="mono">LoadSnapshot</span></td></tr>
+        <tr><td>发现 Tab</td><td>路径 · 模式 · 类别 · 文件数 · 状态 · 操作</td><td>批准 / 拒绝 / 建为日志源 / 发起 日志分析</td></tr>
+        <tr><td>绑定 / 解绑</td><td>把 Agent 加入或移出当前项目</td><td>一个 Agent 可同时服务多个项目</td></tr>
+      </tbody>
+    </table>
+    <p class="small muted"><b>发现记录是审批点</b>：Agent 只负责“看到并上报”，是否变成可搜索的日志源由人决定，避免把无关目录灌进配置。</p>
+
+    <h3 id="s5-members">5.13 成员管理（仅项目管理员）</h3>
+    <p><b>它是什么</b>：控制谁能进入这个项目，以及以什么角色。</p>
+    <div class="split">
+      <div class="card"><h4>操作</h4><ol class="small" style="margin:0">
+        <li>「添加成员」：选平台用户（用户 ID / 用户名）+ 分配项目角色。</li>
+        <li>「添加」后立即生效，成员刷新即可见项目。</li>
+        <li>列表带<b>角色列</b>（成员 / 项目管理员），与权限门禁（仅 PA 可管理）对得上，不用查库判断谁是谁。</li>
+        <li>列表可「移除」；移除后该用户立即失去项目所有页面访问（守卫会重定向到对话助手）。</li>
+      </ol></div>
+      <div class="card"><h4>数据概念</h4><dl class="kv">
+        <dt>关系表</dt><dd><span class="mono">project_members</span>（用户 × 项目 × 角色）</dd>
+        <dt>与全局角色关系</dt><dd>A/S 天然可见全部项目，不受成员表限制；PA/M 依赖成员表</dd>
+        <dt>审计</dt><dd>增删成员都会写审计（动作 + 目标用户 + 项目）</dd>
+      </dl></div>
+    </div>
+
+    <h3 id="s5-llm">5.14 日志分析</h3>
+    <p><b>它是什么</b>：项目级智能分析台。让模型读一段真实日志，给出结论、可疑项与建议；结论只进记录，不自动改配置。</p>
+    <table class="tbl compact">
+      <thead><tr><th style="width:170px">控件</th><th>作用</th><th style="width:250px">说明</th></tr></thead>
+      <tbody>
+        <tr><td>发起分析</td><td>选命令 + 时间范围（或关键词），点「开始分析」</td><td>采样命中日志送模型，长文本按规则裁剪</td></tr>
+        <tr><td>LLM 配置</td><td>项目级模型与提供方（缺省用平台默认）</td><td>密钥只回显掩码，修改才需重填</td></tr>
+        <tr><td>分析技能</td><td>提示词资产：如“5xx 根因分析”“安全事件研判”</td><td>可在项目内建私有，也可由平台下发公共</td></tr>
+        <tr><td>解析 Agent</td><td>面向某类日志格式的解析器资产</td><td>与提取规则互补：前者是模型侧知识，后者是确定性解析</td></tr>
+        <tr><td>格式识别</td><td>让模型判断这段日志属于什么格式</td><td>常与发现面板配合使用</td></tr>
+        <tr><td>分析历史</td><td>每次分析的结论、耗时、用量、所用模型（分页浏览）</td><td>可展开对照原始证据行</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warn"><p class="small" style="margin:0"><b>实现边界</b>：模型不可用（未配置 / 调用失败 / 超时）时，记录里保留失败原因与重试入口；页面不会把“无结论”渲染成空白。</p></div>
+
+    <h3 id="s5-scenes">5.15 场景</h3>
+    <p><b>它是什么</b>：把一整套可用配置打包成模板，一键克隆成新项目。适合“新业务线接入”和“给客户演示”。</p>
+    <div class="split">
+      <div class="card"><h4>场景里能打包什么</h4><ul class="small" style="margin:0">
+        <li>技能（分析技能）与解析 Agent</li>
+        <li>日志源、搜索命令</li>
+        <li>剧本（可执行流程）</li>
+        <li>指定参与实例化的 Agent</li>
+      </ul>
+      <h4 style="margin-bottom:2px">两种动作</h4>
+      <p class="small muted" style="margin:0">「＋ 新建场景模板」= 定义模板；「从场景创建项目」= 实例化。</p>
+    </div>
+      <div class="card"><h4>实例化会做什么</h4><ol class="small" style="margin:0">
+        <li>建项目，复制模板里的全部配置为新版本。</li>
+        <li>技能/解析 Agent 等资产<b>改名并重映射 ID</b>，新项目改配置不会影响模板。</li>
+        <li>写入审计 <span class="mono">scene.instantiate</span>。</li>
+        <li>任一步失败 → 整体回滚，不会留下半成品项目。</li>
+      </ol></div>
+    </div>
+
+    <h3 id="s5-download">5.16 客户端下载</h3>
+    <p><b>它是什么</b>：给业务机器取 Agent 二进制的地方，附接入步骤，避免到处找包。</p>
+    <table class="tbl compact">
+      <thead><tr><th style="width:170px">控件</th><th>作用</th><th style="width:250px">说明</th></tr></thead>
+      <tbody>
+        <tr><td>架构选择</td><td>linux / darwin / windows × amd64 / arm64</td><td>列表来自后端 <span class="mono">/api/client/archs</span></td></tr>
+        <tr><td>下载按钮</td><td>下载对应二进制</td><td>失败可「重试」</td></tr>
+        <tr><td>接入步骤</td><td>安装 → 配置 server + appid/secret（或安装令牌）+ CA → 启动 → 回控制台确认在线</td><td>推荐用项目 appid / secret，注册即绑定项目；用安装令牌则需再手动绑定</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="s5-platform">5.17 平台设置（仅平台管理员）</h3>
+    <p><b>它是什么</b>：整平台的三类“公共物”：人（用户与密钥）、模型（公共模型配置）、资产（公共技能 / 解析 Agent / 剧本）。三个<b>平级页签</b>（路由即页签：<span class="mono">/platform/users · /platform/llm · /platform/assets</span>，刷新 / 收藏 / 直链都成立）。页签列表<b>不是硬编码</b>：由各页路由的 <span class="mono">meta.nav = { group, label, order }</span> 显式声明派生（见 §10.7）；新增平台页必须声明，否则不会出现在页签里。</p>
+    <div class="grid g3">
+      <div class="card"><h4>用户管理</h4>
+        <p class="small muted" style="margin:0 0 4px">两个 Tab：<b>用户</b> / <b>API 密钥</b>。</p>
+        <ul class="small" style="margin:0">
+          <li>创建用户：用户名 + 初始口令 + 角色。</li>
+          <li>禁用 / 启用；管理员账号显示「不可禁用」。</li>
+          <li>API 密钥：创建 → <b>明文只显示一次</b> → 记录 Prefix；可吊销。</li>
+          <li>密钥可限项目、限 scopes（如 <span class="mono">query/read/download</span>）与过期时间。</li>
+        </ul>
+      </div>
+      <div class="card"><h4>公共模型配置</h4>
+        <ul class="small" style="margin:0">
+          <li>多提供方、多模型并存；「设为默认」决定全局兜底。</li>
+          <li>项目级配置优先于平台默认。</li>
+          <li>编辑 / 删除；密钥字段掩码显示。</li>
+        </ul>
+      </div>
+      <div class="card"><h4>公共资产</h4>
+        <ul class="small" style="margin:0">
+          <li>三个 Tab：公共技能 / 公共解析 Agent / 剧本。</li>
+          <li>公共技能：<b>点名称或行内铅笔</b>打开详情/编辑弹层（全部字段一次看完并改），保存即对引用它的 Agent 生效；「<b>＋ 导入项目技能</b>」把某个项目里的技能复制成平台公共技能。</li>
+          <li>「分配」把资产下发到指定项目；「解除」收回。</li>
+          <li>剧本可编排多步骤（＋ 添加步骤）。</li>
+          <li>开放范围决定项目里是否可见可改。</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 id="s5-permissions">5.18 权限矩阵（所有登录用户可见）</h3>
+    <p><b>它是什么</b>：把「角色 → 权限」讲清楚的<b>只读</b>页面（<span class="mono">/permissions</span>）。权限由角色天然决定——这里没有赋权表单，也不修改任何数据，只是把后端权限点注册表（<span class="mono">internal/auth/permissions.go</span>，18 个点）渲染出来。渲染出来。</p>
+    <p class="small muted">导航位置：侧栏「平台」域（<b>一级可见</b>，不并入平台设置页签——成员没有平台设置权限，并入会导致成员完全找不到；判据见 §10.7 门槛登记）。</p>
+    <table class="tbl compact">
+      <thead><tr><th style="width:170px">区域</th><th>内容</th><th style="width:240px">怎么用</th></tr></thead>
+      <tbody>
+        <tr><td>左侧角色栏</td><td>4 个角色：平台管理员 A / 平台主管 S（平台级）· 项目管理员 PA / 项目成员 M（项目内）；每项带一行「平台级角色 / 项目内角色 · N 人」</td><td>点角色切换右侧内容；进入时默认选中你自己的角色</td></tr>
+        <tr><td>右侧权限面板</td><td>角色说明 + <b>平台级 N 项</b> + <b>项目级 N 项</b>，每行给出权限名、作用说明与权限点标识（如 <span class="mono">project.config.write</span>）</td><td>回答「这个角色到底能做什么」</td></tr>
+        <tr><td>底部「我的角色」条</td><td>当前登录用户的角色与其权限计数</td><td>一眼确认自己站在哪</td></tr>
+      </tbody>
+    </table>
+    <p class="small muted"><b>权限</b>：所有登录用户都能看整张表（不是只读自己的）。<b>注意</b>：页面上的显隐只是体验，真正的拦截在后端 RBAC 中间件，越权返回 403 并写审计。18 个点里 <span class="mono">platform.admin</span>（平台设置全部）、<span class="mono">project.view</span>（项目可见）、<span class="mono">project.admin</span>（配置写 / 成员 / 客户端绑定 / LLM 配置总闸）是三个真实生效的汇聚闸门，其余点「登记可见、随汇总生效」。</p>
+
+    <h3 id="s5-audit">5.19 审计日志</h3>
+    <p><b>它是什么</b>：谁在什么时候对什么做了什么。默认保留 180 天，是排障与合规的第一入口。</p>
+    <table class="tbl compact">
+      <thead><tr><th style="width:150px">列 / 筛选项</th><th>含义</th><th style="width:250px">排查用法</th></tr></thead>
+      <tbody>
+        <tr><td>时间 / 操作者 / 动作 / 目标 / 项目 / 详情</td><td>一条动作的完整五要素</td><td>先按“项目 + 时间窗”收窄，再看详情里的前后值</td></tr>
+        <tr><td>查询</td><td>按上述字段过滤</td><td>定位“谁把这个日志源删了”“谁回滚了命令”</td></tr>
+        <tr><td>动作命名</td><td>点分命名空间，如 <span class="mono">scene.instantiate</span></td><td>可直接按动作前缀筛选一类操作</td></tr>
+      </tbody>
+    </table>
+    <p class="small muted"><b>权限</b>：A / S 可看全平台；其他角色看不到入口。</p>
+  </section>
+
+  <!-- ============================ §6 原型 ============================ -->
+  <section class="doc-sec" id="s6">
+    <h2>6 · 界面原型（与真实系统同布局，数据全为演示）</h2>
+    <p class="lead">下列每一屏都复刻真实页面的骨架、配色与控件位置；<b>所有数字、名称、日志行都是虚构的</b>。标签页、折叠等可点，但不连后端。</p>
+    <div class="callout warn"><p class="small" style="margin:0">原型用途是“对齐形态与流程”，不是像素级设计交付。真实页面中的按钮启用态、空态与错误态由角色与数据决定，请以 §5 的模块说明为准。</p></div>
+
+    <h3 id="p1">6.1 登录</h3>
+    <p class="proto-note"><span class="chip warn">演示数据</span>无自助注册；账号由平台管理员创建。失败提示不区分“用户不存在 / 密码错误”。</p>
+    <div class="proto">
+      <div class="proto-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">/loggen/login</span><span class="fake">演示数据</span></div>
+      <div style="background:var(--color-bg); padding:var(--space-2xl) var(--space-lg); display:grid; place-items:center; min-height:360px">
+        <div class="panel" style="width:340px; padding:var(--space-lg)">
+          <div class="app-brand" style="padding:0 0 var(--space-md); font-size:15px"><i style="width:26px;height:26px">ls</i><span>logsearch</span></div>
+          <div class="rows">
+            <div class="field"><label>用户名</label><div class="input">zhang.gong</div></div>
+            <div class="field"><label>密码</label><div class="input mono">••••••••••</div></div>
+            <button class="btn primary" style="justify-content:center">登录</button>
+          </div>
+          <p class="tiny muted" style="margin:var(--space-md) 0 0">登录即写入审计；连续失败不会锁号，但会持续留痕。</p>
+        </div>
+      </div>
+    </div>
+
+    <h3 id="p2">6.2 工作台</h3>
+    <p class="proto-note"><span class="chip warn">演示数据</span>项目总览页（登录默认落在对话助手）：项目瓦片 + 最近任务 + 对话助手入口卡。<span class="chip warn">⏳ 待实施</span>对话助手入口卡将移除（与侧栏「对话」重复，A2/D3）；瓦片零值将改为「无活动」态（见 §10.8）。</p>
+    <div class="proto">
+      <div class="proto-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">/loggen/workbench</span><span class="fake">演示数据</span></div>
+      <div class="app">
+                <aside class="app-side">
+          <div class="app-brand"><i>ls</i><span>logsearch</span></div>
+          <div class="nav-grp">工作区</div>
+          <a><svg class="icon"><use href="#i-chat"/></svg>对话</a>
+          <a><svg class="icon"><use href="#i-folder"/></svg>项目</a>
+          <a><svg class="icon"><use href="#i-scene"/></svg>场景</a>
+          <a class="active"><svg class="icon"><use href="#i-grid"/></svg>工作台</a>
+
+          <div class="nav-grp">平台</div>
+          <a><svg class="icon"><use href="#i-shield"/></svg>权限矩阵</a>
+          <a><svg class="icon"><use href="#i-gear"/></svg>平台设置</a>
+          <a><svg class="icon"><use href="#i-audit"/></svg>审计日志</a>
+
+          <div class="nav-grp">更多</div>
+          <a><svg class="icon"><use href="#i-download"/></svg>客户端下载</a>
+
+          <div class="spacer"></div>
+          <a>退出登录</a>
+        </aside>
+        <div class="app-main">
+          <div class="app-top"><span class="crumb"><b>工作台</b></span><span class="right"><span class="chip">admin · 李工</span><button class="btn sm">文档资料</button></span></div>
+          <div class="app-body">
+            <p class="h1">项目</p>
+            <div class="grid g3">
+              <div class="panel"><div class="h2p">heimdallr 网关</div><p class="small muted" style="margin:0">网关访问日志与错误排查 · 3 台 Agent</p><div style="margin-top:10px"><span class="chip ok">在线 3</span> <span class="chip mono">68 会话</span></div></div>
+              <div class="panel"><div class="h2p">数据同步服务</div><p class="small muted" style="margin:0">离线任务与对账异常 · 2 台 Agent</p><div style="margin-top:10px"><span class="chip warn">离线 1</span> <span class="chip mono">12 会话</span></div></div>
+              <div class="panel"><div class="h2p">演示环境（场景实例化）</div><p class="small muted" style="margin:0">由场景「网关排障模板」创建 · 1 台 Agent</p><div style="margin-top:10px"><span class="chip ok">在线 1</span> <span class="chip mono">1 会话</span></div></div>
+            </div>
+            <p class="h2p" style="margin-top:var(--space-lg)">最近任务</p>
+            <table class="tbl compact">
+              <thead><tr><th>项目</th><th>类型</th><th>状态</th><th>时间</th></tr></thead>
+              <tbody>
+                <tr><td>heimdallr 网关</td><td>日志搜索 · nginx_access</td><td><span class="chip ok">completed</span></td><td class="mono">14:32</td></tr>
+                <tr><td>heimdallr 网关</td><td>日志生成 · nginx 200 文件</td><td><span class="chip">running 62%</span></td><td class="mono">14:20</td></tr>
+                <tr><td>数据同步服务</td><td>日志分析 · 对账失败根因</td><td><span class="chip ok">已出结论</span></td><td class="mono">13:58</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3 id="p3">6.3 对话工作台（平台级）</h3>
+    <p class="proto-note"><span class="chip warn">演示数据</span>范围开关在顶栏右侧（输入卡左侧 ✦ 可快捷切换）：当前为「平台 · 全部项目」→ 左栏按项目分组折叠；切到具体项目后左栏只列本项目。确认执行的回执（含任务号 / 批次号）留在对话流，支持「取消刚才那个任务」式多轮指代。</p>
+    <div class="proto">
+      <div class="proto-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">/loggen/chat</span><span class="fake">演示数据</span></div>
+      <div class="app tall">
+                <aside class="app-side">
+          <div class="app-brand"><i>ls</i><span>logsearch</span></div>
+          <div class="nav-grp">工作区</div>
+          <a class="active"><svg class="icon"><use href="#i-chat"/></svg>对话</a>
+          <a><svg class="icon"><use href="#i-folder"/></svg>项目</a>
+          <a><svg class="icon"><use href="#i-scene"/></svg>场景</a>
+          <a><svg class="icon"><use href="#i-grid"/></svg>工作台</a>
+
+          <div class="nav-grp">平台</div>
+          <a><svg class="icon"><use href="#i-shield"/></svg>权限矩阵</a>
+
+          <div class="nav-grp">更多</div>
+          <a><svg class="icon"><use href="#i-download"/></svg>客户端下载</a>
+
+        </aside>
+        <div class="app-main">
+          <div class="app-top">
+            <span class="crumb"><b>对话</b></span>
+            <span class="right">
+              <span class="chip mono">范围</span>
+              <span class="input" style="width:190px; gap:6px">平台 · 全部项目 <span class="muted" style="margin-left:auto">▾</span></span>
+            </span>
+          </div>
+          <div class="app-body flush" style="display:grid; grid-template-columns:230px minmax(0,1fr)">
+            <div style="border-right:1px solid var(--color-border); background:var(--color-surface); display:flex; flex-direction:column; min-height:0">
+              <div style="padding:var(--space-sm) var(--space-md); border-bottom:1px solid var(--color-border)">
+                <button class="btn primary sm" style="width:100%; justify-content:center">＋ 新建对话</button>
+                <div class="small muted" style="margin-top:8px; display:flex; align-items:center; gap:6px">
+                  <span>平台 · 全部项目</span><span style="margin-left:auto"><a class="tiny">全部折叠</a></span>
+                </div>
+              </div>
+              <div style="overflow:auto; padding:var(--space-sm) 6px; min-height:0">
+                <div style="display:flex; align-items:center; gap:6px; padding:4px 8px; font-size:12px; color:var(--color-text-secondary)"><span>▾</span><b style="color:var(--color-text-primary)">平台</b><span class="chip mono" style="margin-left:auto">7</span></div>
+                <a class="active" style="display:block; padding:6px 8px 6px 22px; border-radius:var(--radius-sm); background:var(--color-brand-subtle); color:var(--color-brand); font-size:12.5px">日志分析助手怎么用？<div class="tiny" style="color:var(--color-text-tertiary)">3 分钟前</div></a>
+                <a style="display:block; padding:6px 8px 6px 22px; font-size:12.5px; color:var(--color-text-secondary)">平台有哪些项目<div class="tiny" style="color:var(--color-text-tertiary)">今天 11:04</div></a>
+                <div style="display:flex; align-items:center; gap:6px; padding:4px 8px; margin-top:6px; font-size:12px; color:var(--color-text-secondary)"><span>▾</span><b style="color:var(--color-text-primary)">heimdallr 网关</b><span class="chip mono" style="margin-left:auto">68</span></div>
+                <a style="display:block; padding:6px 8px 6px 22px; font-size:12.5px; color:var(--color-text-secondary)">5xx 突增排查<div class="tiny" style="color:var(--color-text-tertiary)">昨天 18:22</div></a>
+                <a style="display:block; padding:6px 8px 6px 22px; font-size:12.5px; color:var(--color-text-secondary)">给这个项目加一个日志源<div class="tiny" style="color:var(--color-text-tertiary)">昨天 16:40</div></a>
+                <a style="display:block; padding:6px 8px 6px 22px; font-size:12.5px; color:var(--color-text-secondary)">回滚提取规则到 v3<div class="tiny" style="color:var(--color-text-tertiary)">昨天 15:02</div></a>
+                <div style="display:flex; align-items:center; gap:6px; padding:4px 8px; margin-top:6px; font-size:12px; color:var(--color-text-secondary)"><span>▸</span><b style="color:var(--color-text-primary)">数据同步服务</b><span class="chip mono" style="margin-left:auto">12</span></div>
+                <div style="padding:6px 8px 0 22px"><a class="tiny">查看更多（+7）</a></div>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; min-height:0">
+              <div style="flex:1; overflow:auto; padding:var(--space-lg) var(--space-lg) 0">
+                <div style="max-width:760px; margin:0 auto">
+                  <div style="display:flex; gap:var(--space-sm); margin-bottom:var(--space-md)">
+                    <span class="chip brand">你</span>
+                    <div><p style="margin:0"><b>heimdallr 昨天下午的 5xx 为什么突增？</b></p><p class="tiny muted" style="margin:4px 0 0">项目：heimdallr 网关 · 时间范围：昨天 14:00–18:00</p></div>
+                  </div>
+                  <div style="display:flex; gap:var(--space-sm)">
+                    <span class="chip">助手</span>
+                    <div>
+                      <p style="margin:0">对 14:00–18:00 的 nginx access 日志做了聚合，5xx 从基线 0.4% 升到 6.8%，集中在 <span class="mono">/api/v1/dispatch</span>，状态码以 <span class="mono">502</span> 为主，时间点与上游 <span class="mono">heimdallr-edge</span> 重启窗口重合。</p>
+                      <div class="panel" style="margin-top:var(--space-sm); padding:var(--space-sm) var(--space-md); border-left:2px solid var(--color-brand)">
+                        <p class="small" style="margin:0"><b>建议动作</b> · 添加日志源</p>
+                        <p class="tiny muted" style="margin:4px 0 6px">路径 <span class="mono">/var/log/heimdallr-edge</span> · 模式 <span class="mono">*.error.log</span>（来自发现记录）</p>
+                        <button class="btn primary sm">确认执行</button> <button class="btn sm">忽略</button>
+                      </div>
+                      <p class="tiny muted" style="margin:var(--space-sm) 0 0">证据行 1 208 条 · 分析耗时 4.2s · 模型 <span class="mono">qwen-max</span></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style="padding:var(--space-sm) var(--space-lg) var(--space-md)">
+                <div class="panel" style="max-width:760px; margin:0 auto; padding:var(--space-sm) var(--space-md); display:flex; gap:var(--space-sm); align-items:center">
+                  <button class="btn sm">✦ heimdallr 网关 ▾</button>
+                  <span class="muted small">说点什么…（Enter 发送，Shift+Enter 换行）</span>
+                  <span style="margin-left:auto" class="chip">项目级对话 · 可执行动作</span>
+                  <button class="btn sm">📖 示例</button>
+                  <button class="btn primary sm">发送</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3 id="p4">6.4 项目 · 日志搜索（单次）</h3>
+    <p class="proto-note"><span class="chip warn">演示数据</span>结果区是全站唯一的深底表面（终端感）；点某行可展开上下文与解析字段，右上角可下载完整结果。</p>
+    <div class="proto">
+      <div class="proto-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">/loggen/projects/2/search</span><span class="fake">演示数据</span></div>
+      <div class="app">
+                <aside class="app-side">
+          <div class="app-brand"><i>ls</i><span>logsearch</span></div>
+          <div class="nav-grp">工作区</div>
+          <a><svg class="icon"><use href="#i-chat"/></svg>对话</a>
+          <a class="active"><svg class="icon"><use href="#i-folder"/></svg>项目</a>
+          <a><svg class="icon"><use href="#i-scene"/></svg>场景</a>
+          <a><svg class="icon"><use href="#i-grid"/></svg>工作台</a>
+
+          <div class="nav-grp">平台</div>
+          <a><svg class="icon"><use href="#i-shield"/></svg>权限矩阵</a>
+          <a><svg class="icon"><use href="#i-gear"/></svg>平台设置</a>
+          <a><svg class="icon"><use href="#i-audit"/></svg>审计日志</a>
+
+          <div class="nav-grp">更多</div>
+          <a><svg class="icon"><use href="#i-download"/></svg>客户端下载</a>
+
+          <div class="spacer"></div>
+          <a>退出登录</a>
+        </aside>
+        <div class="app-main">
+          <div class="app-top"><span class="crumb">项目 / <b>heimdallr 网关</b> / 搜日志</span><span class="right"><span class="chip">proj_admin · 王工</span></span></div>
+          <div style="display:flex;gap:4px;align-items:center;padding:6px var(--space-lg);border-bottom:1px solid var(--color-border);background:var(--color-surface)" role="tablist" aria-label="项目导航"><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;background:var(--color-brand-subtle);color:var(--color-brand);font-weight:600">搜日志</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">搜索配置</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">搜索日志客户端</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">成员管理</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">日志分析</a></div>
+          <div class="app-body">
+            <div class="rows" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); display:grid">
+              <div class="field"><label>命令</label><div class="input">nginx_access（v4） <span style="margin-left:auto">▾</span></div></div>
+              <div class="field"><label>关键词</label><div class="input mono">status=502</div></div>
+              <div class="field"><label>时间范围</label><div class="input mono">2026-09-10 14:00 → 18:00</div></div>
+              <div class="field"><label>&nbsp;</label><button class="btn primary">搜索</button></div>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center; margin:var(--space-md) 0 var(--space-sm)">
+              <span class="chip mono">1 208 命中</span><span class="chip ok">completed</span>
+              <span class="chip">级别：ERROR</span><span class="chip">Agent：2</span>
+              <span style="margin-left:auto"><button class="btn sm">下载</button></span>
+            </div>
+            <div class="logview">10.16.28.37 - - [10/Sep/2026:14:22:07 +0800] "GET /api/v1/dispatch HTTP/1.1" <span class="lv-err">502</span> 0.842 "-" "heimdallr-edge/1.4.2"
+10.16.28.41 - - [10/Sep/2026:14:22:07 +0800] "POST /api/v1/dispatch/ack HTTP/1.1" <span class="lv-err">502</span> 1.113 "-" "heimdallr-edge/1.4.2"
+10.16.28.37 - - [10/Sep/2026:14:22:08 +0800] "GET /api/v1/dispatch HTTP/1.1" <span class="lv-err">502</span> 0.911 "-" "heimdallr-edge/1.4.2"
+<span class="lv-dim">— 点击行展开上下文与解析字段 —</span>
+解析字段：ip=<span class="lv-info">10.16.28.37</span> method=<span class="lv-info">GET</span> path=<span class="lv-info">/api/v1/dispatch</span> status=<span class="lv-err">502</span> rt=<span class="lv-warn">0.842</span> trace=<span class="lv-info">7f3c…a91d</span></div>
+            <p class="tiny muted" style="margin-top:var(--space-sm)">解析字段来自项目「提取规则 · nginx access 标准解析（v3）」。若出现 <span class="mono">partial_success</span>，说明触发了 10MB / 10 万行截断上限。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3 id="p5">6.5 项目 · 日志搜索（批量）</h3>
+    <p class="proto-note"><span class="chip warn">演示数据</span>一个批次 = N 个子请求 × 可选机器子集；用于关键词扫描与容量压测，执行语义与单次搜索完全一致。详情页有去重后的「命中日志汇总」。「历史」页签统一回看单次与批次。</p>
+    <div class="proto">
+      <div class="proto-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">/loggen/projects/2/search?mode=batch</span><span class="fake">演示数据</span></div>
+      <div class="app">
+                <aside class="app-side">
+          <div class="app-brand"><i>ls</i><span>logsearch</span></div>
+          <div class="nav-grp">工作区</div>
+          <a><svg class="icon"><use href="#i-chat"/></svg>对话</a>
+          <a class="active"><svg class="icon"><use href="#i-folder"/></svg>项目</a>
+          <a><svg class="icon"><use href="#i-scene"/></svg>场景</a>
+          <a><svg class="icon"><use href="#i-grid"/></svg>工作台</a>
+
+          <div class="nav-grp">平台</div>
+          <a><svg class="icon"><use href="#i-shield"/></svg>权限矩阵</a>
+          <a><svg class="icon"><use href="#i-gear"/></svg>平台设置</a>
+          <a><svg class="icon"><use href="#i-audit"/></svg>审计日志</a>
+
+          <div class="nav-grp">更多</div>
+          <a><svg class="icon"><use href="#i-download"/></svg>客户端下载</a>
+
+          <div class="spacer"></div>
+          <a>退出登录</a>
+        </aside>
+        <div class="app-main">
+          <div class="app-top"><span class="crumb">项目 / <b>heimdallr 网关</b> / 搜日志</span><span class="right"><span class="chip">proj_admin · 王工</span></span></div>
+          <div style="display:flex;gap:4px;align-items:center;padding:6px var(--space-lg);border-bottom:1px solid var(--color-border);background:var(--color-surface)" role="tablist" aria-label="项目导航"><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;background:var(--color-brand-subtle);color:var(--color-brand);font-weight:600">搜日志</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">搜索配置</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">搜索日志客户端</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">成员管理</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">日志分析</a></div>
+          <div class="app-body">
+            <div class="tabs" data-tabs role="tablist">
+              <button data-tab="one" role="tab" aria-selected="false">单次搜索</button><button data-tab="batch" role="tab" aria-selected="true">批量搜索</button><button data-tab="hist" role="tab" aria-selected="false">历史</button>
+            </div>
+            <div class="tabpanel" data-panel="one" role="tabpanel" hidden>
+              <div class="callout"><p class="small" style="margin:0">单次搜索是同一个页面的默认模式：选中命令、填关键词与时间范围，结果直接在本屏展示。完整界面见 <a href="#p4">6.4 单次搜索</a>。</p></div>
+            </div>
+            <div class="tabpanel" data-panel="batch" role="tabpanel">
+            <div class="panel">
+              <p class="panel-title">创建批量搜索批次</p>
+              <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+                <div class="field"><label>命令</label><div class="input">nginx_access（v4） <span style="margin-left:auto">▾</span></div></div>
+                <div class="field"><label>并发</label><div class="input mono">4</div></div>
+                <div class="field"><label>Req/Worker</label><div class="input mono">25</div></div>
+                <div class="field"><label>关键词集</label><div class="input mono">502, 504, timeout</div></div>
+                <div class="field"><label>&nbsp;</label><button class="btn primary">创建批次</button></div>
+              </div>
+              <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:6px 0 10px">
+                <span class="tiny muted">执行机器</span>
+                <span class="chip" style="border-color:var(--color-brand);color:var(--color-brand)">☑ 全部（2）</span>
+                <span class="chip">☑ agent-10-16-28-37 <span style="color:#16a34a">●</span></span>
+                <span class="chip">☑ agent-10-16-28-41 <span style="color:#16a34a">●</span></span>
+                <span class="chip">☐ agent-10-16-28-52</span>
+              </div>
+            </div>
+            <p class="h2p" style="margin-top:var(--space-lg)">历史批次</p>
+            <table class="tbl compact">
+              <thead><tr><th>ID</th><th>命令</th><th>并发</th><th>Req/Worker</th><th>总计</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead>
+              <tbody>
+                <tr><td class="mono">#318</td><td class="mono">nginx_access v4</td><td class="mono">4</td><td class="mono">25</td><td class="mono">100</td><td><span class="chip">running 63/100</span></td><td class="mono">09-10 14:41</td><td><button class="btn sm">详情</button> <button class="btn sm">取消</button></td></tr>
+                <tr><td class="mono">#317</td><td class="mono">syslog_auth v2</td><td class="mono">2</td><td class="mono">10</td><td class="mono">20</td><td><span class="chip ok">completed</span></td><td class="mono">09-10 11:02</td><td><button class="btn sm">详情</button></td></tr>
+                <tr><td class="mono">#316</td><td class="mono">nginx_access v4</td><td class="mono">8</td><td class="mono">50</td><td class="mono">400</td><td><span class="chip danger">canceled</span></td><td class="mono">09-09 20:15</td><td><button class="btn sm">详情</button></td></tr>
+              </tbody>
+            </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3 id="p6">6.6 项目 · 搜索配置 · 日志文件路径</h3>
+    <p class="proto-note"><span class="chip warn">演示数据</span>与搜索语句模板 / 字段解析配置同住「搜索配置」页（?sub= 深链）；路径 + 模式决定 Agent 搜哪里，每次修改生成新版本可回滚。</p>
+    <div class="proto">
+      <div class="proto-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">/loggen/projects/2/search-config?sub=sources</span><span class="fake">演示数据</span></div>
+      <div class="app">
+                <aside class="app-side">
+          <div class="app-brand"><i>ls</i><span>logsearch</span></div>
+          <div class="nav-grp">工作区</div>
+          <a><svg class="icon"><use href="#i-chat"/></svg>对话</a>
+          <a class="active"><svg class="icon"><use href="#i-folder"/></svg>项目</a>
+          <a><svg class="icon"><use href="#i-scene"/></svg>场景</a>
+          <a><svg class="icon"><use href="#i-grid"/></svg>工作台</a>
+
+          <div class="nav-grp">平台</div>
+          <a><svg class="icon"><use href="#i-shield"/></svg>权限矩阵</a>
+          <a><svg class="icon"><use href="#i-gear"/></svg>平台设置</a>
+          <a><svg class="icon"><use href="#i-audit"/></svg>审计日志</a>
+
+          <div class="nav-grp">更多</div>
+          <a><svg class="icon"><use href="#i-download"/></svg>客户端下载</a>
+
+          <div class="spacer"></div>
+          <a>退出登录</a>
+        </aside>
+        <div class="app-main">
+          <div class="app-top"><span class="crumb">项目 / <b>heimdallr 网关</b> / 搜索配置 · 日志文件路径</span><span class="right"><span class="chip">proj_admin · 王工</span></span></div>
+          <div style="display:flex;gap:4px;align-items:center;padding:6px var(--space-lg);border-bottom:1px solid var(--color-border);background:var(--color-surface)" role="tablist" aria-label="项目导航"><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">搜日志</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;background:var(--color-brand-subtle);color:var(--color-brand);font-weight:600">搜索配置</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">搜索日志客户端</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">成员管理</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">日志分析</a></div>
+          <div style="display:flex;gap:4px;align-items:center;padding:4px var(--space-lg);border-bottom:1px solid var(--color-border)"><a style="padding:3px 9px;border-radius:var(--radius-sm);font-size:12px;background:var(--color-brand-subtle);color:var(--color-brand)">日志文件路径</a><a style="padding:3px 9px;border-radius:var(--radius-sm);font-size:12px;color:var(--color-text-secondary)">搜索语句模板</a><a style="padding:3px 9px;border-radius:var(--radius-sm);font-size:12px;color:var(--color-text-secondary)">字段解析配置</a></div><div class="app-body">
+            <div class="panel">
+              <p class="panel-title">添加日志源</p>
+              <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+                <div class="field"><label>路径</label><div class="input mono">/var/log/nginx</div></div>
+                <div class="field"><label>模式</label><div class="input mono">*.log</div></div>
+                <div class="field"><label>描述</label><div class="input">网关访问与错误日志</div></div>
+                <div class="field"><label>&nbsp;</label><button class="btn primary">添加</button></div>
+              </div>
+            </div>
+            <p class="h2p" style="margin-top:var(--space-lg)">日志源 <span class="chip mono">3</span></p>
+            <table class="tbl compact">
+              <thead><tr><th>路径</th><th>模式</th><th>描述</th><th>版本</th><th>状态</th><th>操作</th></tr></thead>
+              <tbody>
+                <tr><td class="mono">/var/log/nginx</td><td class="mono">*.log</td><td>网关访问与错误日志</td><td class="mono">v4</td><td><span class="chip ok">启用</span></td><td><button class="btn sm">回滚</button> <button class="btn sm">禁用</button> <button class="btn sm">删除</button></td></tr>
+                <tr><td class="mono">/data/heimdallr/logs</td><td class="mono">app-*.log</td><td>应用运行日志</td><td class="mono">v2</td><td><span class="chip ok">启用</span></td><td><button class="btn sm">回滚</button> <button class="btn sm">禁用</button> <button class="btn sm">删除</button></td></tr>
+                <tr><td class="mono">/var/log/heimdallr-edge</td><td class="mono">*.error.log</td><td>边缘组件错误日志（来自发现批准）</td><td class="mono">v1</td><td><span class="chip">禁用</span></td><td><button class="btn sm">回滚</button> <button class="btn sm">启用</button> <button class="btn sm">删除</button></td></tr>
+              </tbody>
+            </table>
+            <p class="tiny muted" style="margin-top:var(--space-sm)">路径已不存在时，搜索结果会出现 <span class="mono">source_missing</span>：改配置或回滚，别反复重试。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3 id="p7">6.7 项目 · 搜索配置 · 字段解析配置</h3>
+    <p class="proto-note"><span class="chip warn">演示数据</span>左侧填规则、中间「校验预览」对照日志行与解析结果（校验样本在本页签内管理）；「按样本生成草稿」按样本做确定性启发式推断（不调用大模型），只给初稿，需人工校验后提交。</p>
+    <div class="proto">
+      <div class="proto-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">/loggen/projects/2/search-config?sub=rules</span><span class="fake">演示数据</span></div>
+      <div class="app">
+                <aside class="app-side">
+          <div class="app-brand"><i>ls</i><span>logsearch</span></div>
+          <div class="nav-grp">工作区</div>
+          <a><svg class="icon"><use href="#i-chat"/></svg>对话</a>
+          <a class="active"><svg class="icon"><use href="#i-folder"/></svg>项目</a>
+          <a><svg class="icon"><use href="#i-scene"/></svg>场景</a>
+          <a><svg class="icon"><use href="#i-grid"/></svg>工作台</a>
+
+          <div class="nav-grp">平台</div>
+          <a><svg class="icon"><use href="#i-shield"/></svg>权限矩阵</a>
+          <a><svg class="icon"><use href="#i-gear"/></svg>平台设置</a>
+          <a><svg class="icon"><use href="#i-audit"/></svg>审计日志</a>
+
+          <div class="nav-grp">更多</div>
+          <a><svg class="icon"><use href="#i-download"/></svg>客户端下载</a>
+
+          <div class="spacer"></div>
+          <a>退出登录</a>
+        </aside>
+        <div class="app-main">
+          <div class="app-top"><span class="crumb">项目 / <b>heimdallr 网关</b> / 搜索配置 · 字段解析配置</span><span class="right"><span class="chip">proj_admin · 王工</span></span></div>
+          <div style="display:flex;gap:4px;align-items:center;padding:6px var(--space-lg);border-bottom:1px solid var(--color-border);background:var(--color-surface)" role="tablist" aria-label="项目导航"><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">搜日志</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;background:var(--color-brand-subtle);color:var(--color-brand);font-weight:600">搜索配置</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">搜索日志客户端</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">成员管理</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">日志分析</a></div>
+          <div style="display:flex;gap:4px;align-items:center;padding:4px var(--space-lg);border-bottom:1px solid var(--color-border)"><a style="padding:3px 9px;border-radius:var(--radius-sm);font-size:12px;color:var(--color-text-secondary)">日志文件路径</a><a style="padding:3px 9px;border-radius:var(--radius-sm);font-size:12px;color:var(--color-text-secondary)">搜索语句模板</a><a style="padding:3px 9px;border-radius:var(--radius-sm);font-size:12px;background:var(--color-brand-subtle);color:var(--color-brand)">字段解析配置</a></div><div class="app-body">
+            <div class="split">
+              <div class="panel">
+                <p class="panel-title">添加规则</p>
+                <div class="rows">
+                  <div class="field"><label>名称</label><div class="input">nginx access 标准解析</div></div>
+                  <div class="field"><label>类型</label><div class="input">正则 <span style="margin-left:auto">▾</span></div></div>
+                  <div class="field"><label>模式</label><div class="input mono">^(?&lt;ip&gt;\S+) - - \[(?&lt;time&gt;[^\]]+)\]</div></div>
+                  <div class="field"><label>字段</label><div class="input mono">ip, time, method, status, rt, trace</div></div>
+                  <div class="field"><label>时间字段</label><div class="input mono">time</div></div>
+                  <div style="display:flex; gap:6px"><button class="btn">校验预览</button><button class="btn">按样本生成草稿</button><button class="btn primary">提交生效</button></div>
+                </div>
+              </div>
+              <div class="panel">
+                <p class="panel-title">校验预览</p>
+                <table class="tbl compact">
+                  <thead><tr><th>日志行</th><th>解析结果</th><th>状态</th></tr></thead>
+                  <tbody>
+                    <tr><td class="mono tiny">10.16.28.37 … "GET /api/v1/dispatch" 502 0.842</td><td class="mono tiny">ip=10.16.28.37 method=GET status=502 rt=0.842</td><td><span class="chip ok">匹配</span></td></tr>
+                    <tr><td class="mono tiny">10.16.28.41 … "POST /dispatch/ack" 200 0.021</td><td class="mono tiny">ip=10.16.28.41 method=POST status=200 rt=0.021</td><td><span class="chip ok">匹配</span></td></tr>
+                    <tr><td class="mono tiny">2026-09-10 14:22:07 [warn] upstream timed out</td><td class="mono tiny">—</td><td><span class="chip warn">未匹配</span></td></tr>
+                  </tbody>
+                </table>
+                <p class="tiny muted" style="margin-top:var(--space-sm)">未匹配不代表规则错误：这份样本混了 nginx 错误日志格式，可为它单独建规则。</p>
+              </div>
+            </div>
+            <p class="h2p" style="margin-top:var(--space-lg)">规则列表 <span class="chip mono">3</span></p>
+            <table class="tbl compact">
+              <thead><tr><th>名称</th><th>类型</th><th>模式</th><th>字段</th><th>时间字段</th><th>版本</th><th>操作</th></tr></thead>
+              <tbody>
+                <tr><td>nginx access 标准解析</td><td class="mono">regex</td><td class="mono tiny">^(?&lt;ip&gt;\S+) - - …</td><td class="mono tiny">ip, time, method, status, rt</td><td class="mono">time</td><td class="mono">v3</td><td><button class="btn sm">校验预览</button> <button class="btn sm">回滚</button></td></tr>
+                <tr><td>应用 JSON 日志</td><td class="mono">json</td><td class="mono tiny">level / msg / trace_id</td><td class="mono tiny">level, msg, trace_id</td><td class="mono">ts</td><td class="mono">v1</td><td><button class="btn sm">校验预览</button> <button class="btn sm">回滚</button></td></tr>
+                <tr><td>syslog 认证日志</td><td class="mono">分隔符</td><td class="mono tiny">空格分隔，取第 6–9 列</td><td class="mono tiny">user, src_ip, result</td><td class="mono">—</td><td class="mono">v2</td><td><button class="btn sm">校验预览</button> <button class="btn sm">回滚</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3 id="p8">6.8 项目 · 造测试日志（不在标签条；上下文入口待补）</h3>
+    <p class="proto-note"><span class="chip warn">演示数据</span>没有真实日志时先造数据：Agent 可多选（每台机器各建一个任务）、格式可选内置或自定义模板、文件数与行数自定；任务可暂停 / 恢复 / 取消。入口不在项目标签条（决策 E4）；当前仅手输 URL / 收藏稳定可达——工作台「最近任务」只能偶发到详情，<b>对话无法到达本页</b>（回执为纯文本）。<span class="chip warn">⏳ 待实施</span>上下文入口（搜日志空态优先）+ 工作台「查看全部任务」（见 §10.9）。</p>
+    <div class="proto">
+      <div class="proto-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">/loggen/projects/2/tasks</span><span class="fake">演示数据</span></div>
+      <div class="app">
+                <aside class="app-side">
+          <div class="app-brand"><i>ls</i><span>logsearch</span></div>
+          <div class="nav-grp">工作区</div>
+          <a><svg class="icon"><use href="#i-chat"/></svg>对话</a>
+          <a class="active"><svg class="icon"><use href="#i-folder"/></svg>项目</a>
+          <a><svg class="icon"><use href="#i-scene"/></svg>场景</a>
+          <a><svg class="icon"><use href="#i-grid"/></svg>工作台</a>
+
+          <div class="nav-grp">平台</div>
+          <a><svg class="icon"><use href="#i-shield"/></svg>权限矩阵</a>
+          <a><svg class="icon"><use href="#i-gear"/></svg>平台设置</a>
+          <a><svg class="icon"><use href="#i-audit"/></svg>审计日志</a>
+
+          <div class="nav-grp">更多</div>
+          <a><svg class="icon"><use href="#i-download"/></svg>客户端下载</a>
+
+          <div class="spacer"></div>
+          <a>退出登录</a>
+        </aside>
+        <div class="app-main">
+          <div class="app-top"><span class="crumb">项目 / <b>heimdallr 网关</b> / 造测试日志</span><span class="right"><span class="chip">proj_admin · 王工</span></span></div>
+          <div style="display:flex;gap:4px;align-items:center;padding:6px var(--space-lg);border-bottom:1px solid var(--color-border);background:var(--color-surface)" role="tablist" aria-label="项目导航"><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">搜日志</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">搜索配置</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">搜索日志客户端</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">成员管理</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">日志分析</a></div>
+          <div class="app-body">
+            <div class="panel">
+              <p class="panel-title">创建任务</p>
+              <div class="field" style="margin-bottom:var(--space-sm)"><label>Agent（可多选）</label>
+                <div style="display:flex;flex-wrap:wrap;gap:6px">
+                  <span class="chip" style="border-color:var(--color-brand);color:var(--color-brand)">☑ agent-10-16-28-37 <span style="color:#16a34a">●</span></span>
+                  <span class="chip" style="border-color:var(--color-brand);color:var(--color-brand)">☑ agent-10-16-28-41 <span style="color:#16a34a">●</span></span>
+                  <span class="chip">☐ agent-10-16-28-52</span>
+                  <span class="tiny muted" style="align-self:center">已选 2 台</span>
+                </div>
+              </div>
+              <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+                <div class="field"><label>Format</label><div class="input">内置 Format · nginx<span style="margin-left:auto">▾</span></div></div>
+                <div class="field"><label>文件数</label><div class="input mono">200</div></div>
+                <div class="field"><label>每文件行数</label><div class="input mono">5000</div></div>
+                <div class="field"><label>输出目录</label><div class="input mono">/tmp/loggen-out</div></div>
+                <div class="field"><label>&nbsp;</label><button class="btn primary">创建任务</button></div>
+              </div>
+              <p class="tiny muted" style="margin:8px 0 0">生成任务会真实占磁盘：请控制文件数与行数；任务完成前可暂停 / 恢复 / 取消。</p>
+            </div>
+            <div class="panel" style="margin-top:var(--space-md)">
+              <div style="display:flex;align-items:center;gap:8px"><p class="panel-title" style="margin:0">⚙ 模板管理</p><span class="tiny muted">造测试日志页内（§5.11）</span><span style="margin-left:auto"><button class="btn sm">存为模板</button></span></div>
+              <div class="grid g2" style="margin-top:var(--space-sm)">
+                <div class="field"><label>模板名</label><div class="input">pay-nginx</div></div>
+                <div class="field"><label>模板内容（每行一条日志，支持 <span class="mono">{{randIP}}</span> 等函数）</label><div class="input mono" style="min-height:48px">{{.remote_addr}} - {{.status}} {{randInt 1 999}}ms "GET /pay/{{randChoice "v1" "v2"}}" {{randLevel}}</div></div>
+              </div>
+              <p class="tiny muted" style="margin:8px 0 0">本项目模板：pay-nginx · pay-error-log · trace-slow-sql　｜　「用于任务」一键回填 Format 下拉的「自定义模板」组</p>
+            </div>
+            <p class="h2p" style="margin-top:var(--space-lg)">任务列表</p>
+            <table class="tbl compact">
+              <thead><tr><th>ID</th><th>Agent</th><th>Format</th><th>Progress</th><th>Status</th><th>Created At</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr><td class="mono">#77</td><td class="mono tiny">agent-10-16-28-37</td><td class="mono">nginx</td><td style="min-width:130px"><div class="progress"><i style="width:62%"></i></div><span class="tiny mono">124 / 200 文件</span></td><td><span class="chip">running</span></td><td class="mono tiny">09-10 14:20</td><td><button class="btn sm">暂停</button> <button class="btn sm">取消</button></td></tr>
+                <tr><td class="mono">#76</td><td class="mono tiny">agent-10-16-28-41</td><td class="mono">json</td><td style="min-width:130px"><div class="progress"><i style="width:38%"></i></div><span class="tiny mono">19 / 50 文件</span></td><td><span class="chip warn">paused</span></td><td class="mono tiny">09-10 13:44</td><td><button class="btn sm">恢复</button> <button class="btn sm">取消</button></td></tr>
+                <tr><td class="mono">#75</td><td class="mono tiny">agent-10-16-28-37</td><td class="mono">syslog</td><td style="min-width:130px"><div class="progress"><i style="width:100%"></i></div><span class="tiny mono">100 / 100 文件</span></td><td><span class="chip ok">completed</span></td><td class="mono tiny">09-10 10:02</td><td><button class="btn sm">详情</button></td></tr>
+              </tbody>
+            </table>
+            <p class="tiny muted" style="margin-top:var(--space-sm)">详情页可预览 <span class="mono">Generated Files</span> 内容。生成任务会真实占磁盘，生产机器请只写到临时目录。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3 id="p9">6.9 项目 · 搜索日志客户端（监控 / 发现）</h3>
+    <p class="proto-note"><span class="chip warn">演示数据</span>列表看谁在线；「监控」看单机负载；「发现」是审批点——批准后才会变成可搜索的日志源。</p>
+    <div class="proto">
+      <div class="proto-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">/loggen/projects/2/clients</span><span class="fake">演示数据</span></div>
+      <div class="app tall">
+                <aside class="app-side">
+          <div class="app-brand"><i>ls</i><span>logsearch</span></div>
+          <div class="nav-grp">工作区</div>
+          <a><svg class="icon"><use href="#i-chat"/></svg>对话</a>
+          <a class="active"><svg class="icon"><use href="#i-folder"/></svg>项目</a>
+          <a><svg class="icon"><use href="#i-scene"/></svg>场景</a>
+          <a><svg class="icon"><use href="#i-grid"/></svg>工作台</a>
+
+          <div class="nav-grp">平台</div>
+          <a><svg class="icon"><use href="#i-shield"/></svg>权限矩阵</a>
+          <a><svg class="icon"><use href="#i-gear"/></svg>平台设置</a>
+          <a><svg class="icon"><use href="#i-audit"/></svg>审计日志</a>
+
+          <div class="nav-grp">更多</div>
+          <a><svg class="icon"><use href="#i-download"/></svg>客户端下载</a>
+
+          <div class="spacer"></div>
+          <a>退出登录</a>
+        </aside>
+        <div class="app-main">
+          <div class="app-top"><span class="crumb">项目 / <b>heimdallr 网关</b> / 搜索日志客户端</span><span class="right"><button class="btn sm"><svg class="icon"><use href="#i-refresh"/></svg>刷新</button></span></div>
+          <div style="display:flex;gap:4px;align-items:center;padding:6px var(--space-lg);border-bottom:1px solid var(--color-border);background:var(--color-surface)" role="tablist" aria-label="项目导航"><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">搜日志</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">搜索配置</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;background:var(--color-brand-subtle);color:var(--color-brand);font-weight:600">搜索日志客户端</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">成员管理</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">日志分析</a></div>
+          <div class="app-body">
+            <div class="tabs" data-tabs role="tablist">
+              <button data-tab="mon" role="tab" aria-selected="true">监控</button><button data-tab="disc" role="tab" aria-selected="false">发现</button>
+            </div>
+            <div class="tabpanel" data-panel="mon" role="tabpanel">
+              <table class="tbl compact">
+                <thead><tr><th>Agent ID</th><th>机器名</th><th>IP</th><th>状态</th><th>系统</th><th>版本</th><th>标签</th><th>最后心跳</th><th>操作</th></tr></thead>
+                <tbody>
+                  <tr><td class="mono tiny">agent-10-16-28-37</td><td class="mono tiny">heimdallr-gw-01</td><td class="mono tiny">10.16.28.37</td><td><span class="chip ok">online</span></td><td class="mono tiny">linux/amd64</td><td class="mono tiny">1.4.2</td><td><span class="chip">gw,prod</span></td><td class="mono tiny">12s 前</td><td><button class="btn sm">监控详情</button></td></tr>
+                  <tr><td class="mono tiny">agent-10-16-28-41</td><td class="mono tiny">heimdallr-gw-02</td><td class="mono tiny">10.16.28.41</td><td><span class="chip ok">online</span></td><td class="mono tiny">linux/amd64</td><td class="mono tiny">1.4.2</td><td><span class="chip">gw,prod</span></td><td class="mono tiny">8s 前</td><td><button class="btn sm">监控详情</button></td></tr>
+                  <tr><td class="mono tiny">agent-10-16-28-52</td><td class="mono tiny">heimdallr-edge-01</td><td class="mono tiny">10.16.28.52</td><td><span class="chip danger">offline</span></td><td class="mono tiny">linux/arm64</td><td class="mono tiny">1.4.1</td><td><span class="chip">edge</span></td><td class="mono tiny">6 分钟前</td><td><button class="btn sm">监控详情</button></td></tr>
+                </tbody>
+              </table>
+              <div class="grid g4" style="margin-top:var(--space-md)">
+                <div class="panel"><div class="metric-label">CPU</div><div class="metric">18%</div><span class="tiny muted">2 分钟均值 · 8 核</span></div>
+                <div class="panel"><div class="metric-label">内存</div><div class="metric">1.9G</div><span class="tiny muted">/ 8G · 23.7%</span></div>
+                <div class="panel"><div class="metric-label">网络</div><div class="metric">3.4M</div><span class="tiny muted">bytes/s 出向</span></div>
+                <div class="panel"><div class="metric-label">并发槽位</div><div class="metric">2/8</div><span class="tiny muted">运行中 / 上限</span></div>
+              </div>
+            </div>
+            <div class="tabpanel" data-panel="disc" role="tabpanel" hidden>
+              <p class="small muted">来自 <span class="mono">agent-10-16-28-52</span> 的 <span class="mono">DiscoveryReport</span>；批准后写入日志源并生成新配置版本。</p>
+              <table class="tbl compact">
+                <thead><tr><th>路径</th><th>模式</th><th>类别</th><th>文件数</th><th>状态</th><th>操作</th></tr></thead>
+                <tbody>
+                  <tr><td class="mono tiny">/var/log/heimdallr-edge</td><td class="mono tiny">*.error.log</td><td><span class="chip">应用日志</span></td><td class="mono">14</td><td><span class="chip warn">待处理</span></td><td><button class="btn sm primary">批准</button> <button class="btn sm">拒绝</button> <button class="btn sm">建为日志源</button> <button class="btn sm">日志分析</button></td></tr>
+                  <tr><td class="mono tiny">/data/heimdallr/logs</td><td class="mono tiny">app-*.log</td><td><span class="chip">应用日志</span></td><td class="mono">86</td><td><span class="chip ok">已批准</span></td><td><button class="btn sm">查看日志源</button></td></tr>
+                  <tr><td class="mono tiny">/var/log/nginx</td><td class="mono tiny">*.log</td><td><span class="chip">网关日志</span></td><td class="mono">12</td><td><span class="chip">已存在</span></td><td><button class="btn sm">查看日志源</button></td></tr>
+                  <tr><td class="mono tiny">/tmp/build-cache</td><td class="mono tiny">*.log</td><td><span class="chip danger">临时文件</span></td><td class="mono">2</td><td><span class="chip danger">已拒绝</span></td><td><span class="tiny muted">理由：非业务日志</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3 id="p10">6.10 项目 · 日志分析</h3>
+    <p class="proto-note"><span class="chip warn">演示数据</span>模型读真实日志给结论；结论落分析历史（分页），不自动改配置。</p>
+    <div class="proto">
+      <div class="proto-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">/loggen/projects/2/llm</span><span class="fake">演示数据</span></div>
+      <div class="app">
+                <aside class="app-side">
+          <div class="app-brand"><i>ls</i><span>logsearch</span></div>
+          <div class="nav-grp">工作区</div>
+          <a><svg class="icon"><use href="#i-chat"/></svg>对话</a>
+          <a class="active"><svg class="icon"><use href="#i-folder"/></svg>项目</a>
+          <a><svg class="icon"><use href="#i-scene"/></svg>场景</a>
+          <a><svg class="icon"><use href="#i-grid"/></svg>工作台</a>
+
+          <div class="nav-grp">平台</div>
+          <a><svg class="icon"><use href="#i-shield"/></svg>权限矩阵</a>
+          <a><svg class="icon"><use href="#i-gear"/></svg>平台设置</a>
+          <a><svg class="icon"><use href="#i-audit"/></svg>审计日志</a>
+
+          <div class="nav-grp">更多</div>
+          <a><svg class="icon"><use href="#i-download"/></svg>客户端下载</a>
+
+          <div class="spacer"></div>
+          <a>退出登录</a>
+        </aside>
+        <div class="app-main">
+          <div class="app-top"><span class="crumb">项目 / <b>heimdallr 网关</b> / 日志分析</span><span class="right"><button class="btn sm">LLM 配置</button> <button class="btn sm">分析技能</button> <button class="btn sm">解析 Agent</button></span></div>
+          <div style="display:flex;gap:4px;align-items:center;padding:6px var(--space-lg);border-bottom:1px solid var(--color-border);background:var(--color-surface)" role="tablist" aria-label="项目导航"><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">搜日志</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">搜索配置</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">搜索日志客户端</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;color:var(--color-text-secondary)">成员管理</a><a style="padding:4px 10px;border-radius:var(--radius-sm);font-size:12.5px;background:var(--color-brand-subtle);color:var(--color-brand);font-weight:600">日志分析</a></div>
+          <div class="app-body">
+            <div class="panel">
+              <p class="panel-title">发起分析</p>
+              <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+                <div class="field"><label>命令</label><div class="input">nginx_access（v4） <span style="margin-left:auto">▾</span></div></div>
+                <div class="field"><label>时间范围</label><div class="input mono">昨天 14:00 → 18:00</div></div>
+                <div class="field"><label>分析技能</label><div class="input">5xx 根因分析（公共） <span style="margin-left:auto">▾</span></div></div>
+                <div class="field"><label>解析 Agent</label><div class="input">nginx 解析器 <span style="margin-left:auto">▾</span></div></div>
+                <div class="field"><label>&nbsp;</label><button class="btn primary">开始分析</button></div>
+              </div>
+            </div>
+            <p class="h2p" style="margin-top:var(--space-lg)">分析历史 <span class="chip mono">4</span> <span class="tiny muted" style="margin-left:6px">分页浏览</span></p>
+            <table class="tbl compact">
+              <thead><tr><th>时间</th><th>技能</th><th>模型</th><th>结论摘要</th><th>状态</th></tr></thead>
+              <tbody>
+                <tr><td class="mono tiny">09-10 14:04</td><td>5xx 根因分析</td><td class="mono tiny">qwen-max</td><td>502 集中在 <span class="mono">/api/v1/dispatch</span>，与 heimdallr-edge 重启窗口重合，建议检查上游连接池</td><td><span class="chip ok">已出结论</span></td></tr>
+                <tr><td class="mono tiny">09-10 11:20</td><td>格式识别</td><td class="mono tiny">qwen-max</td><td>识别为 nginx combined + 自定义 trace 字段，建议补充提取规则字段 trace</td><td><span class="chip ok">已出结论</span></td></tr>
+                <tr><td class="mono tiny">09-09 19:02</td><td>安全事件研判</td><td class="mono tiny">deepseek-chat</td><td>发现 3 个 IP 高频探测 <span class="mono">/admin</span>，建议加规则与限流</td><td><span class="chip ok">已出结论</span></td></tr>
+                <tr><td class="mono tiny">09-09 16:41</td><td>5xx 根因分析</td><td class="mono tiny">—</td><td>模型调用超时（8s）</td><td><span class="chip danger">失败 · 可重试</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3 id="p11">6.11 场景</h3>
+    <p class="proto-note"><span class="chip warn">演示数据</span>把整套配置打包成模板；「从场景创建项目」是事务式实例化，失败整体回滚。</p>
+    <div class="proto">
+      <div class="proto-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">/loggen/scenes</span><span class="fake">演示数据</span></div>
+      <div class="app">
+                <aside class="app-side">
+          <div class="app-brand"><i>ls</i><span>logsearch</span></div>
+          <div class="nav-grp">工作区</div>
+          <a><svg class="icon"><use href="#i-chat"/></svg>对话</a>
+          <a><svg class="icon"><use href="#i-folder"/></svg>项目</a>
+          <a class="active"><svg class="icon"><use href="#i-scene"/></svg>场景</a>
+          <a><svg class="icon"><use href="#i-grid"/></svg>工作台</a>
+
+          <div class="nav-grp">平台</div>
+          <a><svg class="icon"><use href="#i-shield"/></svg>权限矩阵</a>
+          <a><svg class="icon"><use href="#i-gear"/></svg>平台设置</a>
+          <a><svg class="icon"><use href="#i-audit"/></svg>审计日志</a>
+
+          <div class="nav-grp">更多</div>
+          <a><svg class="icon"><use href="#i-download"/></svg>客户端下载</a>
+
+          <div class="spacer"></div>
+          <a>退出登录</a>
+        </aside>
+        <div class="app-main">
+          <div class="app-top"><span class="crumb"><b>场景</b></span><span class="right"><button class="btn primary sm">＋ 新建场景模板</button></span></div>
+          <div class="app-body">
+            <div class="grid g2">
+              <div class="panel">
+                <div style="display:flex; align-items:center; gap:8px"><div class="h2p" style="margin:0">网关排障模板</div><span class="chip brand">公共</span><span style="margin-left:auto" class="tiny muted">2 个项目在用</span></div>
+                <table class="tbl compact" style="margin-top:var(--space-sm)">
+                  <tbody>
+                    <tr><td style="width:110px">技能</td><td class="mono tiny">5xx 根因分析、格式识别</td></tr>
+                    <tr><td>解析 Agent</td><td class="mono tiny">nginx 解析器</td></tr>
+                    <tr><td>日志源</td><td class="mono tiny">/var/log/nginx *.log · /data/heimdallr/logs app-*.log</td></tr>
+                    <tr><td>命令</td><td class="mono tiny">nginx_access · error_grep</td></tr>
+                    <tr><td>剧本</td><td class="mono tiny">5xx 排查三步走</td></tr>
+                  </tbody>
+                </table>
+                <div style="margin-top:var(--space-sm); display:flex; gap:6px"><button class="btn sm primary">从场景创建项目</button> <button class="btn sm">编辑</button> <button class="btn sm">删除</button></div>
+              </div>
+              <div class="panel">
+                <div style="display:flex; align-items:center; gap:8px"><div class="h2p" style="margin:0">数据同步排障模板</div><span class="chip">项目私有</span></div>
+                <table class="tbl compact" style="margin-top:var(--space-sm)">
+                  <tbody>
+                    <tr><td style="width:110px">技能</td><td class="mono tiny">对账差异分析</td></tr>
+                    <tr><td>日志源</td><td class="mono tiny">/data/sync/logs sync-*.log</td></tr>
+                    <tr><td>命令</td><td class="mono tiny">sync_error</td></tr>
+                    <tr><td>剧本</td><td class="mono tiny">—</td></tr>
+                  </tbody>
+                </table>
+                <div style="margin-top:var(--space-sm); display:flex; gap:6px"><button class="btn sm primary">从场景创建项目</button> <button class="btn sm">编辑</button></div>
+              </div>
+            </div>
+            <div class="panel" style="margin-top:var(--space-md); border-left:2px solid var(--color-brand)">
+              <p class="panel-title">从场景「网关排障模板」创建项目</p>
+              <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+                <div class="field"><label>项目名</label><div class="input">heimdallr 网关（演示）</div></div>
+                <div class="field"><label>目标 Agent</label><div class="input">agent-10-16-28-37、agent-10-16-28-41</div></div>
+                <div class="field"><label>&nbsp;</label><button class="btn primary">创建</button></div>
+              </div>
+              <p class="tiny muted" style="margin:var(--space-sm) 0 0">实例化会复制技能 / 解析 Agent / 日志源 / 命令 / 剧本并重映射 ID，同时写入审计 <span class="mono">scene.instantiate</span>。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3 id="p12">6.12 平台设置</h3>
+    <p class="proto-note"><span class="chip warn">演示数据</span>仅平台管理员可见。三个平级页签（路由即页签，刷新 / 收藏 / 直链成立）：用户管理 / 公共模型配置 / 公共资产。API 密钥明文<b>只显示一次</b>；管理员账号不可禁用。公共资产页支持「点名称/铅笔 → 详情编辑弹层」与「＋ 导入项目技能」。</p>
+    <div class="proto">
+      <div class="proto-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">/loggen/platform/users</span><span class="fake">演示数据</span></div>
+      <div class="app">
+                <aside class="app-side">
+          <div class="app-brand"><i>ls</i><span>logsearch</span></div>
+          <div class="nav-grp">工作区</div>
+          <a><svg class="icon"><use href="#i-chat"/></svg>对话</a>
+          <a><svg class="icon"><use href="#i-folder"/></svg>项目</a>
+          <a><svg class="icon"><use href="#i-scene"/></svg>场景</a>
+          <a><svg class="icon"><use href="#i-grid"/></svg>工作台</a>
+
+          <div class="nav-grp">平台</div>
+          <a><svg class="icon"><use href="#i-shield"/></svg>权限矩阵</a>
+          <a class="active"><svg class="icon"><use href="#i-gear"/></svg>平台设置</a>
+          <a><svg class="icon"><use href="#i-audit"/></svg>审计日志</a>
+
+          <div class="nav-grp">更多</div>
+          <a><svg class="icon"><use href="#i-download"/></svg>客户端下载</a>
+
+          <div class="spacer"></div>
+          <a>退出登录</a>
+        </aside>
+        <div class="app-main">
+          <div class="app-top"><span class="crumb"><b>平台设置</b> / 用户管理</span></div>
+          <div style="display:flex;gap:4px;border-bottom:1px solid var(--color-border);margin-bottom:var(--space-md)" aria-label="平台设置"><a style="padding:6px 14px;font-size:13px;border-bottom:2px solid var(--color-brand);color:var(--color-brand);font-weight:600;">用户管理</a><a style="padding:6px 14px;font-size:13px;border-bottom:2px solid transparent;color:var(--color-text-secondary);">公共模型配置</a><a style="padding:6px 14px;font-size:13px;border-bottom:2px solid transparent;color:var(--color-text-secondary);">公共资产</a></div>
+          <div class="app-body">
+            <div class="tabs" data-tabs role="tablist">
+              <button data-tab="users" role="tab" aria-selected="true">用户</button><button data-tab="keys" role="tab" aria-selected="false">API 密钥</button>
+            </div>
+            <div class="tabpanel" data-panel="users" role="tabpanel">
+              <div class="panel">
+                <p class="panel-title">创建用户</p>
+                <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+                  <div class="field"><label>用户名</label><div class="input">wang.gong</div></div>
+                  <div class="field"><label>初始密码</label><div class="input mono">••••••••</div></div>
+                  <div class="field"><label>角色</label><div class="input">proj_admin <span style="margin-left:auto">▾</span></div></div>
+                  <div class="field"><label>&nbsp;</label><button class="btn primary">创建</button></div>
+                </div>
+              </div>
+              <p class="h2p" style="margin-top:var(--space-lg)">用户 <span class="chip mono">4</span></p>
+              <table class="tbl compact">
+                <thead><tr><th>ID</th><th>用户名</th><th>角色</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead>
+                <tbody>
+                  <tr><td class="mono">1</td><td class="mono">admin</td><td><span class="chip brand">admin</span></td><td><span class="chip ok">active</span></td><td class="mono tiny">2026-08-01</td><td><button class="btn sm" disabled>不可禁用</button></td></tr>
+                  <tr><td class="mono">2</td><td class="mono">zhang.gong</td><td><span class="chip">secops</span></td><td><span class="chip ok">active</span></td><td class="mono tiny">2026-08-12</td><td><button class="btn sm">禁用</button></td></tr>
+                  <tr><td class="mono">3</td><td class="mono">wang.gong</td><td><span class="chip">proj_admin</span></td><td><span class="chip ok">active</span></td><td class="mono tiny">2026-08-20</td><td><button class="btn sm">禁用</button></td></tr>
+                  <tr><td class="mono">4</td><td class="mono">li.kai</td><td><span class="chip">member</span></td><td><span class="chip danger">disabled</span></td><td class="mono tiny">2026-09-02</td><td><button class="btn sm">启用</button></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="tabpanel" data-panel="keys" role="tabpanel" hidden>
+              <div class="panel">
+                <p class="panel-title">创建 API 密钥</p>
+                <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+                  <div class="field"><label>名称</label><div class="input">ci-query-key</div></div>
+                  <div class="field"><label>Project</label><div class="input">heimdallr 网关 <span style="margin-left:auto">▾</span></div></div>
+                  <div class="field"><label>Scopes</label><div class="input mono">query, read, download</div></div>
+                  <div class="field"><label>Expires</label><div class="input mono">2027-03-01</div></div>
+                  <div class="field"><label>&nbsp;</label><button class="btn primary">生成</button></div>
+                </div>
+              </div>
+              <div class="callout" style="margin-top:var(--space-md)"><p class="small" style="margin:0"><b>密钥明文只显示一次</b>：<span class="mono">lsk_7f3c9a21d0e4b8c6…</span>（复制按钮）。关闭后只能看到 Prefix，遗忘只能吊销重建。</p></div>
+              <table class="tbl compact" style="margin-top:var(--space-sm)">
+                <thead><tr><th>Prefix</th><th>Project</th><th>Scopes</th><th>Expires</th><th>状态</th><th>操作</th></tr></thead>
+                <tbody>
+                  <tr><td class="mono">lsk_7f3c9a21</td><td>heimdallr 网关</td><td class="mono tiny">query, read</td><td class="mono tiny">2027-03-01</td><td><span class="chip ok">有效</span></td><td><button class="btn sm">吊销</button></td></tr>
+                  <tr><td class="mono">lsk_2b81ee40</td><td>全部项目</td><td class="mono tiny">query, read, download</td><td class="mono tiny">—</td><td><span class="chip">已吊销</span></td><td><span class="tiny muted">—</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3 id="p13">6.13 权限矩阵</h3>
+    <p class="proto-note"><span class="chip warn">演示数据</span><b>只读页</b>：权限由角色天然决定，没有赋权表单、也不改数据。左选角色 → 右看它拥有的权限与作用；进入时默认选中你自己的角色（下图为「项目成员」视角）。</p>
+    <div class="proto">
+      <div class="proto-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">/loggen/permissions</span><span class="fake">演示数据</span></div>
+      <div class="app">
+                <aside class="app-side">
+          <div class="app-brand"><i>ls</i><span>logsearch</span></div>
+          <div class="nav-grp">工作区</div>
+          <a><svg class="icon"><use href="#i-chat"/></svg>对话</a>
+          <a><svg class="icon"><use href="#i-folder"/></svg>项目</a>
+          <a><svg class="icon"><use href="#i-scene"/></svg>场景</a>
+          <a><svg class="icon"><use href="#i-grid"/></svg>工作台</a>
+
+          <div class="nav-grp">平台</div>
+          <a class="active"><svg class="icon"><use href="#i-shield"/></svg>权限矩阵</a>
+          <a><svg class="icon"><use href="#i-gear"/></svg>平台设置</a>
+          <a><svg class="icon"><use href="#i-audit"/></svg>审计日志</a>
+
+          <div class="nav-grp">更多</div>
+          <a><svg class="icon"><use href="#i-download"/></svg>客户端下载</a>
+
+          <div class="spacer"></div>
+          <a>退出登录</a>
+        </aside>
+        <div class="app-main">
+          <div class="app-top"><span class="crumb"><b>权限矩阵</b></span></div>
+          <div class="app-body">
+            <p class="lead" style="margin:0 0 var(--space-md); font-size:13px">权限由角色天然决定：左侧选择角色，右侧查看该角色拥有的权限及其作用。</p>
+            <div class="grid" style="grid-template-columns:230px 1fr; align-items:start">
+              <div class="panel" style="padding:var(--space-sm)">
+                <div style="padding:8px 10px; border-radius:var(--radius-sm); font-size:13px; color:var(--color-text-secondary)">平台管理员<div class="tiny" style="color:var(--color-text-tertiary)">平台级角色 · 1 人</div></div>
+                <div style="padding:8px 10px; border-radius:var(--radius-sm); font-size:13px; color:var(--color-text-secondary)">平台主管<div class="tiny" style="color:var(--color-text-tertiary)">平台级角色 · 1 人</div></div>
+                <div style="padding:8px 10px; border-radius:var(--radius-sm); font-size:13px; color:var(--color-text-secondary)">项目管理员<div class="tiny" style="color:var(--color-text-tertiary)">项目内角色 · 2 人</div></div>
+                <div style="padding:8px 10px; border-radius:var(--radius-sm); font-size:13px; font-weight:600; background:var(--color-brand-subtle); color:var(--color-brand)">项目成员<div class="tiny" style="color:var(--color-text-tertiary); font-weight:400">项目内角色 · 3 人</div></div>
+              </div>
+              <div class="panel">
+                <p class="panel-title" style="margin-bottom:4px">项目成员</p>
+                <p class="small muted" style="margin:0 0 var(--space-sm)">项目内的基础角色：能看、能搜、能造测试日志、能发起日志分析；不能改配置、不能管成员。</p>
+                <p class="tiny" style="color:var(--color-text-tertiary); margin:0 0 4px">平台级 · 0 项（该角色不含平台级权限）</p>
+                <p class="tiny" style="color:var(--color-text-tertiary); margin:0 0 4px">项目级 · 4 项</p>
+                <table class="tbl compact">
+                  <thead><tr><th style="width:190px">权限</th><th>作用</th><th style="width:170px">权限点</th></tr></thead>
+                  <tbody>
+                    <tr><td>✓ 查看项目（全部页面）</td><td>打开自己参与项目的各页面</td><td class="mono tiny">project.view</td></tr>
+                    <tr><td>✓ 搜日志（单次/批量/历史）</td><td>发起搜索、看结果、回看历史与批次</td><td class="mono tiny">project.search.run</td></tr>
+                    <tr><td>✓ 造测试日志</td><td>生成测试日志任务（占磁盘，注意输出目录）</td><td class="mono tiny">project.task.create</td></tr>
+                    <tr><td>✓ 日志分析（发起分析/解析 Agent）</td><td>对命中日志出结论，结论只进分析记录</td><td class="mono tiny">project.llm.use</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <p class="small muted" style="margin:var(--space-md) 0 0">你当前的角色：<b>项目成员</b> · 平台级 0 项 · 项目级 4 项</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3 id="p14">6.14 审计日志</h3>
+    <p class="proto-note"><span class="chip warn">演示数据</span>默认保留 180 天。排查顺序：先按项目与时间窗收窄，再看详情里的前后值。</p>
+    <div class="proto">
+      <div class="proto-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">/loggen/audit</span><span class="fake">演示数据</span></div>
+      <div class="app">
+                <aside class="app-side">
+          <div class="app-brand"><i>ls</i><span>logsearch</span></div>
+          <div class="nav-grp">工作区</div>
+          <a><svg class="icon"><use href="#i-chat"/></svg>对话</a>
+          <a><svg class="icon"><use href="#i-folder"/></svg>项目</a>
+          <a><svg class="icon"><use href="#i-scene"/></svg>场景</a>
+          <a><svg class="icon"><use href="#i-grid"/></svg>工作台</a>
+
+          <div class="nav-grp">平台</div>
+          <a><svg class="icon"><use href="#i-shield"/></svg>权限矩阵</a>
+          <a><svg class="icon"><use href="#i-gear"/></svg>平台设置</a>
+          <a class="active"><svg class="icon"><use href="#i-audit"/></svg>审计日志</a>
+
+          <div class="nav-grp">更多</div>
+          <a><svg class="icon"><use href="#i-download"/></svg>客户端下载</a>
+
+          <div class="spacer"></div>
+          <a>退出登录</a>
+        </aside>
+        <div class="app-main">
+          <div class="app-top"><span class="crumb"><b>审计日志</b></span><span class="right"><span class="chip">secops · 张工</span></span></div>
+          <div class="app-body">
+            <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+              <div class="field"><label>时间</label><div class="input mono">2026-09-10 00:00 → 现在</div></div>
+              <div class="field"><label>操作者</label><div class="input placeholder">全部</div></div>
+              <div class="field"><label>动作</label><div class="input mono">log_source.*</div></div>
+              <div class="field"><label>项目</label><div class="input">heimdallr 网关 <span style="margin-left:auto">▾</span></div></div>
+              <div class="field"><label>&nbsp;</label><button class="btn primary">查询</button></div>
+            </div>
+            <table class="tbl compact" style="margin-top:var(--space-md)">
+              <thead><tr><th>时间</th><th>操作者</th><th>动作</th><th>目标</th><th>项目</th><th>详情</th></tr></thead>
+              <tbody>
+                <tr><td class="mono tiny">14:41:02</td><td class="mono tiny">wang.gong</td><td class="mono tiny">log_source.create</td><td class="mono tiny">/var/log/heimdallr-edge</td><td>heimdallr 网关</td><td class="tiny">v1 · 模式 *.error.log</td></tr>
+                <tr><td class="mono tiny">14:22:51</td><td class="mono tiny">zhang.gong</td><td class="mono tiny">extract_rule.update</td><td class="mono tiny">nginx access 标准解析</td><td>heimdallr 网关</td><td class="tiny">v2 → v3（新增 trace 字段）</td></tr>
+                <tr><td class="mono tiny">14:05:12</td><td class="mono tiny">zhang.gong</td><td class="mono tiny">llm.analyze</td><td class="mono tiny">#analysis-91</td><td>heimdallr 网关</td><td class="tiny">技能 5xx 根因分析 · qwen-max</td></tr>
+                <tr><td class="mono tiny">11:03:44</td><td class="mono tiny">admin</td><td class="mono tiny">scene.instantiate</td><td class="mono tiny">scene#2 → project#9</td><td>—</td><td class="tiny">复制 2 技能 / 2 日志源 / 2 命令</td></tr>
+                <tr><td class="mono tiny">09:58:07</td><td class="mono tiny">admin</td><td class="mono tiny">member.remove</td><td class="mono tiny">user#4 li.kai</td><td>数据同步服务</td><td class="tiny">移除后失去项目访问</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ §7 ============================ -->
+  <section class="doc-sec" id="s7">
+    <h2>7 · 角色权限矩阵</h2>
+    <p class="lead">四个角色：<span class="chip brand">A</span> admin（平台管理员）· <span class="chip">S</span> secops（安全/运维）· <span class="chip">PA</span> proj_admin（项目管理员）· <span class="chip">M</span> member（项目成员）。</p>
+    <table class="tbl">
+      <thead><tr><th style="width:250px">能力</th><th>A</th><th>S</th><th>PA</th><th>M</th><th style="width:230px">约束</th></tr></thead>
+      <tbody>
+        <tr><td>登录 / 查看工作台</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>禁用账号拒绝登录</td></tr>
+        <tr><td>看到全部项目</td><td>✓</td><td>✓</td><td>限参与项目</td><td>限参与项目</td><td>由 <span class="mono">project_members</span> 决定</td></tr>
+        <tr><td>创建 / 编辑项目</td><td>✓</td><td>✓</td><td>—</td><td>—</td><td>创建时一次性下发 appid / secret</td></tr>
+        <tr><td>日志搜索（单次 / 批量 / 历史回看）</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>结果受截断与脱敏限制</td></tr>
+        <tr><td>资源配置写操作（日志源 / 命令 / 规则 / 样本）</td><td>✓</td><td>✓</td><td>✓</td><td>—</td><td>每次改动生成新版本，可回滚</td></tr>
+        <tr><td>配置回滚</td><td>✓</td><td>✓</td><td>✓</td><td>—</td><td>回滚同样写审计</td></tr>
+        <tr><td>生成任务（loggen）</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>占磁盘，注意输出目录</td></tr>
+        <tr><td>Agent 绑定 / 解绑 / 禁用</td><td>✓</td><td>✓</td><td>✓</td><td>—</td><td>多对多绑定</td></tr>
+        <tr><td>目录发现审批</td><td>✓</td><td>✓</td><td>✓</td><td>—</td><td>批准后才建日志源</td></tr>
+        <tr><td>成员管理</td><td>✓</td><td>✓</td><td>✓</td><td>—</td><td>页面入口对 M 隐藏，后端同样拦截</td></tr>
+        <tr><td>项目级 LLM 配置 / 技能 / 解析 Agent</td><td>✓</td><td>✓</td><td>✓</td><td>可查看</td><td>平台级配置可被项目覆盖</td></tr>
+        <tr><td>日志分析 / 语义搜索 / 对话</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>对话中的写动作仍需人确认</td></tr>
+        <tr><td>场景创建 / 实例化</td><td>✓</td><td>✓</td><td>✓</td><td>—</td><td>实例化为事务</td></tr>
+        <tr><td>平台设置（用户 / API 密钥 / 公共模型配置 / 公共资产）</td><td>✓</td><td>—</td><td>—</td><td>—</td><td>仅 admin，侧栏入口条件渲染</td></tr>
+        <tr><td>审计日志</td><td>✓</td><td>✓</td><td>—</td><td>—</td><td>180 天 TTL</td></tr>
+        <tr><td>API 密钥调用（<span class="mono">query / read / download</span>）</td><td>—</td><td>—</td><td>按密钥 scopes</td><td>按密钥 scopes</td><td>密钥与项目、scopes、过期时间绑定，可吊销</td></tr>
+      </tbody>
+    </table>
+    <div class="callout"><p class="small" style="margin:0"><b>前端隐藏 ≠ 后端放行</b>：侧栏与按钮按角色条件渲染只是体验；每个写接口都过 RBAC 中间件，越权返回 403 并写审计。</p></div>
+
+    <h3 id="s7-perms">7.1 · 权限管理（角色即权限）</h3>
+    <p>上表回答「每个角色能做什么」。<b>权限完全由角色天然决定</b>——没有「按人赋权」，也没有例外层：同一角色在任何项目里的默认权限一致，项目之间的差异只来自「你是否是该项目的成员、以及在那里是 PA 还是 M」。全局导航 <span class="mono">/permissions</span> 权限矩阵页（所有登录用户可见）把这套关系讲清楚：</p>
+    <ul>
+      <li><b>单一事实来源</b>：后端权限点注册表 <span class="mono">internal/auth/permissions.go</span> 登记 <b>18 个权限点</b>（7 个平台级 + 11 个项目级），每个点标注「哪些角色默认拥有 + 它管什么 + 生效方式」；页面直接渲染这张注册表，代码即文档，与真实鉴权一致。</li>
+      <li><b>左选角色 · 右看权限</b>：左侧角色栏列出 4 个角色（平台管理员 A / 平台主管 S / 项目管理员 PA / 项目成员 M）与各角色当前人数；选中后右侧按「平台级 N 项 / 项目级 N 项」分组列出该角色拥有的全部权限点，每行给出权限名、作用说明与权限点标识（如 <span class="mono">project.config.write</span>）。</li>
+      <li><b>进入即看自己</b>：页面默认选中当前登录用户的角色，先回答「我有什么」。底部另有「我的角色」条，一眼确认自己的角色与权限计数。</li>
+      <li><b>判定规则</b>：平台级点由全局角色（A / S）决定；项目级点在「你是该项目成员」时按成员角色生效（PA 可写、M 只读），A / S 全局天然通过。唯一判定入口是 <span class="mono">PermAllowed(user, projectID, key)</span>，纯角色计算，不查任何覆盖表。</li>
+      <li><b>真实生效点</b>：<span class="mono">platform.admin</span>（平台设置全部路由）、<span class="mono">project.view</span>（项目可见）、<span class="mono">project.admin</span>（配置写 / 成员 / 客户端绑定 / LLM 配置总闸）为三个汇聚闸门；其余细粒度权限点先「登记可见」（标注「随汇总生效」），逐点独立判定在后续版本接入。</li>
+      <li><b>不存在锁死风险</b>：权限管理页不提供任何写操作——没有任何接口能单独改某个人的权限。角色只在「创建用户」与「添加项目成员」两处决定，因此不存在把自己或他人锁在外面的可能。</li>
+      <li><b>审计</b>：角色相关变更走既有动作留痕：<span class="mono">user.create</span>（建号时定全局角色）、<span class="mono">member.add</span> / <span class="mono">member.remove</span>（项目内角色）。</li>
+    </ul>
+  </section>
+
+  <!-- ============================ §8 ============================ -->
+  <section class="doc-sec" id="s8">
+    <h2>8 · 术语表</h2>
+    <table class="tbl">
+      <thead><tr><th style="width:170px">术语</th><th style="width:210px">英文 / 标识</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>控制中心</td><td class="mono">control-center</td><td>平台主服务：HTTP 管理 API + RBAC + 配置版本化 + 任务调度 + gRPC Agent 服务 + 审计</td></tr>
+        <tr><td>日志 Agent</td><td class="mono">agent</td><td>部署在业务机器上的执行者，主动外连、领取租约、受限执行、分批上报</td></tr>
+        <tr><td>项目</td><td class="mono">project</td><td>配置隔离边界；拥有 appid / secret、成员、日志源、命令、规则、资产</td></tr>
+        <tr><td>appid / secret</td><td class="mono">project credentials</td><td>Agent 接入某项目时的身份凭据；secret 仅创建时显示一次</td></tr>
+        <tr><td>日志源</td><td class="mono">log_source</td><td>路径 + 匹配模式，告诉 Agent 去哪找日志；版本化可回滚</td></tr>
+        <tr><td>搜索命令</td><td class="mono">search_command</td><td>搜索命令模板，必须含 <span class="mono">{files}</span>；参数只进声明槽位</td></tr>
+        <tr><td>提取规则</td><td class="mono">extract_rule</td><td>正则 / JSON / 分隔符解析，把日志行变成结构化字段</td></tr>
+        <tr><td>校验样本</td><td class="mono">test_sample</td><td>用于验证规则的日志片段（搜索配置 → 字段解析配置内管理）；可从发现记录导入</td></tr>
+        <tr><td>任务 / 作业</td><td class="mono">search_job</td><td>一次搜索的中心侧对象，带状态机与多 Agent 结果</td></tr>
+        <tr><td>租约</td><td class="mono">lease</td><td>下发给单个 Agent 的带时限执行许可，含文件、argv、限制与解析规则</td></tr>
+        <tr><td>配置快照</td><td class="mono">config_snapshot</td><td>冻结“这次搜索用了哪一版配置”，保证结果可复现</td></tr>
+        <tr><td>批次</td><td class="mono">search_request_batch</td><td>批量搜索容器，内含 N 个子请求；有独立状态与进度</td></tr>
+        <tr><td>发现记录</td><td class="mono">discovery_record</td><td>Agent 上报的候选日志目录，需人工批准/拒绝</td></tr>
+        <tr><td>技能</td><td class="mono">llm_skill</td><td>分析提示词资产（如 5xx 根因分析），可公共下发或项目私有</td></tr>
+        <tr><td>解析 Agent</td><td class="mono">llm_agent</td><td>面向某类日志格式的解析器资产（模型侧知识）</td></tr>
+        <tr><td>剧本</td><td class="mono">playbook</td><td>多步可执行流程，可分配给项目、在对话中触发</td></tr>
+        <tr><td>场景</td><td class="mono">scene</td><td>可复用工作模板（技能 + Agent + 日志源 + 命令 + 剧本），一键实例化为项目</td></tr>
+        <tr><td>会话 / 消息</td><td class="mono">chat_session / chat_message</td><td>对话记忆：服务端落库，按项目或平台级组织</td></tr>
+        <tr><td>审计日志</td><td class="mono">audit_log</td><td>动作留痕（操作者 / 动作 / 目标 / 项目 / 详情），180 天 TTL</td></tr>
+        <tr><td>公共资产</td><td class="mono">public assets</td><td>平台级技能 / 解析 Agent / 剧本，可分配到项目</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ============================ §9 ============================ -->
+  <section class="doc-sec" id="s9">
+    <h2>9 · 常见问题</h2>
+    <div class="grid g2">
+      <div class="card"><h4>搜索没有结果，怎么判断哪一步的问题？</h4><p class="small" style="margin:0">先看 Agent 结果状态：<span class="mono">no_files</span>／<span class="mono">no_source_matched</span> 说明是日志源路径或模式问题（找 PA 改配置）；<span class="mono">no_match</span> 说明找到了文件但没命中关键词（换关键词或放宽时间）；<span class="mono">source_missing</span> 说明路径已不存在（回滚或改配置）。</p></div>
+      <div class="card"><h4>结果条数和预期不符，是被吞了吗？</h4><p class="small" style="margin:0">看是否出现 <span class="mono">partial_success</span>：Agent 侧有 10MB / 10 万行上限，触顶即截断。缩小时间范围或加过滤条件，而不是重复重跑。</p></div>
+      <div class="card"><h4>Agent 显示离线，任务会怎样？</h4><p class="small" style="margin:0">离线 Agent 不参与派发；重新上线后会上报 <span class="mono">running_jobs</span>，中心补发未过期租约、对已取消任务补发取消，Agent 按 <span class="mono">job_id</span> 去重，因此不会重复产出结果。</p></div>
+      <div class="card"><h4>为什么改配置之后要“提交生效”，不能直接改？</h4><p class="small" style="margin:0">配置是版本化对象：每次修改生成新版本，Agent 拿到的是某个具体版本，因此结果可复现、可回滚。直接改会让“上次搜索用的是哪版配置”无法回答。</p></div>
+      <div class="card"><h4>对话里让 AI 改配置，它真的会改吗？</h4><p class="small" style="margin:0">不会自动改。它会生成“建议动作卡”，你点「确认执行」后走的就是页面同一个写接口（同样过 RBAC 与审计）；确认回执（含任务号 / 批次号）留在对话流里，接着说「取消刚才那个任务」也能直接执行。平台级对话缺项目上下文时会降级为引导回答。</p></div>
+      <div class="card"><h4>LLM 没配好，页面还能用吗？</h4><p class="small" style="margin:0">能。自然语言搜索走本地规则解析、日志搜索与配置管理完全不依赖模型；只有语义搜索、日志分析、对话需要模型，页面会给出前往「平台设置 · 公共模型配置」的引导。</p></div>
+      <div class="card"><h4>appid / secret 丢了怎么办？</h4><p class="small" style="margin:0">secret 只显示一次，无法找回；在项目里重新生成后，更新 Agent 配置并重启即可。旧 secret 立即失效。</p></div>
+      <div class="card"><h4>批量搜索会不会影响线上？</h4><p class="small" style="margin:0">并发与每 Worker 请求数由你控制，执行的是读日志命令（禁 shell、只读），但会产生真实 CPU/IO 与网络流量——压测请在低峰期并从小并发开始。</p></div>
+    </div>
+  </section>
+
+  <!-- ============================ §10 ============================ -->
+  <section class="doc-sec" id="s10">
+    <h2>10 · 附录</h2>
+
+    <h3>10.1 状态与枚举（后端真实取值）</h3>
+    <div class="grid g2">
+      <div class="card"><h4>用户</h4><p class="small" style="margin:0"><span class="mono">active</span> · <span class="mono">disabled</span></p></div>
+      <div class="card"><h4>Agent</h4><p class="small" style="margin:0"><span class="mono">registered · online · offline · draining · unhealthy · rejected</span></p></div>
+      <div class="card"><h4>搜索作业 Job</h4><p class="small" style="margin:0"><span class="mono">created · dispatching · running · partial_success · completed · failed · canceled · timed_out</span></p></div>
+      <div class="card"><h4>单 Agent 结果</h4><p class="small" style="margin:0"><span class="mono">success · no_match · partial_success · failed · timed_out · canceled · no_files · no_source_matched · source_missing</span></p></div>
+      <div class="card"><h4>生成任务</h4><p class="small" style="margin:0"><span class="mono">created · running · paused · completed · failed · canceled</span></p></div>
+      <div class="card"><h4>API 密钥 scopes</h4><p class="small" style="margin:0"><span class="mono">query · read · download</span>（JSON 数组，可组合）</p></div>
+    </div>
+
+    <h3>10.2 本地运行与常驻</h3>
+    <table class="tbl compact">
+      <thead><tr><th style="width:230px">命令</th><th>作用</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">make dev-certs</td><td>生成开发自签 TLS 证书（<span class="mono">out/certs</span>）</td></tr>
+        <tr><td class="mono">make run-cc / make run-agent</td><td>前台分别启动控制中心 / Agent</td></tr>
+        <tr><td class="mono">make dev-up</td><td>后台常驻启动控制中心 <span class="mono">:20006</span> + vite dev <span class="mono">:20007</span>（<span class="mono">setsid nohup</span> 脱离终端 + 掉线 3s 自动拉起）</td></tr>
+        <tr><td class="mono">make dev-status / dev-restart / dev-down</td><td>查看状态（进程 / 端口 / HTTP）· 重启 · 停止</td></tr>
+        <tr><td class="mono">make build-all</td><td>构建前端 dist + 三个二进制（dist 经 go:embed 打进二进制）</td></tr>
+        <tr><td>工作台数据真实性核对（A2 真机）</td><td>✅ <span class="mono">with_stats</span> 真实返回统计 · 最近任务真实 · <span class="mono">agent_online=0</span> 经核实为正确值（agents 均 offline）· 15 个项目中 12 个全零（7 个 e2e 残留）</td></tr>
+        <tr><td>导航分层守护（<span class="mono">e2e/nav-ia.spec.ts</span>）</td><td>4 通过：侧栏三分域/顺序/无已下线文案 · 权限矩阵对成员可见 · 平台页签由 <span class="mono">meta.nav</span> 派生 · 路由级守护（负向验证：删掉声明即报 <span class="mono">缺少 meta.nav</span> 并失败）</td></tr>
+        <tr><td class="mono">make ci</td><td>验收基线：go vet + go test / vue-tsc / vite build</td></tr>
+      </tbody>
+    </table>
+    <p class="small muted"><b>访问</b>：dev 走 vite（<span class="mono">http://&lt;host&gt;:20007/loggen/</span>），生产走控制中心托管的 dist。容器/局域网按 IP 访问需要 <span class="mono">server.host: true</span>（已在 <span class="mono">web/vite.config.ts</span> 开启），否则 vite 默认只监听 localhost，端口映射会连不上。<br>
+    <b>已知基线噪声</b>：<span class="mono">make ci</span> 的 go test 段存在既存 flaky 用例 <span class="mono">TestSyslogGenerator</span>（<span class="mono">internal/loggen/templates</span>，统计断言带 ±1.5σ，实测约 10% 概率越界），与前端/对话工作台无关，详见 <span class="mono">.specs/LESSONS.md</span> L-003。</p>
+
+    <h3>10.3 关键环境变量</h3>
+    <div class="split">
+      <div class="card"><h4>控制中心</h4><table class="tbl compact"><tbody>
+        <tr><td class="mono">CC_HTTP_ADDR</td><td>默认 <span class="mono">:8080</span>（本项目常用 <span class="mono">:20006</span>）</td></tr>
+        <tr><td class="mono">CC_GRPC_ADDR</td><td>默认 <span class="mono">:8443</span>，Agent 通道</td></tr>
+        <tr><td class="mono">CC_DB_SQLITE</td><td>非空则用 SQLite（开发）</td></tr>
+        <tr><td class="mono">CC_DB_DSN</td><td>MySQL DSN（生产）</td></tr>
+        <tr><td class="mono">CC_TLS_CERT / CC_TLS_KEY</td><td>gRPC TLS 证书（必填）</td></tr>
+        <tr><td class="mono">CC_MASTER_KEY</td><td>SecretBox 主密钥（加密 agent_secret）</td></tr>
+        <tr><td class="mono">CC_ADMIN_USER / _PASSWORD</td><td>引导管理员（幂等创建）</td></tr>
+        <tr><td class="mono">CC_INSTALL_TOKEN</td><td>Agent 安装令牌</td></tr>
+        <tr><td class="mono">CC_RESULT_TMP</td><td>完整结果临时目录（24h TTL）</td></tr>
+      </tbody></table></div>
+      <div class="card"><h4>Agent</h4><table class="tbl compact"><tbody>
+        <tr><td class="mono">AGENT_SERVER</td><td>控制中心 gRPC 地址（必填）</td></tr>
+        <tr><td class="mono">AGENT_APPID + AGENT_SECRET</td><td><b>推荐</b>：用项目 appid / secret 注册，注册即绑定项目</td></tr>
+        <tr><td class="mono">AGENT_INSTALL_TOKEN</td><td>安装令牌（未用 appid 时的通用路径，需再手动绑定项目）</td></tr>
+        <tr><td class="mono">AGENT_ID</td><td>平台侧唯一标识（默认 hostname-user-pid）</td></tr>
+        <tr><td class="mono">AGENT_HOSTNAME / AGENT_LABELS</td><td>上报机器名 / 逗号分隔标签</td></tr>
+        <tr><td class="mono">AGENT_SECRET_FILE</td><td>secret 落盘路径（0600）</td></tr>
+        <tr><td class="mono">AGENT_TLS_CA / _INSECURE</td><td>信任的 CA / 跳过校验（仅开发）</td></tr>
+        <tr><td class="mono">DISCOVERY_PATHS</td><td>额外参与发现的日志目录（逗号分隔）</td></tr>
+        <tr><td class="mono">AGENT_MAX_OUTPUT_BYTES / _LINES</td><td>截断上限（默认 10MB / 100000）</td></tr>
+        <tr><td class="mono">AGENT_CONCURRENCY_SLOTS</td><td>并发槽位（心跳上报，默认 NumCPU）</td></tr>
+      </tbody></table></div>
+    </div>
+
+    <h3>10.4 验证基线（这份文档对应版本）</h3>
+    <table class="tbl compact">
+      <thead><tr><th style="width:250px">验证</th><th>结果</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">vue-tsc --noEmit</td><td>0 错误</td></tr>
+        <tr><td class="mono">go build / go test ./internal/...</td><td>全绿（含权限注册表单测 <span class="mono">TestPermissionRegistry</span> / <span class="mono">TestPermAllowedRoleDefault</span>）</td></tr>
+        <tr><td>Playwright · 核心 4 spec（rbac/assets/app/platform）</td><td>46 通过（另有 1 条真实 LLM 用例在并发下抖动，单跑通过）</td></tr>
+        <tr><td>权限矩阵 v8（角色即权限）</td><td>页面 + 后端例外层撤除全绿：单栏角色页 / overrides 路由与表删除 / rbac e2e 4 条改写通过</td></tr>
+        <tr><td>全站控件基线</td><td>13 页 24 处重复定义收敛到 <span class="mono">global.css</span>；截图 + DOM 核验通过</td></tr>
+        <tr><td class="mono">make ci</td><td>vue-tsc / vite build 通过；go test 段命中既存 flaky 用例（见 10.2 说明）</td></tr>
+      </tbody>
+    </table>
+
+    <h3>10.5 相关文档</h3>
+    <ul class="small">
+      <li><span class="mono">client/README.md</span> —— 架构速览、环境变量、HTTP API、关键设计决策</li>
+      <li><span class="mono">client/.specs/ARCHITECTURE.md</span> —— 需求与实现对照（AC-1 ~ AC-18）</li>
+      <li><span class="mono">client/proto/agent.proto</span> —— Agent 通道协议定义</li>
+      <li><span class="mono">client/.specs/scenes-memory-c6/UI-DESIGN.md</span> —— 对话工作台与分组折叠的界面设计（含 AC-UI-1~8）</li>
+      <li><span class="mono">client/.specs/scenes-memory-c6/TASK.md</span> —— 任务分解与验证记录</li>
+      <li><span class="mono">client/.specs/perm-matrix-ui-polish/UI-DESIGN.md</span> —— 权限矩阵页 v8（角色即权限）与公共技能操作区界面规范</li>
+      <li><span class="mono">client/STATE.md</span> —— 跨会话状态与决策日志</li>
+      <li><span class="mono">client/scripts/dev-stack.sh</span> —— 常驻开发栈脚本（<span class="mono">make dev-up</span> 的实现）</li>
+    </ul>
+    <h3>10.6 控件基线（全站统一的交互风格）</h3>
+    <p class="small">实现位置：<span class="mono">web/src/styles/global.css</span> 底部「控件基线」段。原则是<b>各页只写布局尺寸，颜色/圆角/hover/focus/disabled 一律交给基线</b>，避免同一控件在不同页面长出不同手感（此前的碎片化：padding 5 种、圆角 6 种、<span class="mono">.ghost</span> 被 6 个页面各自定义）。</p>
+    <table class="tbl compact">
+      <thead><tr><th style="width:190px">控件</th><th>统一规格</th><th style="width:250px">交互</th></tr></thead>
+      <tbody>
+        <tr><td><span class="mono">input / select / textarea</span></td><td>r8 · 13px · surface 底 + 1px border · 7px 10px 内边距</td><td>hover 边框加深 → focus 品牌色边框 + 2px 品牌 ring → disabled 灰底 + <span class="mono">not-allowed</span>；placeholder 统一四级灰</td></tr>
+        <tr><td><span class="mono">.btn-primary</span>（主操作）</td><td>r8 · 品牌蓝实底白字 · 7px 16px</td><td>hover 深一档 → active 压暗 → disabled 半透明；focus-visible 品牌 ring</td></tr>
+        <tr><td><span class="mono">.ghost</span>（次操作）</td><td>r8 · surface 底 + border · 7px 14px；<span class="mono">.danger</span> 红字红 hover、<span class="mono">.sm</span> 小号</td><td>hover 浮底加深边框 → 文字转一级色</td></tr>
+        <tr><td><span class="mono">.op</span>（列表行内操作）</td><td>r7 · 12px · 4px 12px；<span class="mono">.primary</span> 蓝底、<span class="mono">.danger</span> 红系</td><td>hover 品牌描边 + 5% 品牌底；disabled 半透明</td></tr>
+        <tr><td><span class="mono">.icon-btn</span>（图标操作 / 弹层关闭）</td><td>26×26 r7 隐形按钮</td><td>hover 浮底 + 品牌色；<span class="mono">.danger</span> 红底红字；统一用于行内编辑/删除与弹层 ✕</td></tr>
+        <tr><td>弹窗脚部（<span class="mono">.modal-actions / .dlg-foot / .modal-foot</span>）</td><td>flex 右对齐 + <span class="mono">gap:10px</span>（三套类名同规格）</td><td>相邻按钮另有 <span class="mono">margin-left:8px</span> 兜底，父容器无 gap 时也不会挤在一起</td></tr>
+        <tr><td>尺寸变体</td><td><span class="mono">.sm</span> = 4px 10px / 12px / r7</td><td>用于表格行内与紧凑工具条</td></tr>
+      </tbody>
+    </table>
+
+    <h3>10.7 导航分层规范（一级三分域）</h3>
+    <p class="small">决策来源：议题 A1「全局导航已 8 项，是否需要重新分层」（<span class="mono">client/discovery/nav-restructure/</span>，五步发现循环 + 专家团：3 同意 / 1 非阻塞保留）。</p>
+    <table class="tbl compact">
+      <thead><tr><th style="width:170px">项</th><th>规则</th></tr></thead>
+      <tbody>
+        <tr><td>三分域</td><td><b>工作区</b>（对话 / 项目 / 场景 / 工作台）· <b>平台</b>（权限矩阵 / 平台设置 / 审计日志）· <b>更多</b>（客户端下载）。分组标题是纯文本 <span class="mono">&lt;p class="nav-group"&gt;</span>，<b>不可点击</b>；禁分隔线 / 计数 / 折叠</td></tr>
+        <tr><td>顺序</td><td>按真实使用频率：对话 → 项目 → 场景 → 工作台（工作台在「工作区」域内后置；其去留由议题 A2 裁决）</td></tr>
+        <tr><td>可见性</td><td>仍由路由 <span class="mono">meta.roles</span> 单一事实源决定：<b>权限矩阵对所有角色可见</b>（成员必须能自查「我有什么」）· 平台设置仅 A · 审计日志仅 A / S</td></tr>
+        <tr><td>二级页签</td><td>平台设置页签<b>只读</b>路由 <span class="mono">meta.nav = { group, label, order }</span> 的显式声明，<b>不推断</b>路由结构；新增 <span class="mono">/platform/*</span> 路由必须声明，否则不出现在页签里（守护：<span class="mono">e2e/nav-ia.spec.ts</span>）</td></tr>
+        <tr><td>文案守护</td><td>导航项文案纳入 e2e 断言，禁止出现已下线的能力描述。历史缺陷：权限矩阵悬停文案曾残留「管理员按人赋权」，而该能力已在权限模型 v8（角色即权限）中删除</td></tr>
+      </tbody>
+    </table>
+    <p class="small">实现位置：<span class="mono">web/src/components/Sidebar.vue</span>（三分域 + 顺序）· <span class="mono">web/src/router/index.ts</span>（<span class="mono">meta.nav</span> 显式声明）· <span class="mono">web/src/components/platform/PlatformTabs.vue</span>（派生渲染）。</p>
+
+    <p class="h2p" style="margin-top:var(--space-lg)">为什么没有把「权限矩阵 / 审计日志」并进平台设置页签（R3b 后置）</p>
+    <ul class="small">
+      <li><b>量化证据</b>：NN/g 对 179 名用户 × 6 个站点的测试——把入口藏进一层后，<b>桌面端导航使用率从可见的 48–50% 降到 27%</b>，且作者明确指出「隐藏主要伤害那些页内没有直达链接的内容」。权限矩阵正是这类页面（成员的自查入口）。</li>
+      <li><b>更硬的原因</b>：平台设置页签栏当前只对管理员渲染，对成员而言「并入」等于<b>完全不可达</b>，不是「多一层」。</li>
+      <li><b>参照与差异</b>：Grafana 把 Manage users / Roles and permissions / Organizations 平级收在 Administration 域内，GitLab 的 Administer 域整体按角色显隐——两者都是「整域同一可见性」；而我们权限页全员可读、其余项仅 A / A·S，属「半开半闭域」，<b>没有现成先例可照抄</b>，因此不上马。</li>
+    </ul>
+
+    <p class="h2p" style="margin-top:var(--space-lg)">门槛登记（满足任一即立项 R3b：导航合并）</p>
+    <table class="tbl compact">
+      <thead><tr><th style="width:320px">指标</th><th>门槛</th></tr></thead>
+      <tbody>
+        <tr><td>「找入口」任务首次导航点击耗时</td><td>中位数 &gt; 8 秒</td></tr>
+        <tr><td>点错入口次数</td><td>≥ 1 次</td></tr>
+        <tr><td>经侧栏直达 <span class="mono">/permissions</span> 的占比</td><td>&lt; 60%</td></tr>
+      </tbody>
+    </table>
+    <p class="small muted">取证前置：本环境暂无真实用户数据（live 库 815 条对话消息全部由 e2e / 走查脚本生成），需先给走查脚本加「找入口」任务与最小导航埋点，门槛才有数据可判。</p>
+    <p class="small">调研与评审产物：<span class="mono">discovery/nav-restructure/</span> —— 01 头脑风暴（17 方向）· 02 竞品调研（4 个原厂来源）· 03 结论 · 04 专家团 · 05–08 第 2 轮回炉（含 NN/g 隐藏导航证据）。</p>
+
+
+    <div class="callout"><p class="small" style="margin:0"><b>维护约定</b>：界面结构、导航、角色可见性或流程发生变化时，同步更新本文 §3（架构表）、§4（时序）、§5（对应模块）与 §6（该屏原型）；数据模型变化时同步 §3.3 与 §8 术语表。</p></div>
+    <h3>10.8 页面职责分工与「待实施」清单（A2 工作台归属）</h3>
+    <p class="small">决策来源：议题 A2「工作台与对话工作台职责重叠」（<span class="mono">client/discovery/workbench-overlap/</span>，五步发现循环 + 专家团：2 同意 / 2 有保留，带条件放行）。</p>
+    <table class="tbl compact">
+      <thead><tr><th style="width:150px">编号</th><th>决策</th><th style="width:190px">状态</th></tr></thead>
+      <tbody>
+        <tr><td>D1 分工写清</td><td><b>工作台 = 项目总览（巡检）</b>：每项目活动数据 + 跨项目最近任务；<b>项目管理页 = 清单</b>：创建（含凭证下发）+ 搜索筛选 + 分页。见 §5.2 / §5.4</td><td>✅ 文档已落地；标题改名 <span class="chip warn">⏳ 待实施</span></td></tr>
+        <tr><td>D2 保留工作台</td><td><b>不并入项目页</b>（裁定 A1 遗留的待决项）。理由：删除会让「跨项目最近任务」无处安放（巡检能力归零），且活动数据管道经真机取证真实可用</td><td>✅ 已裁定</td></tr>
+        <tr><td>D3 删对话入口卡</td><td>工作台的「对话助手入口卡」与侧栏「对话」重复（A1 后对话就在侧栏第一项）→ 移除</td><td><span class="chip warn">⏳ 决策已定，实现待排期</span></td></tr>
+        <tr><td>D4 数据卫生</td><td>清理 e2e 残留项目（<span class="mono">ui-smoke-*</span>）；「e2e 用例必须在 finally 清理自建项目」口径<b>复发</b>，需加强</td><td><span class="chip warn">⏳ 待清理（数据操作）</span></td></tr>
+        <tr><td>D5 合一方案暂缓</td><td>「活动数据并入项目列表列」暂缓，<b>判据</b>：真实项目数 &gt; 25 或瓦片页停留时长明显低于项目页。备注（Winston）：两页各有一套分页/筛选状态，是未来合一的<b>主要障碍</b></td><td>⏸ 暂缓</td></tr>
+        <tr><td>零值语义</td><td><span class="mono">agent_total=0 / session_count=0</span> 渲染为<b>「无活动」</b>，不展示为一串 0</td><td><span class="chip warn">⏳ 待实施</span></td></tr>
+      </tbody>
+    </table>
+
+    <p class="h2p" style="margin-top:var(--space-lg)">本轮真机取证（决定结论走向的事实）</p>
+    <table class="tbl compact">
+      <thead><tr><th style="width:320px">取证项</th><th>结果</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">GET /api/projects?with_stats=1</td><td>✅ 真实返回按项目 id 的 <span class="mono">stats</span> 兄弟映射（<span class="mono">agent_total / agent_online / session_count / last_active_at</span>）——数据管道真实，非空壳</td></tr>
+        <tr><td class="mono">GET /api/workbench/recent</td><td>✅ 真实返回跨项目最近任务（项目名 / 类型 / 状态 / 时间）</td></tr>
+        <tr><td><span class="mono">agent_online</span> 全为 0 是否为缺陷</td><td>❌ <b>不是</b>：<span class="mono">agents</span> 表 3 条状态均为 <span class="mono">offline</span>（在线判定 = <span class="mono">agents.status='online'</span>），0 是正确值</td></tr>
+        <tr><td>项目活动分布（15 个项目）</td><td>⚠️ <b>12 个全零</b>，其中 <b>7 个是 <span class="mono">ui-smoke-*</span> e2e 残留</b>；真正有活动的仅 3 个 ⇒ 巡检信号被环境残留淹没（D4 的由来）</td></tr>
+      </tbody>
+    </table>
+    <p class="small muted"><b>文档纪律（Winston 约束）</b>：凡「决策已定但未实施」的条目一律带 <span class="chip warn">⏳ 待实施</span> 标记——避免出现 A1 那类漂移（文档写已删除、代码里还在）。上线实现后必须同批移除该标记。</p>
+
+    <h3>10.9 可发现性规范（A3 项目导航）</h3>
+    <p class="small">决策来源：议题 A3「项目导航的可发现性」（<span class="mono">client/discovery/project-nav-discovery/</span>，五步发现循环 + 专家团：3 同意 / 1 有保留，带条件放行）。</p>
+    <p class="h2p">设计原则判定（NN/g《Progressive Disclosure》，2006）</p>
+    <table class="tbl compact">
+      <thead><tr><th style="width:300px">渐进披露的硬要求</th><th>我们的现状 → 判定</th></tr></thead>
+      <tbody>
+        <tr><td>初始层必须放下<b>高频需要</b>的东西</td><td>造测试日志<b>不是低频</b>：每次改配置后都要造样本验证 → ❌ 拆分错误</td></tr>
+        <tr><td><b>前进路径必须显然</b>（机制简单 + 强信息气味）</td><td><span class="mono">/tasks</span> <b>全站零入站链接</b>；对话回执是纯文本无跳转 → ❌ 前进路径不存在</td></tr>
+        <tr><td>形态 = 推迟到次级界面，<b>仍有控件可前进</b></td><td>我们是从界面<b>移除</b> → ❌ 这不是渐进披露</td></tr>
+        <tr><td>分级披露（staged）：初始层放「任务序列中最先访问的」</td><td>造测试日志是搜索的<b>前置步骤</b> → ✅ 应按流程步骤处理</td></tr>
+      </tbody>
+    </table>
+
+    <p class="h2p" style="margin-top:var(--space-lg)">裁定</p>
+    <table class="tbl compact">
+      <thead><tr><th style="width:150px">编号</th><th>决策</th><th style="width:190px">状态</th></tr></thead>
+      <tbody>
+        <tr><td>E1 定位重述</td><td>造测试日志 = <b>搜日志流程内的验证步骤</b>（先造数据 → 再验证配置），不是与搜日志并列的独立功能。见 §5.10 / §5.4</td><td>✅ 文档已落地</td></tr>
+        <tr><td>E2 三个上下文入口</td><td>① 搜日志<b>空态</b>「还没有数据？先造测试日志」（<b>优先级最高</b>，Sally：搜不到时挫败感最强）② 搜索配置<b>保存成功后</b>「造一批样本验证」（文案须含<b>原因</b>：配置刚改，现有日志可能验证不到）③ 对话生成类<b>回执</b>「查看任务 →」</td><td><span class="chip warn">⏳ 待实施</span></td></tr>
+        <tr><td>E3 工作台入口补齐</td><td>工作台「最近任务」加「<b>查看全部任务 →</b>」，消除「详情可达、列表不可达」的不对称</td><td><span class="chip warn">⏳ 待实施</span>（建议与 A2/D3 同批改同一文件）</td></tr>
+        <tr><td>E4 不恢复并列导航项</td><td>项目标签条承载<b>并列功能</b>，而造测试日志是<b>前置步骤</b> → 用流程内入口替代，不新增第 6 项</td><td>✅ 已裁定（附判据）</td></tr>
+        <tr><td>E5 并入搜日志页</td><td>把造测试日志彻底变成搜日志页内的「造样本」能力（结构级收敛）</td><td>⏸ 暂缓（E2 落地后观察）</td></tr>
+      </tbody>
+    </table>
+
+    <p class="h2p" style="margin-top:var(--space-lg)">E4 判据（满足任一即恢复标签条第 6 项）</p>
+    <ul class="small">
+      <li>走查任务「找到造测试日志」<b>失败</b>或需要手输 URL；</li>
+      <li>上下文入口上线后，<span class="mono">/tasks</span> 的到达仍<b>主要来自手输</b>。</li>
+    </ul>
+
+    <p class="h2p" style="margin-top:var(--space-lg)">待实施优先级（A3 + 联动）</p>
+    <ol class="small">
+      <li>搜日志空态入口（Sally：最高优先）</li>
+      <li>搜索配置保存后提示（文案含原因）</li>
+      <li>对话任务回执「查看任务 →」（与批次回执同款）</li>
+      <li>工作台「查看全部任务 →」（可与 A2/D3 删对话卡同批）</li>
+      <li>任务页 URL 统一到一处 helper（Winston：当前 <span class="mono">WorkbenchPage.vue</span> 已有一处硬编码拼接，避免将来路由一动就断）</li>
+    </ol>
+    <p class="small muted"><b>事实基线（本轮实测）</b>：<span class="mono">ProjectNav.vue</span> 5 项不含造测试日志；<span class="mono">WorkbenchPage.vue:77</span> 仅 generation 类跳到 <span class="mono">/tasks/:id</span> 详情；全站唯一回执深链是批次（<span class="mono">ChatWorkbenchPage.vue:130</span>），生成类回执为纯文本 ⇒ <span class="mono">/tasks</span> 列表页零入站链接。</p>
+
+      </section>
+
+  </main>
+</div>
+
+<footer class="doc-foot" style="max-width:1180px;margin:0 auto;padding:0 var(--space-xl) var(--space-2xl)">
+  logsearch · 产品设计文档与界面原型（演示数据）· 生成于 2026-09-10 · 按实现事实修订于 2026-09-16（含造数模板管理与多机扇出补全）· 单文件、离线可读
+</footer>
+
+<script>
+// 目录高亮：滚动时把当前小节同步到左侧导航
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll('.doc-nav a[href^="#"]'));
+  var map = {};
+  links.forEach(function(a){ map[a.getAttribute('href').slice(1)] = a; });
+  var targets = links.map(function(a){ return document.getElementById(a.getAttribute('href').slice(1)); }).filter(Boolean);
+  if (!('IntersectionObserver' in window) || !targets.length) return;
+  var visible = {};
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ visible[e.target.id] = e.isIntersecting ? e.intersectionRatio : 0; });
+    var best = null, bestRatio = 0;
+    Object.keys(visible).forEach(function(id){ if (visible[id] > bestRatio) { bestRatio = visible[id]; best = id; } });
+    if (!best) return;
+    links.forEach(function(a){ a.classList.remove('active'); });
+    if (map[best]) map[best].classList.add('active');
+  }, { rootMargin: '-72px 0px -60% 0px', threshold: [0, .25, .5, 1] });
+  targets.forEach(function(t){ io.observe(t); });
+})();
+
+// 原型里的标签页：只切换展示，不发请求
+function activateTab(btn){
+  var bar = btn.closest('[data-tabs]');
+  Array.prototype.forEach.call(bar.querySelectorAll('button[data-tab]'), function(b){
+    b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+  });
+  var scope = bar.parentElement;
+  var panels = scope ? scope.querySelectorAll('[data-panel]') : [];
+  Array.prototype.forEach.call(panels, function(p){
+    p.hidden = p.getAttribute('data-panel') !== btn.getAttribute('data-tab');
+  });
+}
+document.addEventListener('click', function(ev){
+  var btn = ev.target.closest('[data-tabs] button[data-tab]');
+  if (btn) activateTab(btn);
+});
+// 左右方向键在页签间漫游（WAI-ARIA tabs 键盘约定）
+document.addEventListener('keydown', function(ev){
+  if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') return;
+  var btn = ev.target.closest('[data-tabs] button[data-tab]');
+  if (!btn) return;
+  ev.preventDefault();
+  var all = Array.prototype.slice.call(btn.closest('[data-tabs]').querySelectorAll('button[data-tab]'));
+  var i = all.indexOf(btn) + (ev.key === 'ArrowRight' ? 1 : -1);
+  var next = all[(i + all.length) % all.length];
+  next.focus(); activateTab(next);
+});
+</script>
+</body>
+</html>
