@@ -1,3 +1,12 @@
+---
+name: code-kit
+description: Use the code-kit research and delivery workflow to route software-engineering requests, enforce artifact gates, and guide changes from discovery through integration.
+short_description: Code-kit software delivery workflow.
+short_description_zh: code-kit 研发交付工作流。
+version: 1
+updated: 2026-09-18T00:00:00Z
+---
+
 # GO — code-kit 统一入口（每个 IDE 都用这一个）
 
 > **用户使用方式**：`@code-kit/GO.md` + 一句话意图
@@ -129,8 +138,6 @@ Preflight 失败时，路由声明必须写明：
 
 | 用户输入特征 | 路由到 | 备注 |
 |---|---|---|
-| `BMAD` / `PRD` / `brief` / `PRFAQ` / `epic` / `story` / `sprint` / `readiness` / `E2E` / `walkthrough` / `复盘` / `party` / `项目上下文` | `prompts/B-bmad-extensions.md` | BMAD 能力融合调度：优先复用 code-kit 阶段和工件，不建立第二套流程 |
-| `correct course` / `冲刺变更` / `重大变更影响` / `重新规划` | `prompts/C-course-correction.md` | 评估影响，批准后回流到最早受影响阶段 |
 | `调研` / `议题讨论` / `看看有啥改进` / `怎么优化` / `竞品分析后给建议` / `探索一下方案` / `评估这个改进想法` | `prompts/D-discovery.md` | 议题发现循环：事实文档拆子议题 → 逐个五步讨论 → roadmap；全程零代码改动（R16），不属任何 change |
 | `写产品文档` / `产品 PRD 和原型` / `产品设计文档` / `出一份带原型的需求文档` | `prompts/P-product.md` | 产品 PR + 界面原型合一：单文件 `PRODUCT-DESIGN.html`（九段制）；是 1-requirement 的可选上游 |
 | `对齐检查` / `拉齐` / `检查漂移` / `文档和代码是不是偏了` / `留痕补齐` | `prompts/S-align.md` | 五层对齐检测（R15）；7-integration 前强制跑一次 |

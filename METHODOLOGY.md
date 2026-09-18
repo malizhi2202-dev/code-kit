@@ -6,7 +6,13 @@
 
 ---
 
-## 标准流程
+## BMAD 融合层
+
+BMAD 能力通过 `BMAD-INTEGRATION.md` 与 `prompts/B-bmad-extensions.md` 接入本骨架，不另建一套产物体系：产品能力补到 CHANGE/REQUIREMENT，架构能力补到 ARCHITECTURE/DESIGN，Epic/Story/Sprint 补到 TASK/STATE，QA/复盘补到 TEST/REVIEW/INTEGRATION。重大变更走 `prompts/C-course-correction.md`。
+
+**大议题/子议题例外锁**：`prompts/D-discovery.md` 保留 BMAD 的完整流程——大议题每轮八步、最多三轮；第 7 步发现子议题、第 8 步人工确认；确认后才逐个讨论子议题，子议题结束也必须人工确认。任何未确认结论不得落盘。不得将子议题自动扩展为新的三轮大议题。
+
+---
 
 ```
 [DISCOVERY]* → CHANGE → REQUIREMENT → DESIGN → [2a UI-DESIGN]* → TASK → DEV → TEST → REVIEW → [S-ALIGN]** → INTEGRATION → ARCHIVE

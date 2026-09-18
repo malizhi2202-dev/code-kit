@@ -11,10 +11,11 @@
 装一次，后面不跟任何上游版本绑定。
 
 
+**BMAD 融合**：BMAD 的产品、架构、Epic/Story/Sprint、QA、变更治理、复盘、上下文和多角色能力已通过 `BMAD-INTEGRATION.md` 接入；相似能力补强现有阶段，不复制 BMAD 独立工件。大议题/子议题发现流程保持完整的三轮、八步和逐级人工确认，不压缩、不改序。
+
 ## 为什么是纯 markdown
 
 写多了项目会发现：一个工具只要"装"了，就一定会有版本问题、依赖冲突、哪天突然 breaking change。code-kit 故意反过来——它不是工具，是一组文件。clone 到项目根目录就用，没有运行时。
-
 - 不用 `npm install`、不用 `pip`、不用 CLI
 - Windsurf / Claude Code / Cursor / Copilot / Codex / Gemini / Cline 都能跑，只要 AI IDE 支持 `@` 引用文件
 - 所有规则都在文件里，想改哪条就改哪个 md

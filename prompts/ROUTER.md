@@ -11,7 +11,9 @@
 
 | 意图 | 用户话语样例 | 路由到 |
 |---|---|---|
-| **调研/讨论/改进议题** | "项目调研" / "议题讨论" / "看看有啥改进" / "改进产品" / "怎么优化" / "别人怎么做" / "评估改进想法" / "迭代方向讨论" | `@code-kit/prompts/D-discovery.md`（发现循环） |
+| **调研/讨论/改进议题** | "项目调研" / "议题讨论" / "看看有啥改进" / "改进产品" / "怎么优化" / "别人怎么做" / "评估改进想法" / "迭代方向讨论" | `@code-kit/prompts/D-discovery.md`（BMAD 兼容的大议题/子议题发现循环） |
+| **BMAD 扩展能力** | "PRD" / "brief" / "PRFAQ" / "epic" / "story" / "sprint" / "readiness" / "E2E" / "walkthrough" / "复盘" / "项目上下文" / "party" | `@code-kit/prompts/B-bmad-extensions.md`（先映射到现有阶段，不建立第二套流程） |
+| **重大变更影响评估** | "correct course" / "冲刺变更" / "重大变更影响" / "重新规划" | `@code-kit/prompts/C-course-correction.md` |
 | **写产品 PR + 原型** | "写产品文档" / "产品 PRD 和原型一起出" / "产品设计文档" / "出一份带原型的需求文档" | `@code-kit/prompts/P-product.md`（单文件 HTML 模型） |
 | **五层对齐检查** | "对齐检查" / "文档和代码是不是偏了" / "拉齐一下" / "检查漂移" / "留痕补齐" | `@code-kit/prompts/S-align.md` |
 | **新想法/新功能** | "我有个想法" / "加个功能" / "改个 bug" / "有个变更要做" | `@code-kit/prompts/0-change.md` |
