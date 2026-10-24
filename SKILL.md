@@ -1,388 +1,243 @@
 ---
 name: code-kit
-description: Use the code-kit research and delivery workflow to route software-engineering requests, enforce artifact gates, and guide changes from discovery through integration.
+description: 一站式研发交付工作流：意图路由 → 0-change…7-integration 八阶段闭环 → 8 道专家门禁 → 逐任务自动化投票；内置 ponytail 最小完整改动律、16 个工程技能（TDD/调试/安全/性能/API/文档/Git/迁移等）与 DSH 工具接线。当用户要求从想法到交付完整开发、写需求/设计/拆任务/实现/测试/审查，或要求少写代码、别过度设计时使用。
+whenToUse: 用户要求从想法到交付完整开发、写需求/设计/拆任务/实现/测试/审查、老项目入场/体检/对齐，或明确要求"少写代码/别过度设计/最省实现"
 short_description: Code-kit software delivery workflow.
 short_description_zh: code-kit 研发交付工作流。
-version: 1
-updated: 2026-09-18T00:00:00Z
+version: 2
+updated: 2026-10-24T00:00:00Z
 ---
 
-# GO — code-kit 统一入口（每个 IDE 都用这一个）
+# code-kit
 
-> **用户使用方式**：`@code-kit/GO.md` + 一句话意图
-> AI 看到 `@GO.md` 就按本文件路由，自动决定阶段、自动生成 ID、自动按需加载工件，**不要等用户提供 ID 或路径**。
+一套把「想法 → 可交付代码」压成固定轨道的研发流程，外加一组工程硬规矩。
+本文件是 **DSH 技能入口**：负责路由、总律与加载；逐阶段细节在 `GO.md` / `prompts/`，工程底座在 `reference/`。
 
----
-
-## 红线·Token 预算（走任何阶段前必读）
-
-code-kit 的文件分两类，**加载策略不同**：
-
-| 类型 | 路径 | 长度 | 加载方式 |
-|---|---|---|---|
-| **SPEC**（项目产物）| `.specs/<id>/*.md` | 通常 < 200 行 | 整读 OK |
-| **REFERENCE**（查阅型）| `code-kit/reference/*.md` | 75~470 行 | **禁止默认整读**，只 grep / read offset 需要的那一节 |
-| **TEMPLATE / PROMPT** | `code-kit/templates|prompts/*.md` | < 150 行 | 整读 OK |
-
-**违规示例**（AI 常犯）：
-
-- ❌ 进入 2-design 阶段后直接 `read_file code-kit/reference/tech-stacks.md` 整读 467 行
-- ✅ 正确：`grep_search` 查 `适用矩阵` 或 `read_file offset=??? limit=80` 只读所需那节
-
-- ❌ 进入 2a-ui-design 后同时读 `ui-aesthetics.md` 与 `ui-anti-patterns.md` 两全文
-- ✅ 正确：`ui-anti-patterns.md` 75 行可整读；`ui-aesthetics.md` 只读「调性」一节
-
-**Token 预算**：进入任何阶段的首轮消息，加载的 reference 总行数 ≤ **150 行**。超过 → 拆到后面按需拉。
+**仓库根目录 = 技能根目录**。DSH 安装后相对路径直接可用；把本目录复制进项目当 `code-kit/` 用时，路径加 `code-kit/` 前缀。
 
 ---
 
-## Token 预算估计 · 进阶段前必跑
+## 0. 三条总律（压过一切细节）
 
-> 上面是单阶段加载预算。本段是**整链路预算**——让用户提前知道价格，并选挡位。
+1. **最小完整改动（ponytail）**：最好的代码是没写的代码。先问「要不要存在」，再问「仓库里有没有」，再问「标准库/平台/已装依赖能不能做」，最后才写最少的新代码。**省的是方案，不是改动本身**——调用方、测试、夹具、配置该改全改。
+2. **绝不省的**：信任边界的校验、防止数据丢失的错误处理、安全、无障碍、真实硬件需要的校准、用户明确要求的东西、以及非平凡逻辑的一条小测试。缺一条都算没做完。
+3. **证据而非声称**：没跑过 `verify` 不许说"完成"；没贴出命令输出不许说"通过"；没 grep 过不许说"项目里没有"。
 
-### 典型 token 成本表（按一个中等规模 change，前端项目，5 个 task）
+---
 
-| 阶段 | 完整模式 | 极简模式（非 UI 跳 2a / 跳第四轮 / 跳跨模型）| 单点调用（仅跑选定阶段）|
-|---|---|---|---|
-| 0 + 1 + 2 + 2a + 3（规划链） | ~42k - 62k | ~30k - 45k | 按需，只跑你需要的那个 |
-| 4 × 5 task（实施） | ~125k - 300k | ~125k - 300k | 单 task ~25k - 60k |
-| 5（测试） | ~30k - 80k | ~20k - 50k | 单独 ~30k |
-| 6（review） | ~25k - 50k | ~15k - 25k | 单独 ~25k |
-| 7（集成归档） | ~20k - 40k | ~15k - 25k | 单独 ~20k |
-| **总计** | **~250k - 530k** | **~205k - 445k** | **选什么跑什么** |
+## 1. 先路由（不要等用户报阶段号）
 
-### 用户首轮路由后，AI 必须输出预算估算
+### 1.1 读状态（强制第一步）
 
-在路由声明（见第四步）后追加一段：
+1. 读仓库根 `STATE.md`（有则读）：`活跃 Change` / `当前阶段` / `当前 Task` / `中断任务`。
+2. `中断任务` 非空 → 恢复：先读对应 `PROGRESS.md` 的「已排除方案」，按 `RULES.md` R1.5/R1.6 续跑，**禁止重新规划整个任务**。
+3. 无 `.specs/` 或用户描述的是全新事物 → 从 `0-change` 起步。
 
-```
-✅ Token 预算估计：
-   - 本次 change 规模：<small / medium / large>（依据：预估代码行数 / 任务数 / 是否前端）
-   - 默认模式预估：~XXk - YYk tokens
-   - 已选挡位：完整 / 极简 / 单点
-✅ 是否继续？或换挡位？
-   1. 完整（推荐 500+ 行 / 团队项目 / 长期维护）
-   2. 极简（推荐 100~500 行 · 非 UI 项目可跳 2a / 跳第四轮 / 跳跨模型，省 ~20%；UI 项目 2a 不可跳）
-   3. 单点（你只想跑某一阶段，告诉我哪一个）
-   4. 不走 code-kit（< 50 行代码 / bugfix 直接修，别走闭环）
-```
+### 1.2 意图 → 入口（完整语义路由表见 `GO.md` 第二步）
 
-### 何时**不必**跑这段
-
-- 用户已显式指定模式（如「快速加个字段」/「极简模式跑」）
-- 当前是恢复中断任务（直接走 R1.5 重启协议，不重新估）
-- 用户跑横向命令（L-restyle / M-health）— 这些有自己的预算
-
-### 真实成本影响因子（让估算更准）
-
-把下面这些因子套进估算：
-
-| 因子 | 影响 |
+| 用户说的话 | 走哪 |
 |---|---|
-| 前端项目 | +20%（多 2a-ui-design 阶段 + UI 第三轮）|
-| 涉及 schema 变更 | +5~10%（多 1.7 段 + 5-test 4.2 验证）|
-| 跨模型 spot-check 触发 | +30%（双模型走同样 review）|
-| task 数 < 3 | -30%（建议走单点调用不走闭环）|
-| task 数 > 10 | +50%（建议拆 milestone）|
+| 新功能 / 新想法 / "加个 X" / "实现 X" | `prompts/0-change.md`（自动生成 change-id） |
+| 写需求 / AC / 验收标准 | `prompts/1-requirement.md` |
+| 技术方案 / 选型 / 架构 / ADR | `prompts/2-design.md` |
+| 界面 / 视觉 / design tokens / 调性 | `prompts/2a-ui-design.md`（前端项目） |
+| 拆任务 / 排期 / 任务清单 | `prompts/3-task.md` |
+| 写代码 / 修 bug / 实现某个 task | `prompts/4-dev.md`（必须先有 TASK） |
+| 测试 / UAT / 测试矩阵 | `prompts/5-test.md` |
+| 审查 / review / 查风险 | `prompts/6-review.md`（三轮协议） |
+| 审查单个 diff / ponytail review / 找可删复杂度 | `reference/ponytail.md` §5（四段格式，不走三轮协议） |
+| 全仓审计 / "我继承了这个仓库" | `reference/ponytail.md` §6；`prompts/M-health.md` |
+| 捷径台账 / 技术债台账 / shortcut 注释 | `reference/ponytail.md` §7 |
+| 少写点 / 再狠点 / 停用 ponytail | `reference/ponytail.md` §0（等级与开关） |
+| 继续 / 接着上次 / resume / 执行 T<NN> | 恢复：`STATE.md` + `TASK.md` 当前 task + `PROGRESS.md`（R1.5/R1.6） |
+| 调试 / 为什么崩了 / 性能回归 | `reference/engineering.md` §2（先造能红的回路） |
+| 文档 / ADR / README / changelog | `reference/engineering.md` §4 |
+| 慢 / 安全 / 依赖审计 / 弃用迁移 | `reference/quality.md` §1–2；`reference/engineering.md` §7 |
+| 集成 / 收尾 / 归档 / 上线 | `prompts/7-integration.md`（进阶段后第一步跑 S-align） |
+| 调研 / 议题讨论 / 看看怎么改进 | `prompts/D-discovery.md` |
+| 老项目第一次接入 / 摸底 | `prompts/I-intel-scan.md` |
+| 体检 / 查技术债 / 找死代码 | `prompts/M-health.md` |
+| 换风格 / 重做视觉 | `prompts/L-restyle.md` |
+| 对齐 / 文档和代码偏了 | `prompts/S-align.md` |
+| 架构梳理 / 沉淀架构 | `prompts/A-architect.md` / `prompts/A-evolve.md` |
+| 产品 PRD + 原型 / UX 规格 | `prompts/P-product.md`；`reference/planning.md` §3 |
+| BMAD / PRD / epic / story / sprint / 复盘 | `prompts/B-bmad-extensions.md` |
+| 重大变更影响 / correct course | `prompts/C-course-correction.md` |
+| 想不清楚，先问明白 | `reference/planning.md` §1（设计树访谈） |
 
-### 用户视角的取舍
+**规模速判**（档位细则见 `GO.md` 的 Token 预算段）：
+- < 50 行 / typo / bugfix → 不走闭环，直接改 + 回归测试 + 自审。
+- 50–150 行 / 单会话 → **压缩路径** `0→3→4→6`：允许在 `CHANGE.md` 内写「最小需求/AC」与「最小设计/触碰模块」两节并显式声明豁免，`6-review` 可只交功能轮 + 回归登记。
+- 150 行以上 / 多会话 / 对外交付 → 完整或极简流程。
 
-| 你的诉求 | 选 |
-|---|---|
-| 想要全套产物（CHANGE / REQUIREMENT / DESIGN / UI-DESIGN（前端）/ TASK / SUMMARY × N / TEST / REVIEW） | 完整 |
-| 想要核心产物但能少则少（REQUIREMENT / DESIGN / TASK / SUMMARY × N / REVIEW；UI 项目另含 UI-DESIGN） | 极简 |
-| 只想跑某一阶段（如只 review / 只 design / 只 体检）| 单点 · 见 README 决策表 |
-| 代码 < 50 行 · 一次性修补 · hackathon | 不走 code-kit，走 7 个原生 skill 更划算 |
+### 1.3 路由前预检（Artifact Preflight）
+
+| 目标阶段 | 必须有 | 缺了怎么办 |
+|---|---|---|
+| 0-change | 无 | 直接进 |
+| 1-requirement | `CHANGE.md` | 回 0-change |
+| 2-design | `CHANGE.md` + `REQUIREMENT.md` | 回缺失阶段 |
+| 2a-ui-design | 上述 + `DESIGN.md` | 回缺失阶段；UI 项目不许跳 |
+| 3-task | `REQUIREMENT.md` + `DESIGN.md`（前端另需 `UI-DESIGN.md`） | 回缺失阶段；**压缩路径**可在 CHANGE 内写最小需求/AC 与最小设计/触碰模块并声明豁免 |
+| 4-dev | `TASK.md` 中的当前 task | 回 3-task；只有用户显式给临时最小 TASK 才可单点执行 |
+| 5-test | `REQUIREMENT.md` + `DESIGN.md` + `TASK.md` + 各 `SUMMARY.md` | 回缺失阶段 |
+| 6-review | 上述 + `TEST.md` + 本次 diff | 回缺失阶段；**压缩路径**可只交功能轮 + 回归登记并声明 |
+| 7-integration | 本 change 全部应有产物；`ALIGNMENT.md` 基线覆盖 HEAD | 缺产物回缺失阶段；基线缺/落后 → **进阶段后第 0 步跑 S-align**，不在 Preflight 拦截 |
+
+阶段可以压进同一轮对话，**工件不能缺席**。缺了就说：
+`规则 R2.7 触发：目标阶段缺少 <工件>。先回 <阶段> 补齐，不能直接继续。`
+
+### 1.4 路由声明（每次进入阶段先说清）
+
+```
+✅ 路由：<阶段>
+✅ Change-ID：<id>（新生成 / 恢复 <id>）
+✅ 已加载：<文件>（全读 N 行 / 仅查<节> line X-Y）
+✅ 未加载：<后面才需要的参考，说明何时拉>
+✅ 第一动作：<下一步具体动作>
+```
+
+### 1.5 加载预算
+
+- 产物（`.specs/<id>/*.md`）与模板（`templates/*.md`）：可整读。
+- `reference/*.md`：**首轮 ≤ 150 行**，先 grep 定位节，再 `read offset/limit`；禁止"为了保险"整读。
+- `prompts/<阶段>.md`（< 150 行）可整读；`GO.md` / `RULES.md` 按节读。
 
 ---
 
-## 第一步 · 读取项目状态（必须，跳过即违反）
+## 2. 阶段地图（0–7 八阶段 + 2a 子阶段，共 9 个关卡）
 
-1. 尝试读 `STATE.md`（仓库根）。不存在 → 视为新项目，跳过
-2. 关注字段：`活跃 Change` / `当前阶段` / `当前 Task` / `中断任务`
-3. 如果存在 `中断任务` 非空 → **优先级最高**，直接走"恢复中断任务"分支（见下表）
-
-### 零外部依赖声明
-
-code-kit 只依赖 markdown 与 git 本身：不检测、不调用任何包管理器、语言运行时、外部设计工具或运行时适配器。所有决策基线（美学 / 反模式 / 测试金字塔 / 界面样例）均内置在 `reference/` 与 `ui-samples/`，断网可用。
-
-## 第二步前 · Artifact Preflight Gate（强制）
-
-路由到任何阶段前，先检查上游工件是否存在且足够用。**阶段可以压缩到同一轮对话里做，但关键工件不能缺席。**
-
-| 目标阶段 | 必须已有的上游工件 | 缺失时动作 |
-|---|---|---|
-| `0-change` | 无 | 直接进入 |
-| `1-requirement` | `.specs/<id>/CHANGE.md` | 回 `0-change` 生成 CHANGE |
-| `2-design` | `.specs/<id>/CHANGE.md` + `.specs/<id>/REQUIREMENT.md` | 缺哪个回哪个阶段补齐 |
-| `2a-ui-design` | `CHANGE.md` + `REQUIREMENT.md` + `DESIGN.md` | 回缺失阶段补齐；UI 项目不能用极简模式跳过 |
-| `3-task` | `REQUIREMENT.md` + `DESIGN.md`；前端/UI 项目还必须有 `UI-DESIGN.md` | 回缺失阶段补齐 |
-| `4-dev` | 正式 `.specs/<id>/TASK.md` 中的当前 task，或用户显式提供的临时最小 TASK | 没有就反问：回 `3-task` 生成正式 TASK，还是由用户提供临时最小 TASK |
-| `5-test` | `REQUIREMENT.md` + `DESIGN.md` + `TASK.md` + 各 `*-SUMMARY.md` | 回缺失阶段补齐 |
-| `6-review` | `REQUIREMENT.md` + `TASK.md` + `TEST.md` + 本次 diff；有 `DESIGN.md` / `UI-DESIGN.md` 时必须一起读 | 回缺失阶段补齐 |
-| `7-integration` | `.specs/<id>/` 下本 change 的全部应有产物 | 回缺失阶段补齐 |
-
-临时最小 TASK 不是正式 `TASK.md` 的隐式替代品。它只允许用于单点调用 `4-dev`，且必须由用户显式给出，包含 `id / name / read_files / write_files / action / verify / done`。AI 不允许为了绕过 `3-task` 自己编造临时 TASK。
-
-Preflight 失败时，路由声明必须写明：
-
-```text
-规则 R2.7 触发：目标阶段缺少 <工件>。本次先回到 <阶段> 补齐，不能直接继续。
-```
-
-## 第二步 · 解析用户意图，路由到阶段
-
-匹配表格前先判断是否是**新事物描述**：如果当前没有活跃 change，且用户是在说"做 / 想 / 加 / 实现 / 设计 + X"，即使句子里含有"设计 / UI / 测试 / review"等词，也优先路由到 `0-change`。只有已经存在活跃 change 且 Artifact Preflight Gate 通过时，才允许直达中间阶段。
-
-按以下表格匹配用户输入（在上面优先级之后，**取最先命中那一条**）：
-
-| 用户输入特征 | 路由到 | 备注 |
-|---|---|---|
-| `调研` / `议题讨论` / `看看有啥改进` / `怎么优化` / `竞品分析后给建议` / `探索一下方案` / `评估这个改进想法` | `prompts/D-discovery.md` | 议题发现循环：事实文档拆子议题 → 逐个五步讨论 → roadmap；全程零代码改动（R16），不属任何 change |
-| `写产品文档` / `产品 PRD 和原型` / `产品设计文档` / `出一份带原型的需求文档` | `prompts/P-product.md` | 产品 PR + 界面原型合一：单文件 `PRODUCT-DESIGN.html`（九段制）；是 1-requirement 的可选上游 |
-| `对齐检查` / `拉齐` / `检查漂移` / `文档和代码是不是偏了` / `留痕补齐` | `prompts/S-align.md` | 五层对齐检测（R15）；7-integration 前强制跑一次 |
-| `继续` / `接着上次` / `恢复` / `resume` | `prompts/4-dev.md` 的「入场恢复」段 | 加载 `STATE.md` 中断任务对应的 PROGRESS |
-| `执行 T<NN>` / `跑 T<NN>` / `do T<NN>` | `prompts/4-dev.md` | task-id 从用户输入提取 |
-| `审查` / `review` / `检查代码` / `code review` | `prompts/6-review.md` | |
-| `测试` / `写测试` / `UAT` / `test` | `prompts/5-test.md` | |
-| `上线` / `集成` / `验收` / `ship` / `归档` | `prompts/7-integration.md` | |
-| `拆任务` / `plan tasks` / `分解` | `prompts/3-task.md` | |
-| `设计` + `<已有需求>` / `架构` / `design` | `prompts/2-design.md` | 仅当 `CHANGE.md` + `REQUIREMENT.md` 已存在；否则回缺失阶段 |
-| `选技术` / `选栈` / `选框架` / `tech stack` / `用什么开发` / `迁移评估` | `prompts/2-design.md` 步骤 0 | 只需技术栈选型时入口 |
-| `UI` / `视觉` / `美学` / `theme` / `design system` / `design tokens` | `prompts/2a-ui-design.md` | 前端项目，用户可见 UI；必须已有 `CHANGE.md` + `REQUIREMENT.md` + `DESIGN.md` |
-| `换调性` / `改风格` / `换风格` / `redesign` / `restyle` / `重做视觉` / `换皮` | `prompts/L-restyle.md` | 已有项目换视觉，保留功能 |
-| `健康检查` / `health` / `体检` / `技术债扫描` / `巡检` / `扫冗余` / `找死代码` / `找重复` / `清未用导出` / `清未用依赖` / `dedupe` / `dead code` | `prompts/M-health.md` | 代码库周期性巡检 + 冗余扫描（步骤 2.5），不属任何 change |
-| `扫描代码` / `scan` / `intel` / `入场扫描` / `给项目体检` / `老项目首次访问` | `prompts/I-intel-scan.md` | 生成 / 更新 `.specs/CONTEXT.md`，brownfield 项目首次使用必跑 |
-| `同步架构` / `沉淀架构` / `evolve` / `架构演进` / `同步 CONTEXT` / `整理沉淀` | `prompts/A-evolve.md` | 扫近期归档 change 的 DESIGN § 9，批量 review + patch CONTEXT.md / ARCHITECTURE.md（不属任何 change）|
-| `建立架构` / `架构梳理` / `重构架构` / `architect` / `重审 ADR` / `画架构图` | `prompts/A-architect.md` | 首次 / 重构时建立 `ARCHITECTURE.md`。项目级 ADR / 模块图 / 跨模块契约（不属任何 change）|
-| `需求` / `spec` / `requirement` | `prompts/1-requirement.md` | |
-| 任何**新事物描述**（"做 / 想 / 加 / 实现 / 设计 + X"，且当前无活跃 change） | `prompts/0-change.md` | **自动生成 change-id**，不要问用户要 |
-| 模糊不清 | 反问用户：「你想做的是新需求 / 继续上次 / 别的吗？」 | 一句话定位 |
-
-> **架构级变更的二次拦截**：路由表只看关键词，但 0-change / 2-design 进去后会**用判断**做二次检测——如果用户描述涉及「拆模块 / 换数据库 / 换鉴权方案 / 改公共契约 / 容量边界 / 跨服务编排」这类项目级变更，会停下来反问"是否先跑 A-architect"。判定细则见 `@code-kit/prompts/0-change.md` 步骤 0.4 / `@code-kit/prompts/2-design.md` 步骤 0₋。
->
-> **AI 的额外职责**：路由到 0-change / 2-design 时，路由声明的「第一动作」一栏应明确写"按 0.4 / 0₋ 先做架构级预检"，避免遗漏。
-
-### 专家团门禁总览（R9/R13 强制）
-
-每个阶段的**出口**都有该领域专属的 4 人专家团审核。不通过不得进入下一阶段。
-
-| 门 | 阶段 | 出口触发点 | Master | 专家团 |
-|---|---|---|---|---|
-| **G1 需求门** | 0-change | CHANGE.md 确认后 | — | 高级产品经理 + 资深用户评测员 + 架构师 + 安全审计师 |
-| **需求门** | 1-requirement | REQUIREMENT.md 完成后 | — | 高级产品经理 + 资深用户评测员 + 架构师 + 安全审计师 |
-| **G2 方案门** | 2-design | DESIGN.md 完成后 | 架构师 | 架构师(M) + 研发负责人 + 领域专家 + 安全审计师 |
-| **G2a UI设计门** | 2a-ui-design | UI-DESIGN.md 完成后 | — | 资深UI设计师 + 资深用户体验官 + 前端架构师 + 无障碍专家 |
-| **Task 门** | 3-task | TASK.md 完成后（含逐 task 自动化投票） | — | 工程效能专家 + 架构师 + 研发负责人 + 资深测试工程师 |
-| **G3 代码门** | 4-dev | 全部 task 完成后 | 研发负责人 | 研发负责人(M) + 架构师 + 资深测试工程师 + 安全审计师 |
-| **测试门** | 5-test | TEST.md 完成后 | — | 资深测试工程师 + 研发负责人 + 高级产品经理 + 资深用户体验官 |
-| **G4 审查门** | 6-review | REVIEW.md 完成后 | 资深测试工程师 | 资深测试工程师(M) + 架构师 + 领域专家 + 安全审计师 |
-
-> **逐 task 自动化投票**：3-task 门禁中，每个 task 由研发负责人 + 资深测试工程师 + 安全审计师投票决定「🤖 自动化」还是「👤 人工介入」。结果写入 `<auto>` 字段，4-dev 步骤 0 强制执行。
-
-### 角色定义文件索引
-
-每个门禁角色有独立的角色定义文件（`prompts/R-*.md`），定义其触发场景、边界、职责、输入输出：
-
-| 角色 | 文件 | 出现于 |
-|---|---|---|
-| 架构师 | `A-architect.md` | G1/G2/G3/G4/Task |
-| 高级产品经理 | `R-高级产品经理.md` | G1/需求门/测试门 |
-| 资深用户评测员 | `R-资深用户评测员.md` | G1/需求门 |
-| 安全审计师 | `R-安全审计师.md` | G1/需求门/G2/G3/G4/Task |
-| 领域专家 | `R-领域专家.md` | G2/G4 |
-| 资深UI设计师 | `R-资深UI设计师.md` | G2a |
-| 资深用户体验官 | `R-资深用户体验官.md` | G2a/测试门 |
-| 前端架构师 | `R-前端架构师.md` | G2a/G2 |
-| 无障碍专家 | `R-无障碍专家.md` | G2a |
-| 工程效能专家 | `R-工程效能专家.md` | Task |
-| 研发负责人 | `R-研发负责人.md` | Task/G3 |
-| 资深测试工程师 | `R-资深测试工程师.md` | Task/G3/测试门/G4 |
-
-## 第三步 · 老项目入场检测（brownfield 必跑）
-
-**触发**：进入 0-change 之前必跑。
-
-### 3.1 探测 AI 上下文文档
-
-按下面顺序 `ls` / `find` 探测：
-
-| 文档 | 路径 | 来自哪个生态 |
-|---|---|---|
-| `CONTEXT.md` | 仓库根 / `.specs/` | code-kit 自己 |
-| `AGENTS.md` | 仓库根 | OpenAI Codex / 标准 agents 协议 |
-| `CLAUDE.md` | 仓库根 / `.claude/` | Anthropic Claude Code |
-| `.cursor/rules/*.md` | `.cursor/` | Cursor IDE |
-| `.windsurf/rules/*.md` | `.windsurf/` | Windsurf IDE |
-| `.github/copilot-instructions.md` | `.github/` | GitHub Copilot |
-| `.clinerules` | 仓库根 | Cline |
-
-读 `STATE.md` 的 `ai_context_doc`（用户上次指定的替代文档）和 `last_intel_scan` 字段。
-
-### 3.2 判决
-
-#### 情况 A · `STATE.md` 已设 `ai_context_doc`
-
-用户上次明确指定了某文档为 AI 遵守依据。**直接读它**，不再询问。
-
-后续阶段（2-design / 4-dev）改读 `<ai_context_doc>` 替代 `.specs/CONTEXT.md`。
-
-#### 情况 B · 已存在 CONTEXT.md 且 `last_intel_scan` 在 90 天内
-
-**直接读 CONTEXT.md**，跳过本步。无需打扰用户。
-
-#### 情况 C · 已存在 CONTEXT.md 但超过 90 天
-
-读 CONTEXT.md，**提醒用户**："上次扫描已 X 天，可重跑 intel-scan"，但**不强制**。
-
-#### 情况 D · 未发现 CONTEXT.md，但有其他 AI 上下文文档（AGENTS / CLAUDE / Cursor / 等）
-
-**反问用户**（**必须**等待回复才能继续）：
-
-```
-🔍 检测到本项目已有以下 AI 上下文文档：
-  - <列出找到的，含路径与文件大小>
-
-code-kit 默认用 CONTEXT.md 作为单一源。请选择：
-  1. 跑 intel-scan，综合现有文档 + 代码扫描，生成 CONTEXT.md（推荐）
-  2. 以现有文档为准（告诉我哪个），跳过 intel-scan
-  3. 跳过 intel-scan + 不读现有文档（不推荐 · AI 会盲飞）
-
-请选 1/2/3。无人工确认前我不进 0-change（避免 AI 在不知项目约定下开始动手）。
-```
-
-- **选 1**：进 `prompts/I-intel-scan.md` 走分支 A
-- **选 2**：在 `STATE.md` 写 `ai_context_doc: <用户指定路径>`，回到原意图（直接进 0-change）
-- **选 3**：在 `STATE.md` 写 `ai_context_doc: none / skip`，回到原意图（带警告）
-
-#### 情况 E · 未发现任何 AI 上下文文档（CONTEXT / AGENTS / CLAUDE / Cursor / Windsurf / Copilot / Cline 全无）
-
-**反问用户**（**必须**等待回复才能继续）：
-
-```
-🔍 项目里未发现任何 AI 上下文文档。
-
-code-kit 后续阶段需要项目上下文给 AI 用。请选择：
-  1. 现在跑入场扫描，自动生成 CONTEXT.md（~15-30k tokens · 仅首次 · 推荐）
-  2. 我手动指定项目里某个文档作为开发遵守依据：<请回复路径>
-  3. 跳过 intel-scan，直接进 0-change（不推荐 · AI 会"盲飞"，老项目护栏 B1-B5 全失效）
-
-请选 1/2/3。无人工确认前我不开始扫描或进入 0-change（避免无意义消耗 token）。
-```
-
-- **选 1**：进 `prompts/I-intel-scan.md` 走分支 C
-- **选 2**：在 `STATE.md` 写 `ai_context_doc: <路径>`，回到原意图
-- **选 3**：在 `STATE.md` 写 `ai_context_doc: none`，回到原意图（带警告）
-
-#### 情况 F · 是刚创新项目（无 `package.json` / `pyproject.toml` / 等代码上下文）
-
-跳过本步。这是 greenfield 项目，CONTEXT.md 会在 0-change / 1-requirement / 2-design 过程中逐步沉淀。
-
-### 3.3 为什么这步重要
-
-跳过会导致：
-- AI 不知项目架构 → 写出不合项目风格的代码
-- AI 重复实现已有抽象 → 费 token 且产生重复代码
-- 4-dev 1.7 schema 任务 / 1.8 破坏性变更检测都会不准
-- 用户明明有 CLAUDE.md 写好的约定 → AI 完全不读 → 抱怨"为什么不按我说的来"
-
-## 第四步 · 自动准备（不打扰用户）
-
-进入对应阶段前，AI 必须自行完成：
-
-- **新 CHANGE**：按 `prompts/0-change.md` 的步骤 0 自动生成 `change-id`（kebab-case，2~4 词），并在第一条回复里显式声明
-- **目录不存在**：自行 `mkdir -p .specs/<id>/`，不要让用户先建
-- **规则加载**：若 IDE 未注入全局规则，读 `@code-kit/RULES.md`（精简版 `@code-kit/SYSTEM.md` 也行）
-- **路由声明**：用户话语是自然语言而非阶段号时，先走 `@code-kit/prompts/ROUTER.md` 语义路由（含调研 `D-discovery` / 产品文档 `P-product` / 五层对齐 `S-align` 三个新入口）
-
-### 加载工件（严格区分 必读 / 按需）
-
-**语义约定**：
-- `⚡︎ 全读` ：进阶段首轮必须 read_file 整个文件（只出现在 SPEC / TEMPLATE 上）
-- `⚡︎ 查表` ：只 grep 指定节 或 read offset/limit，**禁止默认整读**（reference/* 都是这个）
-- `⚡︎ 按需` ：首轮不读，里面某个决定点需要时才 grep / 读
-
-| 阶段 | 全读（SPEC） | 查表（REFERENCE，只读指定节） | 按需 |
+| 阶段 | 干什么 | 产出 | 出口门（4 人专家团） |
 |---|---|---|---|
-| 0 / 1 | —（新建）| `code-kit/reference/ui-aesthetics.md` 只查「给 AI 在 0-change 阶段展示用的标准模板」一节（仅前端项目）| — |
-| 2 | `<id>/CHANGE.md` + `<id>/REQUIREMENT.md` + `.specs/CONTEXT.md` + `.specs/ARCHITECTURE.md`（如存在 · brownfield 强烈推荐 · 重点读 § 2/§ 3/§ 4）| `code-kit/reference/tech-stacks.md` 只查「适用矩阵」+ 过滤出的 5~6 张卡片 | ADR 阶段某项要深谈时再读 |
-| 2a | `<id>/CHANGE.md` + `<id>/REQUIREMENT.md` + `<id>/DESIGN.md` `## 0` 段 + `.specs/CONTEXT.md` + `code-kit/reference/ui-anti-patterns.md`（仅 75 行可全读）| `code-kit/reference/ui-aesthetics.md` 查「5 维度」+ 「给 AI 的模板」 | `ui-samples/INDEX.md` 挑基线（内置零依赖）|
-| 3 | `<id>/REQUIREMENT.md` + `<id>/DESIGN.md` + `<id>/UI-DESIGN.md`（前端项目）+ `.specs/CONTEXT.md` | — | 任务模板查询 |
-| 4 | `<id>/TASK.md`（只读当前 task 块）+ `<id>/DESIGN.md` `## 0` 段 + `<id>/UI-DESIGN.md`（UI 任务）+ `.specs/CONTEXT.md` + `.specs/LESSONS.md` | `code-kit/reference/ui-anti-patterns.md`（UI 任务 · 75 行可全读）| — |
-| 5 | `<id>/REQUIREMENT.md` + `<id>/DESIGN.md` `## 0` 段 + `<id>/TASK.md` + 各 `*-SUMMARY.md` | `code-kit/reference/test-pyramid.md` 只查「适用矩阵」+ 需要的那几轮详情 | — |
-| 6 | `<id>/REQUIREMENT.md` + `<id>/DESIGN.md` + `<id>/TASK.md` + `<id>/TEST.md` + `git diff` | `code-kit/reference/ui-anti-patterns.md`（前端项目第三轮 · 75 行可全读）| — |
-| 7 | `.specs/<id>/` 全部产物 + `.specs/LESSONS.md` | — | — |
-| **M** (health) | `.specs/CONTEXT.md` + `.specs/LESSONS.md` + 最近 1 份 `.specs/health/*.md`（如有，做对比基线）| — | 抽样 5 个最近改动频繁的 src/ 模块 + 5 个测试文件 + 最近 30 天 git log |
-| **A** (evolve) | `STATE.md` + `.specs/CONTEXT.md` + `.specs/ARCHITECTURE.md`（如存在）+ 范围内每个 `.specs/archive/<change>/DESIGN.md` 的 § 9 段（仅 § 9，非整份 DESIGN）| — | 仅扫 `last_evolve_at` 之后归档的 change，禁止越界读 § 9 以外的 DESIGN 内容 |
-| **A** (architect) | `.specs/CONTEXT.md` + `.specs/ARCHITECTURE.md`（如存在）+ `.specs/CHANGELOG.md` + `code-kit/templates/ARCHITECTURE.md`（模板）| — | `src/` 顶层结构 + `package.json` / 依赖文件 + 抽样几份 `.specs/archive/*/DESIGN.md` |
+| 0-change | 把模糊想法问清楚、划边界 | `CHANGE.md` | G1 需求门 |
+| 1-requirement | 用户故事 + 可验证 AC + 域语言 | `REQUIREMENT.md`、`CONTEXT.md` | 需求门 |
+| 2-design | 技术栈、决策、ADR、风险、架构对齐 | `DESIGN.md`、`adr/*.md` | G2 方案门 |
+| 2a-ui-design | 调性、tokens、组件规约、占位符策略 | `UI-DESIGN.md` | G2a UI 门 |
+| 3-task | 原子任务 + 边界 + verify + 波次 + `<auto>` | `TASK.md` | Task 门 |
+| 4-dev | 逐任务实现、迁移、边界自查、提交 | 代码 + `<task-id>-SUMMARY.md` | G3 代码门 |
+| 5-test | 五轮金字塔（功能/性能/安全/兼容/可观测） | `TEST.md` | 测试门 |
+| 6-review | 三轮审查（spec/质量/UI）+ 触发式第四轮 + 修复任务 | `REVIEW.md`、`T-FIX-NN` | G4 审查门 |
+| 7-integration | 对齐、全量自动化、UAT、LESSONS、归档 | `UAT.md`、归档、CHANGELOG/STATE 更新（`ALIGNMENT.md` 由 S-align 产出） | — |
 
-### 查 reference 某一节的实际动作示例
-
-```
-# ± 查「适用矩阵」那一节的起始行
-grep_search Query="适用矩阵" SearchPath="code-kit/reference/tech-stacks.md"
-# 取到 line 380 左右为起始，再：
-read_file path="code-kit/reference/tech-stacks.md" offset=380 limit=60
-```
-
-不要「为了保险」一上来就整读。不仅费 token，还让你在后面的推理中被无关节况干扰。
-
-## 第五步 · 显式声明执行计划（必须）
-
-进入实际工作前，AI 必须输出一段**路由声明**，**每个加载项必须标明起止行或「全读」**：
-
-```
-✅ 路由：<阶段，例如 0-change>
-✅ Change-ID：<id>（已自动生成 / 已恢复活跃 change：<existing-id>）
-✅ 已加载：
-   - <file1>（全读，N 行）
-   - <file2>（全读，N 行）
-   - <reference-file>（仅查「某节」，line X-Y）
-✅ 未加载：<本阶段不需但后面可能用到的 reference，明说何时才拉>
-✅ 第一动作：<具体下一步，例如 "按 0-change 流程反问澄清，先问 3 个问题"）
-```
-
-示例（2-design 阶段首轮）：
-
-```
-✅ 路由：2-design
-✅ Change-ID：companion-platform
-✅ 已加载：
-   - .specs/companion-platform/CHANGE.md（全读，52 行）
-   - .specs/companion-platform/REQUIREMENT.md（全读，98 行）
-   - .specs/CONTEXT.md（全读，41 行）
-   - code-kit/reference/tech-stacks.md（仅查「适用矩阵」，line 380-405，提取出 5 张候选卡）
-✅ 未加载：ui-aesthetics.md / test-pyramid.md / ui-anti-patterns.md（后面阶段才需）
-✅ 第一动作：按 2-design 步骤 0，列 5 张技术栈卡片 + 推荐 + 排除，等用户选定后才出 ADR。
-```
-
-用户看到这段后可以一句话纠偏（"换 id"、"我想要的是别的阶段"、"你加载太多了"），AI 必须接受。
-
-## 第六步 · 执行对应阶段 prompt
-
-加载 `prompts/<n>-*.md` 的内容并按其指令推进。所有规则（`RULES.md` / `SYSTEM.md`）继续生效。
+门禁构成、投票格式、裁决阈值见 `GO.md` 的「专家团门禁总览」与 `RULES.md` R9/R13；全票/多数通过即自动前进，**禁止再问"要继续吗"**。逐 task 的 `<auto>` 由研发负责人 + 测试 + 安全投票，平票默认 👤（安全优先）。
 
 ---
 
-## 极少数情况：用户根本没说他想做什么
+## 3. ponytail 模式（默认开启）
 
-例：用户只发了 `@code-kit/GO.md`，正文空。
+每次实现前按阶梯取**第一个能完整工作**的选项：
 
-→ AI 必须主动反问，给出 3 个最可能的选项让用户选：
-1. 我有个新想法想做
-2. 继续上次的工作（如果 STATE 有活跃 change，主动列出）
-3. 我要审查/测试某段已有代码
+1. **需要存在吗？** 没人要的功能、选项、灵活性：砍掉，一行说明。
+2. **仓库里已有吗？** helper / 组件 / service / 模式：按周围代码的用法复用。写之前先 grep。
+3. **标准库能做吗？** 用。
+4. **平台原生能做吗？** `<input type="date">` 优于日期选择器库，CSS 优于 JS。
+5. **已安装依赖能做吗？** 用；**绝不为几行代码加新依赖**。
+6. **能一行让读者一眼看懂吗？** 一行。
+7. 否则：能工作的最少代码。
 
-不要瞎猜路由。
+- 删除优于新增；无聊优于聪明；保持仓库既有分层与约定。
+- 修 bug = 修根因：改之前 grep 所有调用方，在共享函数里修一次；只补 ticket 点到的那条路径 = 第二个 bug。
+- 有意走捷径且知道上限 → 写 `shortcut: <上限>, <何时升级>` 注释。
+- 回复以代码为主；结尾最多三行：跳过了什么 / 何时再加 / 有什么风险。用户要的报告不受此限。
+
+完整规则、diff 审查（ponytail review）、全仓审计（ponytail audit）、债务台账（ponytail debt）、等级（lite/full/ultra）见 `reference/ponytail.md`（原项目斜杠命令名仅作别名）。
 
 ---
 
-## 自检（产出路由声明前）
+## 4. 工件与目录（最小集）
 
-- [ ] 已读 STATE.md（如果存在）
-- [ ] 已按表格匹配意图，没有跳过
-- [ ] 新 CHANGE 已自动生成 ID 并展示
-- [ ] **Token 预算**：本轮加载的 reference/* 总行数 ≤ 150（全读仅 ui-anti-patterns 75 行 · 其他均查节）
-- [ ] **未越界**：没有读上表「查表」或「按需」列中的文件为全文
-- [ ] 路由声明含「已加载 / 未加载 / 起止行」三要素
-- [ ] 没有要求用户提供 ID / 路径 / 阶段名（这些 AI 自己决定）
+```
+<repo>/
+├── STATE.md                      # 跨会话状态（活跃 change / 阶段 / 任务 / 中断任务）
+├── AGENTS.md / CLAUDE.md         # 项目级 AI 约定（可被 STATE.ai_context_doc 指定为上下文源）
+└── .specs/
+    ├── CONTEXT.md                # 项目上下文、术语表、已锁决策
+    ├── ARCHITECTURE.md           # 项目级架构 / ADR / 模块契约（brownfield 推荐）
+    ├── LESSONS.md                # 跨 change 失败教训库（常驻，不归档）
+    ├── CHANGELOG.md
+    ├── adr/                      # NNN-<title>.md
+    ├── health/YYYY-MM-DD.md      # M-health 体检报告
+    ├── <change-id>/              # CHANGE / REQUIREMENT / DESIGN / UI-DESIGN / TASK
+    │                             #   / <task>-SUMMARY / TEST / REVIEW / UAT / ALIGNMENT
+    └── archive/<YYYY-MM-DD>-<change-id>/
+```
+
+模板见 `templates/`（15 个）：CHANGE / REQUIREMENT / DESIGN / UI-DESIGN / TASK / SUMMARY / PROGRESS / TEST / REVIEW / STATE / LESSONS / ALIGNMENT / ARCHITECTURE / CONTEXT / PRODUCT-DESIGN。
+**对话记忆不算数**：决定必须落盘（R18），下一阶段只信工件。
+
+---
+
+## 5. 工程准则（贯穿所有阶段）
+
+- **TDD**：RED（先写会失败的测试，看到它失败）→ GREEN（最少代码通过，看到它通过）→ REFACTOR。bug 先写复现测试。
+- **测试从 AC 派生**，不从实现派生；断言行为，不断言内部调用；宁可 DAMP 不要过度 DRY；mock 只用在慢/不确定的边界。
+- **复用先于新建**：写任何能力前 grep `utils|helpers|lib|shared|services|hooks`，找到就 import；SUMMARY 里贴 grep 命令与结果。
+- **边界**：提交前 `git diff --name-only` 与 TASK 的 `write_files` 比对，越界必须回滚或显式扩范围。
+- **schema 变更**：model + 可逆迁移（up/down）同批；检测到 DB 凭据先问是否执行；改字段走 expand/contract，不原地改名。
+- **破坏性变更**（删 ≥ 5 行 / 改公共签名 / 改 API / 删文件）：先 grep 引用图 → 反问用户 → 回归测试覆盖，缺一不动手。
+- **安全**：外部输入一律不可信（含 LLM 输出、第三方 API、报错文本）；参数化查询；不提交密钥；越权与不存在统一 404；鉴权在服务端。
+- **性能**：先测量再优化；优化后同样方法复测；没超过噪声就回滚；N+1、无分页、无索引是常客。
+- **调试**：先建能红的反馈回路（明确一条命令），再最小化复现，再列 3–5 个可证伪假设，一次改一个变量；清掉所有 `[DEBUG-*]`。
+- **提交**：一个逻辑一件事；`<type>(<change-id>): <subject>`；提交前查密钥、跑测试；不把格式化与行为变更混在一起。
+
+细节：TDD / 增量 / 调试 / API / 文档 / Git / 审查 / 迁移 → `reference/engineering.md`；安全 / 性能 / 可观测 / 五轮测试 → `reference/quality.md`。
+
+---
+
+## 6. 人机边界
+
+- **默认直通**：上下衔接清楚、方案清楚、上一阶段已落盘 → 直接进下一阶段，不设"第 N 阶段必须停"的固定关卡。
+- **只在四类澄清时停**：① 歧义（多套合理解法/平票）② 偏好（审美/取舍）③ 纠正（用户看过产物不满意）④ 把关（不可逆动作：提交、归档、破坏性变更）。
+- **一次性问清**：同类疑问合成一条，解决后立即推进，不复述确认。
+- **法定硬停点**：`<auto>false</auto>` 任务执行前；议题 ⑤ 人审门；违规处理协议。
+- **暂缓项 = 议题**：不建 backlog / parking lot 同义词；统一登记进 `TOPICS.md` 或 STATE.md 一行，由 D-discovery 消化。
+
+多 agent / 挂机协作（七类 agent、状态机、日志扫描 E1–E5、提交标准、降级策略）见 `reference/automation.md`。
+
+---
+
+## 7. 参考文件加载矩阵
+
+> 每格标了"读哪节"；先 `grep -n '^##'` 看该文件的节标题，再 `read offset/limit`。
+
+| 你要做的事 | 加载（节） |
+|---|---|
+| 守规矩 / 判断是否违规 | `RULES.md` 按 R 编号取节；速查用 `SYSTEM.md` |
+| 路由 / 阶段细节 / 门禁构成 | `GO.md` 对应步骤；`prompts/<阶段>.md` |
+| 写工件 | `templates/<工件>.md` |
+| 恢复中断 / 反重复 | `RULES.md` R1；`templates/PROGRESS.md` |
+| 少写代码 / 审查可删复杂度 / 债务台账 | `reference/ponytail.md` §2–3、§5–§7 |
+| TDD、调试、API 设计、ADR、Git、废弃迁移 | `reference/engineering.md` §1–§7 |
+| 安全、性能、可观测、五轮测试 | `reference/quality.md` §1–§5 |
+| 质询、调研、PRD、UX、任务拆解 | `reference/planning.md` §1–§4 |
+| 多 agent 自动化协作 | `reference/automation.md` |
+| 想知道某个 multica/ponytail 能力落在哪 | `reference/coverage.md` |
+| 技术栈 / UI 美学 / 反 slop / 测试金字塔 | `reference/tech-stacks.md` / `ui-aesthetics.md` / `ui-anti-patterns.md` / `test-pyramid.md` |
+
+---
+
+## 7.5 DSH 工具接线
+
+| 场景 | 用什么 |
+|---|---|
+| 四类澄清（歧义/偏好/纠正/把关） | `ask_user_question`：一次一组、同类合并选项、给推荐项；解决后立刻推进 |
+| 3-task 起跟踪进度 | `todo_write`（每完成一步立即更新） |
+| 波次并行 / 独立评审 | `subagent`（后台默认，互不依赖的同消息并发） |
+| ≥3 个同构任务扇出 | `workflow`（脚本编排，返回可 JSON 化结果） |
+| 跨会话长目标 | `create_goal`（阻塞条件持续 3 轮才 blocked） |
+| 读产物 | 先 `glob`/`grep` 定位，再 `read offset/limit`；不整读参考 |
+| 验证 | `bash` 跑 verify 并贴真实输出；失败按 `reference/engineering.md` §2 |
+| plan 模式下的方案 | `exit_plan_mode`（计划要决策完备） |
+
+**DSH 没有常驻 agent**：`reference/automation.md` §1 的 ④④′⑤⑥ 是概念模型；默认走 §7 降级——每波次收尾由主 agent 亲自扫描/提交/对齐，前 3 阶段顺序做，不扇出。
+
+---
+
+## 8. 出口自检
+
+- [ ] 阶段判定有依据（读了 STATE / 工件），没有凭印象跳步
+- [ ] 本轮加载的 `reference/` ≤ 150 行（`templates/` 与用户明确要求全读除外）
+- [ ] 产物已落盘到 `.specs/`，STATE.md 有状态行
+- [ ] 实现类工作：verify 真跑过、输出已贴；diff 未越界；非平凡逻辑有测试
+- [ ] 没有"看起来/应该/基本"式结论；没有把对话记忆当工件
+- [ ] 该停的地方停了（歧义/偏好/纠正/把关），不该停的地方没问"要继续吗"

@@ -4,6 +4,8 @@
 
 **集成能力**：10 阶段主流程（0-change→…→7-integration）+ 8 道专家团门禁（12 个领域角色）+ 逐 task 自动化投票（🤖自动/👤人工）+ git 最小化安全提交（每 task checkpoint，一键回滚）+ 门禁通过自动进入下一阶段（全票/多数→自动，平票→交人裁决）+ 5 道老项目安全护栏 + 语义路由 + 横向命令（含调研/产品文档/五层对齐三条新命令）+ 15 个独立可用的工件模板 + 6 个参考文档 + 内置 28 页零依赖界面基线库。纯 markdown + git，零外部依赖。
 
+**v2 新增（multica + ponytail 融合）**：16 个工程技能沉淀为 `reference/engineering.md`、`quality.md`、`planning.md`（TDD、增量实现、调试、API 设计、文档/ADR、Git/发版、审查方法、废弃迁移、安全、性能、可观测、五轮测试、质询、调研、PRD/UX、任务拆解）；ponytail「最小完整改动」成为默认实现律（`reference/ponytail.md` + `RULES.md` R19，含 diff 审查/全仓审计/捷径台账）；新增 `RULES.md` R17（多 agent 协作）/ R18（澄清式人工介入与沉淀前置）与 `reference/automation.md`；新增 DSH 技能入口 `SKILL.md`，可直接装进 `~/.dsh/skills/code-kit`。
+
 主要是把最近折腾过的几个开源方法论项目里面我觉得有用的部分挑出来，再按自己的工作流重排一遍。各自的品牌和 CLI 依赖都剥掉了，只留 markdown。
 
 **新增策略**（相比原始版）：8 Gate 专家团门禁（每阶段领域专属角色）、逐 task 自动化投票（🤖/👤 + `<auto>` 字段）、git 最小化安全提交（每 task safety checkpoint + 门禁通过自动前进 + 一键回滚）、角色定义文件体系（`R-*.md`）、5 道 brownfield 护栏、MVP 模式、极简模式、token 预算估算。
@@ -31,18 +33,35 @@
 ```text
 your-project/
 ├──code-kit/          ← 这里
+│   ├── SKILL.md       ← DSH / 技能式加载入口（其他 IDE 可忽略）
 │   ├── METHODOLOGY.md
-│   ├── RULES.md
+│   ├── RULES.md       ← R1–R19
 │   ├── GO.md
 │   ├── prompts/
 │   ├── templates/
-│   ├── reference/      ← 技术栈卡片 / UI 美学 / 反slop / 测试金字塔 / 产品文档范例
+│   ├── reference/      ← 技术栈 / UI 美学 / 反slop / 测试金字塔 / 产品文档范例
+│   │                     + engineering / quality / planning / ponytail / automation / coverage
 │   └── ui-samples/     ← 28 页零依赖界面基线（patterns 4 + systems 24）
 ├── src/
 └── ...
 ```
 
 **就这样**。下面看怎么调用。
+
+### 装进 DSH（技能版）
+
+本仓库根目录就是技能根目录（`SKILL.md` 在根上），DSH 会把它识别为 `code-kit` 技能：
+
+```bash
+# 方式 1：软链（推荐，git pull 后自动生效）
+ln -sfn ~/project/code-kit ~/.dsh/skills/code-kit
+
+# 方式 2：复制（不跟随仓库更新）
+cp -r ~/project/code-kit ~/.dsh/skills/code-kit
+```
+
+装好后在 DSH 里说"用 code-kit 做 X"或直接触发对应意图即可；`SKILL.md` 负责路由，`GO.md` / `prompts/` / `reference/` 按需加载。
+注意：若目标路径已有旧版本，先备份或删除再软链（`ln -sfn` 会替换同名软链，但不会替换真实目录）。
 
 ---
 

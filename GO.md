@@ -309,6 +309,19 @@ code-kit 后续阶段需要项目上下文给 AI 用。请选择：
 | **A** (evolve) | `STATE.md` + `.specs/CONTEXT.md` + `.specs/ARCHITECTURE.md`（如存在）+ 范围内每个 `.specs/archive/<change>/DESIGN.md` 的 § 9 段（仅 § 9，非整份 DESIGN）| — | 仅扫 `last_evolve_at` 之后归档的 change，禁止越界读 § 9 以外的 DESIGN 内容 |
 | **A** (architect) | `.specs/CONTEXT.md` + `.specs/ARCHITECTURE.md`（如存在）+ `.specs/CHANGELOG.md` + `code-kit/templates/ARCHITECTURE.md`（模板）| — | `src/` 顶层结构 + `package.json` / 依赖文件 + 抽样几份 `.specs/archive/*/DESIGN.md` |
 
+### 工程底座参考（新增 · 按需查节，不整读）
+
+| 主题 | 文件 | 何时用 |
+|---|---|---|
+| TDD / 增量实现 / 调试 / API / 文档 / Git / 审查方法 / 废弃迁移 | `reference/engineering.md` | 实现、修 bug、接口设计、写 ADR、提交与发版、删旧代码 |
+| 安全 / 性能 / 可观测 / 五轮测试 / UI 基线 | `reference/quality.md` | 5-test、涉及输入/鉴权/数据、性能优化、上线观测 |
+| 质询 / 调研 / PRD / UX / 任务拆解 | `reference/planning.md` | 0-change 之前想清楚、P-product、拆任务 |
+| ponytail 最小完整改动 / diff 审查 / 全仓审计 / 债务台账 | `reference/ponytail.md` | 4-dev 实现、6-review 审查、M-health 审计 |
+| 多 agent 自动化协作 | `reference/automation.md` | 挂机 / 多 agent / 提交与拉齐 |
+| 能力来源与覆盖 | `reference/coverage.md` | 追溯"这个能力从哪来" |
+
+规则依据：`RULES.md` R17（协作）/ R18（澄清与沉淀）/ R19（ponytail）。
+
 ### 查 reference 某一节的实际动作示例
 
 ```
