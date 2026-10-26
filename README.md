@@ -2,7 +2,9 @@
 
 一套 AI 编程流程文档。我自己平时写项目用的那套方法抽成可复用的 markdown 包。
 
-**集成能力**：10 阶段主流程（0-change→…→7-integration）+ 8 道专家团门禁（12 个领域角色）+ 逐 task 自动化投票（🤖自动/👤人工）+ git 最小化安全提交（每 task checkpoint，一键回滚）+ 门禁通过自动进入下一阶段（全票/多数→自动，平票→交人裁决）+ 5 道老项目安全护栏 + 语义路由 + 横向命令（含调研/产品文档/五层对齐三条新命令）+ 多 agent 自动化协作架构（七类 agent + 澄清式人工介入 + 沉淀前置，`AUTOMATION.md`）+ BMAD 技能族集成映射（`BMAD.md`）+ 15 个独立可用的工件模板 + 6 个参考文档 + 内置 28 页零依赖界面基线库。纯 markdown + git，零外部依赖。
+**集成能力**：10 阶段主流程（0-change→…→7-integration）+ 8 道专家团门禁（12 个领域角色）+ 逐 task 自动化投票（🤖自动/👤人工）+ git 最小化安全提交（每 task checkpoint，一键回滚）+ 门禁通过自动进入下一阶段（全票/多数→自动，平票→交人裁决）+ 5 道老项目安全护栏 + 语义路由 + 横向命令（含调研/产品文档/五层对齐三条新命令）+ 多 agent 自动化协作架构（七类 agent + 澄清式人工介入 + 沉淀前置，`AUTOMATION.md`）+ BMAD 技能族集成映射（`BMAD.md`）+ 18 个独立可用的工件模板 + 10 个参考文档 + 内置 28 页零依赖界面基线库 + R19 阶梯律（ponytail 最少实现纪律）。纯 markdown + git，零外部依赖。
+
+**v2.1 新增（multica + ponytail + DSH 正典同步）**：16 个工程技能沉淀为 `reference/engineering.md`、`quality.md`、`planning.md`（TDD、增量实现、调试、API 设计、文档/ADR、Git/发版、审查方法、废弃迁移、安全、性能、可观测、五轮测试、质询、调研、PRD/UX、任务拆解）；ponytail「最少实现纪律」熔为默认实现律 R19（`RULES.md` R19 硬规则 + `reference/ponytail.md` 细则：等级 lite/full/ultra、diff 审查四段式、全仓审计、捷径台账；经 4-dev §1.9 阶梯判定、6-review 过度工程专项、M-health 债务收割执行）；`SKILL.md` 重写为 DSH / 技能式入口（三条总律 + 语义路由 + 加载预算 + DSH 工具接线）；主干同步 DSH 现版正典（8 道门禁 + 议题即 change + `AUTOMATION.md` / `BMAD.md` 协议）。来源与许可见 `NOTICE.md` / `reference/coverage.md`。
 
 主要是把最近折腾过的几个开源方法论项目里面我觉得有用的部分挑出来，再按自己的工作流重排一遍。各自的品牌和 CLI 依赖都剥掉了，只留 markdown。
 
@@ -30,18 +32,35 @@
 ```text
 your-project/
 ├──code-kit/          ← 这里
+│   ├── SKILL.md       ← DSH / 技能式加载入口（其他 IDE 可忽略）
 │   ├── METHODOLOGY.md
-│   ├── RULES.md
+│   ├── RULES.md       ← R1–R19 硬规则
 │   ├── AUTOMATION.md    ← 多 agent 自动化 + 澄清式人工介入 + 沉淀前置
 │   ├── BMAD.md          ← BMAD 技能族集成映射
 │   ├── GO.md
 │   ├── prompts/
 │   ├── templates/
-│   ├── reference/      ← 技术栈卡片 / UI 美学 / 反slop / 测试金字塔 / 产品文档范例
+│   ├── reference/      ← 技术栈 / UI 美学 / 反slop / 测试金字塔 / 产品范例
+│   │                     + engineering / quality / planning / ponytail / coverage
 │   └── ui-samples/     ← 28 页零依赖界面基线（patterns 4 + systems 24）
 ├── src/
 └── ...
 ```
+
+### 装进 DSH（技能版）
+
+本仓库根目录就是技能根目录（`SKILL.md` 在根上），DSH 会把它识别为 `code-kit` 技能：
+
+```bash
+# 方式 1：软链（推荐，git pull 后自动生效）
+ln -sfn ~/project/code-kit ~/.agents/skills/code-kit
+
+# 方式 2：复制（不跟随仓库更新）
+cp -r ~/project/code-kit ~/.agents/skills/code-kit
+```
+
+装好后在 DSH 里说"用 code-kit 做 X"或直接触发对应意图即可；`SKILL.md` 负责路由，`GO.md` / `prompts/` / `reference/` 按需加载。
+注意：若目标路径已有旧版本（真实目录而非软链），先备份或删除再软链。
 
 **就这样**。下面看怎么调用。
 
