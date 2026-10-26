@@ -23,7 +23,7 @@
 - `UAT.md` — 集成验证
 - `PRODUCT-DESIGN.html` — 产品 PR + 界面原型合一的单文件 HTML（`P-product` 产出）
 - `.specs/ALIGNMENT.md` — 五层对齐报告（`S-align` 产出，跨 change 常驻）
-- `.specs/<change-id>/discovery/` — 议题发现循环产物（`D-discovery` 产出）
+- `.specs/<change-id>/` 中 `TOPICS.md` / `D-<子议题slug>.md`（超 250 行拆 `D-<slug>/` 文件包：TOPIC+BRAINSTORM+RECON+CONCLUSION+PANEL+REVIEW，R16.8）/ `ROADMAP.md` — 议题发现前置阶段产物（`D-discovery` 产出；议题即 change，R16.5）
 - `.specs/CONTEXT.md` — 项目级共享上下文（术语、决策、偏好）
 - `.specs/LESSONS.md` — 跨任务失败知识库
 - `STATE.md`（仓库根）— 跨会话状态
@@ -31,8 +31,17 @@
 ## 三条新门（R15/R16，详见 RULES）
 
 - **进入 `7-integration` 前必须跑一次 `@code-kit/prompts/S-align.md` 五层对齐**（代码/原型/活文档/决策留痕/执行留痕），未跑禁止集成验证
-- **调研/讨论/找改进点** → `@code-kit/prompts/D-discovery.md`：事实文档驱动拆子议题、五步讨论、三轮上限、人工审核门、**零代码改动**
+- **调研/讨论/找改进点** → `@code-kit/prompts/D-discovery.md`：主干的**可选前置阶段**（kind: discovery，议题即 change）——事实文档拆子议题、五步讨论（④ GD 门 + ⑤ 人审门）、三轮上限、随步落盘状态标记（R16.3）、**零代码改动**
 - **写产品 PR + 原型** → `@code-kit/prompts/P-product.md`：单文件 HTML 九段制，基线样例在 `@code-kit/ui-samples/`
+
+## 自动化协作与人工介入（R17/R18，详见 `@code-kit/AUTOMATION.md`）
+
+- **前 3 阶段（CHANGE/REQUIREMENT/DESIGN[+2a]）相互依赖**，主 agent 顺序完成，禁止拆并行；多 agent 并行只在 3-task 之后的任务波次
+- **`done` ≠ 完成**：自检 done → 立即测试 → review → 待提交；日志错误满足「done + 无依赖 + 产物可读」三条件才进修改
+- **沉淀前置**：进入下一阶段前，上一阶段输出物必须已落盘（`.specs/` 工件 + STATE.md 状态行），对话记忆不算数；未落盘禁止推进
+- **人工介入是触发式，不是固定关卡**：只在需要澄清时停（歧义：4-5 套方案/平票 → 人做选择题；偏好：UI 风格与排版；纠正：人看产物不满意 → 重生成；把关：git 提交/破坏性变更落盘前）。上下衔接清楚、方案清楚的阶段直通推进，落盘即走
+- **暂缓项 = 议题**：先不做/下轮再说/拿不准 → 统一登记为议题（议题 change 的 `TOPICS.md` 状态表或 STATE.md 留档行，R18.4），由 D-discovery 消化；禁用 backlog/parking lot 等同义概念
+- **BMAD 集成**：bmad-* 技能按 `@code-kit/BMAD.md` 映射表在各阶段借用；工件与门禁以 code-kit 为准
 
 ## 角色红线（**必须遵守**）
 
@@ -99,6 +108,15 @@
 
 - **R8.1** 工件 `.md` 与项目主语言一致
 - **R8.2** 代码标识符英文，注释允许中文
+
+## R19 · 阶梯律（最少实现纪律）
+
+- **R19.1** 写码前爬七级阶梯、停在第一条成立的 rung 并记录：需要存在吗（投机=不写）→ 本仓已有（R6.4）→ 标准库 → 平台原生 → 已装依赖 → 一行 → 最小实现
+- **R19.2** 禁单实现接口 / "以后可能用到"脚手架；删除优先于新增，最短可工作优先——前提是先把问题读全
+- **R19.3** bug 修复先 grep 全部调用点，修根因（公共入口）一次，禁只修工单点名的路径
+- **R19.4** 有意切角必须注释 `ponytail: <上限>, <升级路径>`，M-health 收割
+- **R19.5** 信任边界校验 / 错误处理 / 安全 / 无障碍 / 用户点名项不许简化掉；物理世界留校准旋钮
+- **R19.6** 产物先行解释从简；用户点名要的报告给足
 
 ---
 

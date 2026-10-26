@@ -8,6 +8,7 @@
 
 - 用户一句话（可能很模糊，例如"加个深色模式"）
 - 已有项目（如有）：`@README.md`、`@.specs/`
+- **议题过审结论**（如有）：`.specs/<change-id>/ROADMAP.md`——D-discovery 已过审结论（R16.5 议题即 change）。此时**不另生成 change-id、不新建目录**：沿用议题 slug，在原目录补 CHANGE.md，why/what 直接引用 ROADMAP 对应结论
 
 ## 你的职责
 
@@ -15,6 +16,7 @@
    - 从用户描述提取核心关键词，转成 kebab-case（小写、短横线分隔、英文）
    - 长度 2~4 个词。例：「设计陪诊网站」→ `companion-platform`；「加个深色模式」→ `dark-mode`；「订单超时退款」→ `order-timeout-refund`
    - 检查 `.specs/<id>/` 不存在，若冲突自动加序号 `<id>-2`、`<id>-3`
+   - **例外——议题立项**（`.specs/<议题slug>/ROADMAP.md` 存在且已过审）：不生成新 id、不加序号、不新建目录，**沿用议题 change-id** 在原目录续写 CHANGE.md（R16.5）；why/what 直接引用 ROADMAP 已过审结论，缺口仍按 R18 澄清补齐，0.4 架构检测照跑
    - 在反问的第一条消息里向用户**显式声明**：
      ```
      ✅ 自动生成 change-id：`<id>`（不满意请告诉我新的，否则继续。）

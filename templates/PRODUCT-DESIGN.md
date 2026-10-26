@@ -6,7 +6,7 @@
 
 - 版本：v0.1 · <日期> · 状态：<起草/已过审>
 - 一句话：<产品是什么，给谁，解决什么>
-- 上游输入：<CHANGE.md / discovery/99-roadmap.md 路径>
+- 上游输入：<CHANGE.md / ROADMAP.md（议题 change 目录，D-discovery 已过审结论）路径>
 
 ## 0 · 这份文档怎么读
 

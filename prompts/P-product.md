@@ -1,6 +1,7 @@
 # P-product — 产品 PR + 界面原型（单文件 HTML 模型）
 
 > 写产品需求文档（PR）和产品原型时走本流程：**一份自包含 HTML 同时承载"产品设计文档 + 全界面原型"**，浏览器直接打开即读即演示，零外部依赖、零部署。
+> 定位：与 D-discovery 一样是主干的**可选前置阶段**（kind: product，见 METHODOLOGY 阶段定义表）——工件落同一 change 目录，人审门是法定停点（把关触发，R18.2），过审后下游 REQUIREMENT / 2a-ui-design 以其为上游输入。
 > 模型范本：`@code-kit/reference/product-design-exemplar.html`（真实系统 logsearch 的完整范例）。结构模板：`@code-kit/templates/PRODUCT-DESIGN.md`。
 
 ---
@@ -20,7 +21,7 @@
 1. **零外部依赖**：无 CDN、无外链字体、无框架、无图片文件。CSS 全内联；图标用内联 SVG 或 unicode；图表用内联 SVG
 2. **`<html lang="zh-CN">`**，UTF-8，viewport 完整；文案与演示数据全部中文且有真实感（禁止 lorem ipsum）
 3. **Design tokens 内嵌且与产品源码同源**：`:root` CSS 变量，颜色 oklch() 优先 + hex 兜底；tokens 一旦被 `2a-ui-design` 正式化，两边同步（记入 UI-DESIGN.md 的"参考样例"段）
-4. **左侧固定目录导航**：锚点跳转当前项高亮；顶部文档标题 + 版本号 + 日期
+4. **左侧固定目录导航**：锚点跳转当前项高亮；顶部文档标题 + 版本号 + 日期 + **状态标 `状态: 起草中|已过审`**（对齐 R16.3 落盘与审核状态语义：文件随做随存，"已过审"只能由用户原话背书后改写，AI 禁止自行晋级）
 5. 界面原型区块与真实系统**同布局**（不是示意图），数据全为**演示数据**并标注"演示数据"
 
 ## 文档结构（九段制，从范本提炼）
@@ -46,7 +47,7 @@
 
 ## 制作流程
 
-1. **定域**：从 CHANGE.md / D-discovery 的 roadmap 拿产品定位；没有就先反问澄清（不越过 0-change 的澄清职责）
+1. **定域**：从 CHANGE.md / 议题 change 的 `ROADMAP.md`（已过审结论）拿产品定位；没有就先反问澄清（不越过 0-change 的澄清职责）
 2. **搭骨架**：按九段制建 HTML 骨架 + 目录导航 + tokens（可复制范本的 tokens 段起步，或从 `ui-samples/` 任一系统页提取 tokens）
 3. **填 1-5、7-9 章**：文档段先行，每段都要求可指回事实（已有代码/文档/用户原话；推测处标注"待确认"）
 4. **做第 6 章原型**：按界面清单逐页做同布局原型；通用页面模式（登录/表格/表单/看板…）从 `@code-kit/ui-samples/patterns/` 取基线改造；系统级页面（权限/对话/量化…）从 `@code-kit/ui-samples/systems/` 取对应基线
@@ -62,8 +63,8 @@
 ## 与主流程的衔接
 
 ```
-D-discovery（可选，调研清楚）→ P-product（本文档）→ 1-requirement（从本文档抽 AC）
-                                    ↘ 2a-ui-design（tokens 从本文档 :root 继承并正式化）
+D-discovery（可选前置：议题 change → ROADMAP.md 过审）→ CHANGE.md（同目录）→ P-product（产 PRODUCT-DESIGN.html）→ 1-requirement（从本文档抽 AC）
+                                                                                      ↘ 2a-ui-design（tokens 从本文档 :root 继承并正式化）
 ```
 
 - REQUIREMENT.md 的每条 AC 标注来源章节（如"源自 PRODUCT-DESIGN.html §5.3"）

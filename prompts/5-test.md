@@ -99,7 +99,7 @@ UAT-1：<场景>
 
 发现格式沿用 4 要素（Symptom / Source / Consequence / Remedy），写入 `TEST.md` 的「测试质量自检」段。
 
-命中 ≥ 1 项 → 本轮技术债记事（记入 TEST.md 的「测试质量记事」段，按优先级排入 backlog 或当圈修复）。命中 ≥ 3 项 → 本次 release 前必修。
+命中 ≥ 1 项 → 本轮技术债记事（记入 TEST.md 的「测试质量记事」段，按优先级登记为议题或当圈修复；暂缓项 = 议题，R18.4）。命中 ≥ 3 项 → 本次 release 前必修。
 
 > 测试分层与反模式详见 `test-pyramid.md` 第 1 节。
 
