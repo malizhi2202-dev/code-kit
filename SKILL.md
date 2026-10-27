@@ -192,7 +192,7 @@ updated: 2026-10-26T00:00:00Z
 - **法定硬停点**：`<auto>false</auto>` 任务执行前；议题 ⑤ 人审门；违规处理协议。
 - **暂缓项 = 议题**：不建 backlog / parking lot 同义词；统一登记进 `TOPICS.md` 或 STATE.md 一行，由 D-discovery 消化。
 
-多 agent / 挂机协作（七类 agent、状态机、日志扫描 E1–E5、提交标准、降级策略）见 `AUTOMATION.md`。
+多 agent / 挂机协作（七类 agent、状态机、日志扫描 E1–E5、提交标准、降级策略）见 `AUTOMATION.md`；各阶段并行扇出、编排原语与等待/回收纪律见其 §9 手册。
 
 ---
 
