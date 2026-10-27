@@ -13,7 +13,7 @@ code-kit 的文件分两类，**加载策略不同**：
 |---|---|---|---|
 | **SPEC**（项目产物）| `.specs/<id>/*.md` | 通常 < 200 行 | 整读 OK |
 | **REFERENCE**（查阅型）| `code-kit/reference/*.md` | 75~470 行 | **禁止默认整读**，只 grep / read offset 需要的那一节 |
-| **TEMPLATE / PROMPT** | `code-kit/templates|prompts/*.md` | < 150 行 | 整读 OK |
+| **TEMPLATE / PROMPT** | `code-kit/templates|prompts/*.md` | ≤ 300 行（R1.10） | 整读 OK |
 
 **违规示例**（AI 常犯）：
 
@@ -27,65 +27,7 @@ code-kit 的文件分两类，**加载策略不同**：
 
 ---
 
-## Token 预算估计 · 进阶段前必跑
-
-> 上面是单阶段加载预算。本段是**整链路预算**——让用户提前知道价格，并选挡位。
-
-### 典型 token 成本表（按一个中等规模 change，前端项目，5 个 task）
-
-| 阶段 | 完整模式 | 极简模式（非 UI 跳 2a / 跳第四轮 / 跳跨模型）| 单点调用（仅跑选定阶段）|
-|---|---|---|---|
-| 前置 · D-discovery（可选，议题先行时） | ~20k - 60k（视子议题数） | 同左（发现流程不压缩五步） | 单点跑 |
-| 前置 · P-product（可选，产品先行时） | ~60k - 150k | 跳原型逐页精修时下调 | 单点跑 |
-| 0 + 1 + 2 + 2a + 3（规划链） | ~42k - 62k | ~30k - 45k | 按需，只跑你需要的那个 |
-| 4 × 5 task（实施） | ~125k - 300k | ~125k - 300k | 单 task ~25k - 60k |
-| 5（测试） | ~30k - 80k | ~20k - 50k | 单独 ~30k |
-| 6（review） | ~25k - 50k | ~15k - 25k | 单独 ~25k |
-| 7（集成归档） | ~20k - 40k | ~15k - 25k | 单独 ~20k |
-| **总计（标准链路，不含可选前置）** | **~250k - 530k** | **~205k - 445k** | **选什么跑什么** |
-
-### 用户首轮路由后，AI 必须输出预算估算
-
-在路由声明（见第四步）后追加一段：
-
-```
-✅ Token 预算估计：
-   - 本次 change 规模：<small / medium / large>（依据：预估代码行数 / 任务数 / 是否前端）
-   - 默认模式预估：~XXk - YYk tokens
-   - 已选挡位：完整 / 极简 / 单点
-✅ 是否继续？或换挡位？
-   1. 完整（推荐 500+ 行 / 团队项目 / 长期维护）
-   2. 极简（推荐 100~500 行 · 非 UI 项目可跳 2a / 跳第四轮 / 跳跨模型，省 ~20%；UI 项目 2a 不可跳）
-   3. 单点（你只想跑某一阶段，告诉我哪一个）
-   4. 不走 code-kit（< 50 行代码 / bugfix 直接修，别走闭环）
-```
-
-### 何时**不必**跑这段
-
-- 用户已显式指定模式（如「快速加个字段」/「极简模式跑」）
-- 当前是恢复中断任务（直接走 R1.5 重启协议，不重新估）
-- 用户跑横向命令（L-restyle / M-health）— 这些有自己的预算
-
-### 真实成本影响因子（让估算更准）
-
-把下面这些因子套进估算：
-
-| 因子 | 影响 |
-|---|---|
-| 前端项目 | +20%（多 2a-ui-design 阶段 + UI 第三轮）|
-| 涉及 schema 变更 | +5~10%（多 1.7 段 + 5-test 4.2 验证）|
-| 跨模型 spot-check 触发 | +30%（双模型走同样 review）|
-| task 数 < 3 | -30%（建议走单点调用不走闭环）|
-| task 数 > 10 | +50%（建议拆 milestone）|
-
-### 用户视角的取舍
-
-| 你的诉求 | 选 |
-|---|---|
-| 想要全套产物（CHANGE / REQUIREMENT / DESIGN / UI-DESIGN（前端）/ TASK / SUMMARY × N / TEST / REVIEW） | 完整 |
-| 想要核心产物但能少则少（REQUIREMENT / DESIGN / TASK / SUMMARY × N / REVIEW；UI 项目另含 UI-DESIGN） | 极简 |
-| 只想跑某一阶段（如只 review / 只 design / 只 体检）| 单点 · 见 README 决策表 |
-| 代码 < 50 行 · 一次性修补 · hackathon | 不走 code-kit，走 7 个原生 skill 更划算 |
+> 新 CHANGE 路由后 → 整读 `@code-kit/go-budget.md`（64 行）输出估算与挡位
 
 ---
 
@@ -159,131 +101,8 @@ Preflight 失败时，路由声明必须写明：
 >
 > **AI 的额外职责**：路由到 0-change / 2-design 时，路由声明的「第一动作」一栏应明确写"按 0.4 / 0₋ 先做架构级预检"，避免遗漏。
 
-### 专家团门禁总览（R9/R13 强制）
-
-每个阶段的**出口**都有该领域专属的专家团审核（主干门 4 人，GD 议题门为法定减配 3 人）。不通过不得进入下一阶段 / 不得晋级下游工件。
-
-| 门 | 阶段 | 出口触发点 | Master | 专家团 |
-|---|---|---|---|---|
-| **G1 需求门** | 0-change | CHANGE.md 确认后 | — | 高级产品经理 + 资深用户评测员 + 架构师 + 安全审计师 |
-| **需求门** | 1-requirement | REQUIREMENT.md 完成后 | — | 高级产品经理 + 资深用户评测员 + 架构师 + 安全审计师 |
-| **G2 方案门** | 2-design | DESIGN.md 完成后 | 架构师 | 架构师(M) + 研发负责人 + 领域专家 + 安全审计师 |
-| **G2a UI设计门** | 2a-ui-design | UI-DESIGN.md 完成后 | — | 资深UI设计师 + 资深用户体验官 + 前端架构师 + 无障碍专家 |
-| **Task 门** | 3-task | TASK.md 完成后（含逐 task 自动化投票） | — | 工程效能专家 + 架构师 + 研发负责人 + 资深测试工程师 |
-| **G3 代码门** | 4-dev | 全部 task 完成后 | 研发负责人 | 研发负责人(M) + 架构师 + 资深测试工程师 + 安全审计师 |
-| **测试门** | 5-test | TEST.md 完成后 | — | 资深测试工程师 + 研发负责人 + 高级产品经理 + 资深用户体验官 |
-| **G4 审查门** | 6-review | REVIEW.md 完成后 | 资深测试工程师 | 资深测试工程师(M) + 架构师 + 领域专家 + 安全审计师 |
-| **GD 议题门**（减配 3 人 · R16.7） | D-discovery | 每个子议题 ④ 步（结论落盘后） | — | 高级产品经理 +（前端架构师/研发负责人）+ 领域专家（无对应领域→资深用户评测员）；投票格式 R13.3；平票按歧义澄清提交用户 |
-
-> **GD 门之后接 ⑤ 人审门**（法定硬停点，R18.2②）：GD 裁决只决定"可否提交人审"，"通过"只能由用户原话背书；未过审子议题禁止汇入 ROADMAP / 禁止立项续走主干。
-
-> **逐 task 自动化投票**：3-task 门禁中，每个 task 由研发负责人 + 资深测试工程师 + 安全审计师投票决定「🤖 自动化」还是「👤 人工介入」。结果写入 `<auto>` 字段，4-dev 步骤 0 强制执行。
-
-### 角色定义文件索引
-
-每个门禁角色有独立的角色定义文件（`prompts/R-*.md`），定义其触发场景、边界、职责、输入输出：
-
-| 角色 | 文件 | 出现于 |
-|---|---|---|
-| 架构师 | `A-architect.md` | G1/G2/G3/G4/Task |
-| 高级产品经理 | `R-高级产品经理.md` | G1/需求门/测试门/GD |
-| 资深用户评测员 | `R-资深用户评测员.md` | G1/需求门/GD（领域专家无对应领域时的替代位）|
-| 安全审计师 | `R-安全审计师.md` | G1/需求门/G2/G3/G4/Task |
-| 领域专家 | `R-领域专家.md` | G2/G4/GD |
-| 资深UI设计师 | `R-资深UI设计师.md` | G2a |
-| 资深用户体验官 | `R-资深用户体验官.md` | G2a/测试门 |
-| 前端架构师 | `R-前端架构师.md` | G2a/G2/GD（技术可行性位）|
-| 无障碍专家 | `R-无障碍专家.md` | G2a |
-| 工程效能专家 | `R-工程效能专家.md` | Task |
-| 研发负责人 | `R-研发负责人.md` | Task/G3/GD（技术可行性位，与前端架构师二选一）|
-| 资深测试工程师 | `R-资深测试工程师.md` | Task/G3/测试门/G4 |
-
 ## 第三步 · 老项目入场检测（brownfield 必跑）
-
-**触发**：进入 0-change 之前必跑。
-
-### 3.1 探测 AI 上下文文档
-
-按下面顺序 `ls` / `find` 探测：
-
-| 文档 | 路径 | 来自哪个生态 |
-|---|---|---|
-| `CONTEXT.md` | 仓库根 / `.specs/` | code-kit 自己 |
-| `AGENTS.md` | 仓库根 | OpenAI Codex / 标准 agents 协议 |
-| `CLAUDE.md` | 仓库根 / `.claude/` | Anthropic Claude Code |
-| `.cursor/rules/*.md` | `.cursor/` | Cursor IDE |
-| `.windsurf/rules/*.md` | `.windsurf/` | Windsurf IDE |
-| `.github/copilot-instructions.md` | `.github/` | GitHub Copilot |
-| `.clinerules` | 仓库根 | Cline |
-
-读 `STATE.md` 的 `ai_context_doc`（用户上次指定的替代文档）和 `last_intel_scan` 字段。
-
-### 3.2 判决
-
-#### 情况 A · `STATE.md` 已设 `ai_context_doc`
-
-用户上次明确指定了某文档为 AI 遵守依据。**直接读它**，不再询问。
-
-后续阶段（2-design / 4-dev）改读 `<ai_context_doc>` 替代 `.specs/CONTEXT.md`。
-
-#### 情况 B · 已存在 CONTEXT.md 且 `last_intel_scan` 在 90 天内
-
-**直接读 CONTEXT.md**，跳过本步。无需打扰用户。
-
-#### 情况 C · 已存在 CONTEXT.md 但超过 90 天
-
-读 CONTEXT.md，**提醒用户**："上次扫描已 X 天，可重跑 intel-scan"，但**不强制**。
-
-#### 情况 D · 未发现 CONTEXT.md，但有其他 AI 上下文文档（AGENTS / CLAUDE / Cursor / 等）
-
-**反问用户**（**必须**等待回复才能继续）：
-
-```
-🔍 检测到本项目已有以下 AI 上下文文档：
-  - <列出找到的，含路径与文件大小>
-
-code-kit 默认用 CONTEXT.md 作为单一源。请选择：
-  1. 跑 intel-scan，综合现有文档 + 代码扫描，生成 CONTEXT.md（推荐）
-  2. 以现有文档为准（告诉我哪个），跳过 intel-scan
-  3. 跳过 intel-scan + 不读现有文档（不推荐 · AI 会盲飞）
-
-请选 1/2/3。无人工确认前我不进 0-change（避免 AI 在不知项目约定下开始动手）。
-```
-
-- **选 1**：进 `prompts/I-intel-scan.md` 走分支 A
-- **选 2**：在 `STATE.md` 写 `ai_context_doc: <用户指定路径>`，回到原意图（直接进 0-change）
-- **选 3**：在 `STATE.md` 写 `ai_context_doc: none / skip`，回到原意图（带警告）
-
-#### 情况 E · 未发现任何 AI 上下文文档（CONTEXT / AGENTS / CLAUDE / Cursor / Windsurf / Copilot / Cline 全无）
-
-**反问用户**（**必须**等待回复才能继续）：
-
-```
-🔍 项目里未发现任何 AI 上下文文档。
-
-code-kit 后续阶段需要项目上下文给 AI 用。请选择：
-  1. 现在跑入场扫描，自动生成 CONTEXT.md（~15-30k tokens · 仅首次 · 推荐）
-  2. 我手动指定项目里某个文档作为开发遵守依据：<请回复路径>
-  3. 跳过 intel-scan，直接进 0-change（不推荐 · AI 会"盲飞"，老项目护栏 B1-B5 全失效）
-
-请选 1/2/3。无人工确认前我不开始扫描或进入 0-change（避免无意义消耗 token）。
-```
-
-- **选 1**：进 `prompts/I-intel-scan.md` 走分支 C
-- **选 2**：在 `STATE.md` 写 `ai_context_doc: <路径>`，回到原意图
-- **选 3**：在 `STATE.md` 写 `ai_context_doc: none`，回到原意图（带警告）
-
-#### 情况 F · 是刚创新项目（无 `package.json` / `pyproject.toml` / 等代码上下文）
-
-跳过本步。这是 greenfield 项目，CONTEXT.md 会在 0-change / 1-requirement / 2-design 过程中逐步沉淀。
-
-### 3.3 为什么这步重要
-
-跳过会导致：
-- AI 不知项目架构 → 写出不合项目风格的代码
-- AI 重复实现已有抽象 → 费 token 且产生重复代码
-- 4-dev 1.7 schema 任务 / 1.8 破坏性变更检测都会不准
-- 用户明明有 CLAUDE.md 写好的约定 → AI 完全不读 → 抱怨"为什么不按我说的来"
+STATE 无 CONTEXT/技术栈行且 .specs 不存在时 → 整读 `@code-kit/go-entry-check.md`（91 行）执行 3.1–3.4；命中任一豁免（R1.10 冷启动例外）直接跳过
 
 ## 第四步 · 自动准备（不打扰用户）
 
@@ -292,6 +111,7 @@ code-kit 后续阶段需要项目上下文给 AI 用。请选择：
 - **新 CHANGE**：按 `prompts/0-change.md` 的步骤 0 自动生成 `change-id`（kebab-case，2~4 词），并在第一条回复里显式声明
 - **目录不存在**：自行 `mkdir -p .specs/<id>/`，不要让用户先建
 - **规则加载**：若 IDE 未注入全局规则，读 `@code-kit/RULES.md`（精简版 `@code-kit/SYSTEM.md` 也行）
+- **门禁计票 / 角色装配 / 法定停点核对** → 整读 `@code-kit/go-gates.md`（43 行）；各 prompt 内联的 🛡️ 门禁段仍是执行格式事实源
 - **路由声明**：用户话语是自然语言而非阶段号时，先走 `@code-kit/prompts/ROUTER.md` 语义路由（含调研 `D-discovery` / 产品文档 `P-product` / 五层对齐 `S-align` 三个新入口）
 
 ### 加载工件（严格区分 必读 / 按需）
@@ -326,7 +146,7 @@ code-kit 后续阶段需要项目上下文给 AI 用。请选择：
 | 多 agent 自动化协作 | `AUTOMATION.md`（主干协议，不在 reference 计数内） | 挂机 / 多 agent / 提交与拉齐 |
 | 能力来源与覆盖 | `reference/coverage.md` | 追溯"这个能力从哪来" |
 
-规则依据：`RULES.md` R17（多 agent 协作）/ R18（澄清与沉淀）/ R19（阶梯律·最少实现）。
+规则依据：`@code-kit/RULES-FLOW.md` R17（多 agent 协作）/ R18（澄清与沉淀）/ R19（阶梯律·最少实现）；R1–R8 见 `RULES.md`。
 
 ### 查 reference 某一节的实际动作示例
 

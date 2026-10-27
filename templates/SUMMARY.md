@@ -66,7 +66,7 @@ Tests: 3 passed, 3 total
 
 - <列出本次不修的 Minor 项，记入即可>
 
-## 数据库迁移（涉及 schema 变更必填 · 来自 4-dev 步骤 1.7 / R4.5）
+## 数据库迁移（涉及 schema 变更必填 · 来自 `prompts/4-dev-schema.md` / R4.5）
 
 > 没有 schema 变更可整段写 N/A。
 
@@ -128,7 +128,7 @@ Tests: 3 passed, 3 total
 - [ ] 已扩范围（须人工同意）：<list> + 同意人 + 时间
 - [ ] 拆成新 task / 新 CHANGE：<task / CHANGE id>
 
-## 破坏性变更（涉及破坏性改动必填 · 来自 4-dev 步骤 1.8 / R4.6 / B4 老项目护栏）
+## 破坏性变更（涉及破坏性改动必填 · 来自 `prompts/4-dev-breaking.md` / R4.6 / B4 老项目护栏）
 
 > 不涉及破坏性变更可整段写 N/A。
 

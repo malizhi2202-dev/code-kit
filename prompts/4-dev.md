@@ -45,6 +45,17 @@ AI 不允许自行编造临时最小 TASK；缺字段必须反问用户或回到
 
 ## 你的职责
 
+**条件加载索引（R1.10 小文件按需加载 · 命中哪行读哪个；对应原位各节指针）**
+
+| 触发条件 | 分片文件 | 行数 |
+|---|---|---|
+| 任务涉及用户可见 UI（原 1.6） | `@code-kit/prompts/4-dev-ui.md` | 22 |
+| Schema / 字段 / 索引 / 外键变更（原 1.7 · R4.5） | `@code-kit/prompts/4-dev-schema.md` | 122 |
+| 删 ≥5 行 / 改公共接口 / 删文件（原 1.8 · R4.6） | `@code-kit/prompts/4-dev-breaking.md` | 86 |
+| 提交前 diff 边界自查（原第 5 步 · R6.5） | `@code-kit/prompts/4-dev-boundary.md` | 63 |
+| 清窗触发 / 断点接力恢复（R1.5–R1.7） | `@code-kit/prompts/4-dev-resume.md` | 30 |
+| 全部 task 完成后 G3 代码门计票 | `@code-kit/prompts/4-dev-gate.md` | 46 |
+
 ### 0. 自动化门禁检查（强制 · R13）
 
 执行任务前，**必须**检查 TASK.md 中当前 `<task>` 块的 `<auto>` 字段：
@@ -118,232 +129,11 @@ TASK.md 未经过专家团门禁审核。本次先回到 3-task 补齐门禁，�
 3. 若计划做的事与某条 active 条目完全相同 → 停下来按 R1.6 回答"本次与上次的差异是什么"，不允许盲目重试
 4. 若 `.specs/LESSONS.md` 不存在 → 用 `@code-kit/templates/LESSONS.md` 创建空骨架
 
-### 1.6 UI 任务额外检查（仅当任务涉及任何用户可见 UI）
+**1.6 UI 任务额外检查（仅当任务涉及任何用户可见 UI）**：命中 → **整读 `@code-kit/prompts/4-dev-ui.md`（22 行）按其执行；不读禁止写 UI 代码。**
 
-判定标准：任务的 `files` 包含 `.css` / `.scss` / `.tsx` / `.vue` / `.jsx` / `.html` / `.svelte`，或 `action` 含 button / 颜色 / 字体 / 卡片 / 布局 / 动画 / 主题 等关键词。
+**1.7 数据库 Schema 任务额外检查（涉及表 / 字段变更必跑 · 对应 R4.5）**：命中 → **整读 `@code-kit/prompts/4-dev-schema.md`（122 行）按其执行；不读禁止动 schema、禁止开写迁移。**
 
-命中时，进入实现**之前**还必须：
-
-1. 加载 `@.specs/<id>/UI-DESIGN.md`（必须存在；不存在 → 停下来要求先跑 `@code-kit/prompts/2a-ui-design.md`）
-2. 加载 `@code-kit/reference/ui-anti-patterns.md`，按当前任务的关键词 grep 相关章节
-3. 加载 `@code-kit/reference/frontend-engineer-rules.md`（**第 1 + 第 2 + 第 10 节必读**），其他节按输出类型按需读：
-   - 任务是做交互原型 → 补读第 6.1
-   - 任务是做幻灯片 / 演示 → 补读第 6.2
-   - 任务是做仪表盘 / 数据可视化 → 补读第 6.3
-   - 任务有动画 / 交互动效 → 补读第 4 节 + 第 6.4
-   - 任务涉及多变体 / 实时调参 → 补读第 5 节（Tweaks 面板）
-4. 对每条命中的"强制禁忌"，在执行计划里**显式声明**：
-   - 「已知 X 是禁忌（来自 anti-patterns / frontend-rules），本任务不涉及」 或
-   - 「已知 X 是禁忌，本任务采用 Y 替代」
-5. **Token 来源单一**：颜色 / 字体 / 间距 / 圆角 / 动效必须从 UI-DESIGN.md frontmatter 派生的 CSS variables / theme 文件中取。**禁止**在组件代码里硬编码颜色或字号（frontend-rules 第 2.1 节）
-6. **React 三条硬规则马上写入计划**（仅 React 任务）：禁 `const styles` / 跨文件用 `Object.assign(window, ...)` / 禁 `scrollIntoView`（frontend-rules 第 1.1–1.3）
-7. 实现完成后再扫一遍 anti-patterns + frontend-rules 第 10 节交付清单（self-review），写入 SUMMARY.md
-
-### 1.7 数据库 Schema 任务额外检查（涉及表 / 字段变更必跑 · 对应 R4.5）
-
-> 这是 AI 开发最高频的事故源——改了 ORM model 没生迁移，跑起来报"表/字段不存在"。本段强制堵住。
-
-**判定标准**：任务的 `action` 含「**新增表 / 加字段 / 改字段类型 / 加索引 / 加外键 / 重命名表/列 / 删表/列**」等关键词，或 `files` 涉及：
-
-- ORM model：`models/*.py` / `*Model.ts` / `entity/*.java` / `*.entity.ts` / `schema.prisma` / `*.gorm.go`
-- 迁移目录：`migrations/*` / `db/migrate/*` / `alembic/versions/*` / `prisma/migrations/*`
-- DDL：`*.sql`（含 `CREATE TABLE` / `ALTER TABLE` 等）
-
-命中时，进入实现**之前**必须：
-
-#### 1.7.1 声明 schema diff
-
-在执行计划里**显式列出**：
-
-```
-## Schema Diff（本任务）
-- 新增表：`<table>`（字段：col1 TYPE NOT NULL, col2 TYPE DEFAULT ...）+ 索引：...
-- 改字段：`<table>.<col>` 类型 `<old>` → `<new>`，迁移策略：<是否需要 backfill / 兼容期>
-- 删字段：`<table>.<col>`，迁移策略：<是否需要先双写过渡>
-- 新增外键：`<table>.<col>` → `<ref-table>.<ref-col>`（ON DELETE: ...）
-```
-
-**禁止**没声明就开干。
-
-#### 1.7.2 选执行机制（按优先级探测项目）
-
-按下面顺序探测，**用第一个命中的**：
-
-| 优先级 | 检测信号 | 用什么 | 命令示例 |
-|---|---|---|---|
-| 1 | `prisma/schema.prisma` 存在 | Prisma | `npx prisma migrate dev --name <change-id>_<task-id>` |
-| 2 | `alembic.ini` 存在 | Alembic | `alembic revision --autogenerate -m "<change-id> <task-id>"` |
-| 3 | `db/migrate/` 目录（Rails） | Active Record | `rails generate migration <CamelName>` |
-| 4 | `knexfile.*` 存在 | Knex | `npx knex migrate:make <change-id>_<task-id>` |
-| 5 | `flyway.conf` / `flyway/sql/` 存在 | Flyway | 手写 `V<timestamp>__<change-id>_<task-id>.sql` 放进 `flyway/sql/` |
-| 6 | `liquibase/changelog.xml` 存在 | Liquibase | 追加 `<changeSet>` 到 changelog |
-| 7 | `migrations/` 或 `db/migrations/` 目录（无框架）| 手写 SQL | 文件名：`YYYYMMDDHHmm_<change-id>_<task-id>_<verb>.sql` |
-| 8 | 全部都没有（裸项目）| **回退**：生成在 `.specs/<change-id>/migrations/` | 文件名同上，并在 SUMMARY 里登记"待用户搬到正式迁移目录" |
-
-#### 1.7.3 生成可逆迁移
-
-每个迁移文件必须含 `up` 和 `down`（或对应框架的 migrate / rollback）：
-
-```sql
--- up
-ALTER TABLE users ADD COLUMN avatar_url VARCHAR(255) DEFAULT NULL;
-CREATE INDEX idx_users_avatar_url ON users(avatar_url);
-
--- down
-DROP INDEX idx_users_avatar_url ON users;
-ALTER TABLE users DROP COLUMN avatar_url;
-```
-
-**禁止** down 段写 `-- 不可回滚`。即使破坏性变更（删字段），down 也要写"重建空字段 + 数据丢失警告"。
-
-#### 1.7.4 检测 DB 凭据 → 决定要不要现在执行
-
-按下面顺序 grep 项目（用 `grep_search` 工具或等价命令）：
-
-```
-.env / .env.local / .env.development / .env.example
-config/database.yml / config/database.json
-application.yml / application.properties / application-*.yml
-docker-compose.yml（DB 服务段：postgres / mysql / mariadb / mongo）
-prisma/schema.prisma 的 datasource 段
-serverless.yml / wrangler.toml（如适用）
-```
-
-##### 路径 A · 找到凭据
-
-**必须停下来反问用户**，模板：
-
-```
-🔍 检测到本项目有 DB 连接配置（具体：.env 第 12 行 DATABASE_URL）。
-本任务包含 schema 变更：
-  - 新增表：notifications
-  - 改字段：users.email_verified（NULL → NOT NULL DEFAULT FALSE）
-
-是否现在执行迁移？
-  1. 现在执行（我会跑：npx prisma migrate dev --name add-notifications）
-  2. 只生成 SQL/迁移文件，由你手动跑（推荐生产敏感项目）
-  3. 让我先看 SQL 再决定（我会贴出迁移文件内容给你看）
-```
-
-- **用户选 1**：AI 跑迁移命令，**贴出真实输出**到 SUMMARY，并跑 `\d <table>` / `DESCRIBE <table>` / `SHOW CREATE TABLE` 验证表结构落地
-- **用户选 2 / 3**：AI 生成迁移文件，等用户选定后再决定执行
-
-##### 路径 B · 未找到凭据
-
-直接走"只生成迁移文件"：
-
-1. 按 1.7.2 选定的机制生成迁移
-2. 在 `<task-id>-SUMMARY.md`「数据库迁移」段**显式提醒**：
-
-```
-⚠️ 数据库迁移文件已生成（未检测到 DB 凭据，需手动执行）
-  - 文件：prisma/migrations/20260501_add_notifications/migration.sql
-  - 执行命令：npx prisma migrate deploy
-  - 验证命令：psql -c "\d notifications"
-  - 环境清单（执行后逐项打勾）：
-    - [ ] local
-    - [ ] dev
-    - [ ] staging
-    - [ ] prod（生产请走 maintenance window，先 dry-run）
-```
-
-#### 1.7.5 反幻觉（R6.1）
-
-**禁止凭印象写迁移**：
-
-- 加字段 → 必须先 grep ORM model 确认字段已声明（避免迁移和 model 不一致）
-- 改字段类型 → 必须确认旧类型 → 新类型的兼容性（VARCHAR(50) → VARCHAR(20) 可能截断；BIGINT → INT 可能溢出）
-- 加 NOT NULL → 必须确认有 DEFAULT 或先做 backfill（不然旧行报错）
-- 加外键 → 必须确认引用列有索引
-
-#### 1.7.6 5-test 关联
-
-本步生成的迁移文件，5-test 第 4 轮「4.2 数据迁移测试」会再验证一次（在生产数据快照上预演）。所以这里生成的文件必须能被 trace（路径要写进 SUMMARY）。
-
-### 1.8 破坏性变更高门槛（强制 · 对应 R4.6 / B4 老项目护栏）
-
-> 删错代码 / 改坏公共接口是**老项目最高频真事故**。本段强制堵住。
-
-**判定标准**：本任务 diff 命中下面**任一**条件 → 必须走本协议：
-
-1. **删除既有代码** ≥ 5 行（不算空行 / 注释）
-2. **改公共导出**：导出函数 / 类 / 接口的签名变更（参数 / 返回值 / 类型）
-3. **改公共 API**：HTTP / GraphQL / gRPC 路由或 schema 变更
-4. **删除文件** 或 重命名导出符号
-
-#### 1.8.1 grep 引用图（必须）
-
-对每个被删 / 改签名的符号，执行 grep：
-
-```bash
-# 例：删除 formatLegacyDate 函数
-grep -rn "formatLegacyDate" src/ tests/ scripts/ docs/
-# 例：改 fetchUser 的签名
-grep -rn "fetchUser\b" src/ tests/
-# 例：删除文件 src/utils/old-helpers.ts
-grep -rn "from.*old-helpers\|import.*old-helpers" src/ tests/
-```
-
-**贴出完整结果**（哪怕 0 命中也要贴 0 命中的 grep，证明你查了）。
-
-#### 1.8.2 列出影响清单
-
-把 grep 结果整理成清单，**含间接影响**：
-
-```
-被删/改的符号：formatLegacyDate (src/utils/legacy-date.ts:12)
-直接调用：
-  - src/components/InvoiceTable.tsx:34
-  - src/api/reports/route.ts:67
-  - tests/legacy-date.test.ts:8
-间接影响：
-  - InvoiceTable 是 src/pages/invoices.tsx 的子组件 → invoice 页面会受影响
-  - reports/route 被 cron job daily-report 触发 → 可能影响定时任务
-```
-
-⚠️ **特别注意**：
-
-- AI 看到的 grep 结果 ≠ 真实引用图：动态 import / 反射 / 字符串拼接的 require / 配置驱动的 hook 名都可能漏掉
-- 对**公共 API**还要 grep **客户端代码**（mobile app / 第三方集成）
-- 对**导出符号**还要 grep **文档 / README / Storybook**
-
-#### 1.8.3 反问用户（停下来）
-
-把 1.8.1 + 1.8.2 的结果**贴出来反问用户**：
-
-```
-🔴 检测到破坏性变更：删除 formatLegacyDate（5 行 + 8 处调用点）
-
-调用点清单：
-  - src/components/InvoiceTable.tsx:34（调用 1 处）
-  - src/api/reports/route.ts:67（调用 1 处）
-  - tests/legacy-date.test.ts:8（测试用）
-
-请选择处理方式：
-  1. 直接删除 + 同步改 8 处调用点（我会一并改）
-  2. 留兼容期：保留 formatLegacyDate 但加 @deprecated 注解 + 6 个月后清理（建议）
-  3. 写 codemod：生成 ts-morph / jscodeshift 脚本批量替换（适用调用点 > 20）
-  4. 不删了，找别的办法实现需求
-
-无人工确认前，我不动手。
-```
-
-#### 1.8.4 回归测试覆盖
-
-无论选哪个方案，必须确保：
-
-- 删除 / 改动的旧路径**有测试覆盖**（不能默默 break）
-- 改公共 API 的新旧版本必须**同时有测试**（兼容期内两套都跑）
-
-#### 1.8.5 写入 SUMMARY「破坏性变更」段
-
-把 1.8.1~1.8.4 的全部内容写入 `<task-id>-SUMMARY.md` 的「破坏性变更」段（SUMMARY 模板里有）。
-
-#### 1.8.6 何时**不必**走本协议
-
-- 重构内部实现（导出符号不变）
-- 加新参数但保持向后兼容（带默认值的可选参数）
-- 删 < 5 行实现细节（无外部引用）
+**1.8 破坏性变更高门槛（强制 · 对应 R4.6 / B4 老项目护栏）**：diff 命中删 ≥ 5 行 / 改公共导出或 API / 删文件或重命名导出任一 → **整读 `@code-kit/prompts/4-dev-breaking.md`（86 行）按其执行；不读禁止动该代码。**
 
 ### 1.9 阶梯判定（写码前强制 · 对应 R19 / 机制 8）
 
@@ -406,67 +196,7 @@ grep -rn "from.*old-helpers\|import.*old-helpers" src/ tests/
 
 结果写入 `<task-id>-SUMMARY.md` 的「6 维自查」段。**不允许提交时心想"review 阶段再说"**。
 
-### 5. 提交前 diff 边界 verify（强制 · 对应 R6.5 / B3 老项目护栏）
-
-> 防"AI 顺手改了别的"。提交前必须验证 diff 范围 ⊆ TASK 的 `write_files`。
-
-#### 5.1 跑 diff 检查
-
-```bash
-# 列出实际 diff 涉及的文件
-git diff --name-only HEAD
-git diff --cached --name-only       # 含 staged
-git status --short                  # 含 untracked
-```
-
-#### 5.2 比对 TASK 的 write_files
-
-把上面输出与 `TASK.md` 当前 task 的 `<write_files>` 字段比对：
-
-```
-✅ TASK 声明的 write_files：
-  - src/features/notifications/NotificationCenter.tsx
-  - src/features/notifications/useNotifications.ts
-  - src/features/notifications/__tests__/*
-
-✅ 实际 diff 涉及：
-  - src/features/notifications/NotificationCenter.tsx
-  - src/features/notifications/useNotifications.ts
-  - src/features/notifications/__tests__/NotificationCenter.test.tsx
-
-→ 0 越界 ✅
-```
-
-或者：
-
-```
-⚠️ 越界检测：
-
-✅ TASK 声明的 write_files：
-  - src/features/notifications/*
-
-❌ 实际 diff 越界文件：
-  - src/components/Layout.tsx（DESIGN 0.5.1 「禁动清单」中的文件）
-  - src/api/admin/users/route.ts（不在 write_files 范围内）
-
-→ 必须停下来：
-  选项 1. 撤销越界改动（git checkout -- <files>）
-  选项 2. 更新 TASK 的 write_files（须人工同意，相当于扩范围）
-  选项 3. 把越界改动拆成新 task / 新 CHANGE
-```
-
-#### 5.3 验证结果写入 SUMMARY「越界检查」段
-
-即使 0 越界也要写：
-
-```
-✅ 越界检查（R6.5）：
-  - TASK write_files：3 项
-  - 实际 diff 涉及：3 项
-  - 越界：0
-```
-
-**禁止**："顺手修了个 bug" / "看到这里很丑就改了"——必须开新 task 或新 CHANGE。
+**5. 提交前 diff 边界 verify（强制 · 对应 R6.5 / B3 老项目护栏）**：verify 通过、准备提交前 → **整读 `@code-kit/prompts/4-dev-boundary.md`（63 行）按其执行；不读禁止提交。**
 
 ### 5.5 原子提交（R4.1）
 
@@ -487,49 +217,22 @@ git status --short                  # 含 untracked
 
 回到 `TASK.md`，把对应任务的 `done` 字段标记为已完成（保留时间戳）。
 
-## 中途断点（清窗触发与恢复，对应 R1.5 / R1.6 / R1.7）
-
-### 入场恢复（会话开头若发现是接力）
-
-若 `STATE.md` 的「中断任务」非空，或用户要求"继续 task X"，**第一动作**：
-
-1. 加载顺序固定：`METHODOLOGY → RULES → 本 prompt → CONTEXT → REQUIREMENT → DESIGN → TASK → <task-id>-PROGRESS`
-2. 执行 R1.6 反重复检查：读 PROGRESS 的「已排除方案」，确认下一步不撞车
-3. 从 PROGRESS 的「当前正在做」之后续起，禁止重新规划整个任务
-
-### 中途暂停（触发 R1.1 信号时）
-
-若执行中出现 token > 50k / 自我复读 / 同错重现 / 用户说"打转了"中任一信号：
-
-1. **立即停手**——不要再写代码或跑工具
-2. 用 `@code-kit/templates/PROGRESS.md` 写出 `.specs/<id>/<task-id>-PROGRESS.md`，重点填：
-   - 已完成子步骤（勾选清单）
-   - 当前正在做（一段话，恢复后能直接续上）
-   - **已排除的方案 + 理由 + 失败次数**（这是反重复的核心）
-   - 待确认的假设
-3. 更新仓库根 `STATE.md` 的「中断任务」字段
-4. 输出"重启指令"给用户（见 RULES R1.5 模板）
-5. 检查是否触发 R1.7：若 task 体量明显过大，建议在 `TASK.md` 里就地拆为子任务后再恢复
-
-### 任务完成后
-
-如果该任务有 PROGRESS.md，**删除它**，把有用信息迁移到 SUMMARY.md。
-PROGRESS 是临时文件，不归档。
+**中途断点（清窗触发与恢复 · 对应 R1.5 / R1.6 / R1.7）**：执行中命中清窗信号，或会话开头发现是接力 → **整读 `@code-kit/prompts/4-dev-resume.md`（30 行）按其执行；不读禁止写 PROGRESS、禁止断点续做。**
 
 ## 约束（强制）
 
 - **R2.4**：verify 未通过禁止标记完成
 - **R3.2**：发现需求/设计有问题 → 不要自己改 `REQUIREMENT.md` / `DESIGN.md`，停下来开新 CHANGE
 - **R4.5**：Schema 变更必伴随迁移文件。只改 model 不生迁移就提交 → 违规，AI 自己回滚
-- **R4.6**：破坏性变更（删 ≥ 5 行 / 改公共接口）必走 1.8 协议：grep 引用图 + 反问用户 + 回归测试覆盖
+- **R4.6**：破坏性变更（删 ≥ 5 行 / 改公共接口）必走 `4-dev-breaking.md` 协议：grep 引用图 + 反问用户 + 回归测试覆盖
 - **R6.4**：写代码前必 grep 同类抽象（见 1.4），找到了用，不另起炉灶
 - **R19**：写码前爬阶梯（见 1.9）——投机需求不写、复用/标准库/原生/已装依赖优先、新依赖须举证；有意切角必带 `ponytail:` 标记
-- **R6.5**：提交前必跑 diff 边界 verify（见 5），越界必需回滚或扩范围
+- **R6.5**：提交前必跑 diff 边界 verify（见 `4-dev-boundary.md`），越界必需回滚或扩范围
 - **R5.2**：禁止用 mock 屏蔽真实失败
 - **R6.3**：禁止"应该可以工作"——必须实际跑过 verify
 - **R7.1**：发现需要扩大范围 → 停下来要求更新 TASK.md
 - **R1.4**：每个任务一个 fresh context；不允许把多个任务塞进同一个会话
-- **R1.5 / R1.6 / R1.7**：清窗、恢复、反重复严格按上面"中途断点"小节执行
+- **R1.5 / R1.6 / R1.7**：清窗、恢复、反重复严格按 `@code-kit/prompts/4-dev-resume.md` 执行
 
 ## 自检
 
@@ -537,64 +240,21 @@ PROGRESS 是临时文件，不归档。
 - [ ] verify 命令真的跑了，且输出已贴出
 - [ ] 测试与代码同次或紧邻提交
 - [ ] **6 维 self-review 跑了**（生产代码改动必跑：内置 6 维快查），🔴 已修，🟡 已记，🟢 可省
-- [ ] **涉及 schema 变更的任务已生成迁移文件**（R4.5 / 1.7），且含 up + down；检测到凭据已反问用户、未检测到凭据已在 SUMMARY 里提醒手动跑
-- [ ] **前端任务走了 1.6**（命中时）：读了 UI-DESIGN.md + frontend-engineer-rules.md；交付前逐项过了 frontend-rules 第 10 节交付清单（console 无错 / 状态完备 / 无硬编码颜色 / 无 `const styles` / 无 `scrollIntoView`）
+- [ ] **涉及 schema 变更的任务已生成迁移文件**（R4.5 / `4-dev-schema.md`），且含 up + down；检测到凭据已反问用户、未检测到凭据已在 SUMMARY 里提醒手动跑
+- [ ] **前端任务走了 `4-dev-ui.md`**（命中时）：读了 UI-DESIGN.md + frontend-engineer-rules.md；交付前逐项过了 frontend-rules 第 10 节交付清单（console 无错 / 状态完备 / 无硬编码颜色 / 无 `const styles` / 无 `scrollIntoView`）
 - [ ] **沿用既有抽象 grep 跑了**（R6.4 / 1.4），结果贴入 SUMMARY；需要能力都已查过项目里有无
 - [ ] **阶梯判定爬了**（R19 / 1.9）：停点 + 新依赖举证 + `ponytail:` 标记已记入 SUMMARY；bug 修复已 grep 全部调用点、修在根因
-- [ ] **破坏性变更走了 1.8 协议**（R4.6）：删代码 ≥ 5 行 / 改公共接口都 grep 了引用图、反问了用户、有回归测试覆盖。未命中跳则明示
-- [ ] **提交前 diff 边界 verify 跑了**（R6.5 / 5），结果贴入 SUMMARY；0 越界 ✅
+- [ ] **破坏性变更走了 `4-dev-breaking.md` 协议**（R4.6）：删代码 ≥ 5 行 / 改公共接口都 grep 了引用图、反问了用户、有回归测试覆盖。未命中跳则明示
+- [ ] **提交前 diff 边界 verify 跑了**（R6.5 / `4-dev-boundary.md`），结果贴入 SUMMARY；0 越界 ✅
 - [ ] SUMMARY.md 写完了，含「6 维自查」+「越界检查」段（有 schema 变更还要含「数据库迁移」、有破坏性变更还要含「破坏性变更」段）
 - [ ] TASK.md 中的对应任务已勾选
 - [ ] 没有改动 `REQUIREMENT.md` / `DESIGN.md`
 - [ ] 没有越界改其他任务的文件（R7.3）
-- [ ] **🛡️ G3 门禁已跑**（全部 task 完成后）：4 角色投票已执行，全票/多数通过后才进入 5-test
+- [ ] **🛡️ G3 门禁已跑**（全部 task 完成后，按 `4-dev-gate.md` 执行）：4 角色投票已执行，全票/多数通过后才进入 5-test
 
-## 🛡️ 专家团门禁 · G3 代码门（强制 · R9/R13）
-
-全部 task 执行完毕、所有 SUMMARY.md 就位后，**必须**启动该阶段的 4 领域专家审核。不通过不得进入 5-test。
-
-Master 角色：研发负责人（R9.4）。
-
-### G3 专家团构成（代码阶段专有）
-
-| 角色 | 核心关注点 |
-|---|---|
-| 🟫 **研发负责人** (M) | 代码质量、边界检查、SUMMARY 完整性、整体交付质量 |
-| 🟦 **架构师** | 实现是否偏离 DESIGN、是否引入新模块未声明、架构一致性 |
-| 🟩 **资深测试工程师** | verify 输出是否真实、TDD 是否执行到位、覆盖率是否达标、各领域测试是否遗漏 |
-| 🔴 **安全审计师** | 依赖安全、秘钥泄露、破坏性变更处理是否合规 |
-
-### 投票问题
-
-> 「全部 task 是否执行完毕？verify 是否全部通过？SUMMARY.md 是否完整？从代码质量、架构一致性、测试真实性、安全合规四个维度看，可以进入测试阶段吗？」
-
-### 投票格式（R13.3）
-
-```
-🗳️ G3 代码门: DEV 阶段是否通过？
-
-   🟫 研发负责人(M): ✅/❌ <理由（关注：代码质量、边界检查、SUMMARY 完整性）>
-   🟦 架构师: ✅/❌ <理由（关注：设计偏离、新模块未声明、架构一致性）>
-   🟩 资深测试工程师: ✅/❌ <理由（关注：verify 真实性、TDD 执行、覆盖率、领域测试遗漏）>
-   🔴 安全审计师: ✅/❌ <理由（关注：依赖安全、秘钥泄露、破坏性变更）>
-
-   结果: N/4 → <全票通过 ✅ 自动进入 5-test / 多数通过 ✅ / 平票 ⚠️ 提交用户>
-```
-
-### 裁决规则（R13.2）
-
-| 结果 | 动作 |
-|---|---|
-| 全票通过（4/4） | ✅ 自动进入 `5-test.md` |
-| 多数通过（3/4） | ✅ 自动进入，记录反对意见 |
-| 平票（2/2）或争议 | ⚠️ 暂停，提交用户裁决 |
-| 全票反对 | ⚠️ 暂停，回 4-dev 修复 |
-
-### 通过后
-
-进入 `5-test`。**禁止**在全票/多数通过后还问「要继续吗？」（R13.4）。
+**🛡️ 专家团门禁 · G3 代码门（强制 · R9/R13）**：全部 task 完成、进入门禁计票前 → **整读 `@code-kit/prompts/4-dev-gate.md`（46 行）按其执行；不读禁止进入 5-test。**
 
 ## 触发下一步
 
 - 还有未完成任务 → 清窗，再次进入 `@code-kit/prompts/4-dev.md` 跑下一个（每个 task 独立走步骤 0 自动化门禁）
-- 全部完成 → **先跑 G3 门禁**，通过后进入 `@code-kit/prompts/5-test.md`
+- 全部完成 → **先跑 G3 门禁**（整读 `@code-kit/prompts/4-dev-gate.md`），通过后进入 `@code-kit/prompts/5-test.md`

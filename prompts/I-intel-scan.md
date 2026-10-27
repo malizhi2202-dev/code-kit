@@ -227,7 +227,7 @@ detected_stack: <主要技术栈一句话总结>
 
 **对后续 change 的影响**：
   - 4-dev 阶段必须沿用既有 ApiClient（不要直接 fetch）
-  - 涉及 schema 改动 → 建议引入 Prisma 或 Knex（4-dev 1.7 会拦）
+  - 涉及 schema 改动 → 建议引入 Prisma 或 Knex（`4-dev-schema.md` 会拦）
   - 新增模块的 hooks 命名要参考现有 22 个的风格
 
 `.specs/CONTEXT.md` 已生成。后续运行 0-change 时 AI 会自动加载。

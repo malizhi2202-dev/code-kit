@@ -13,9 +13,9 @@
 | 原技能 | 能力 | 落在 |
 |---|---|---|
 | `kit-entry` | 统一入口、意图路由、工件预检、加载预算、老项目入场、路由声明 | `SKILL.md`；`GO.md` |
-| `kit-rules` | 系统硬规则（原 R1–R16 + 新增 R17/R18/R19） | `RULES.md`；`SYSTEM.md` 精简版 |
-| `kit-roles` | 12 角色 + 8 门 + 投票格式 | `GO.md` 门禁总览；`prompts/R-*.md` |
-| `kit-automation` | 七类 agent、状态机、日志扫描、提交标准、降级 | `AUTOMATION.md`（主干协议）；`RULES.md` R17/R18 |
+| `kit-rules` | 系统硬规则（原 R1–R16 + 新增 R17/R18/R19） | `RULES.md`（R1–R8）+ `RULES-FLOW.md`（R9–R19）；`SYSTEM.md` 精简版 |
+| `kit-roles` | 12 角色 + 8 门 + 投票格式 | `go-gates.md` 门禁总览；`prompts/R-*.md` |
+| `kit-automation` | 七类 agent、状态机、日志扫描、提交标准、降级 | `AUTOMATION.md`（主干协议）；`RULES-FLOW.md` R17/R18 |
 | `kit-horizontal` | D-discovery / P-product / S-align / M-health / I-intel-scan / A-architect / A-evolve / L-restyle | `prompts/` 对应命令；`reference/planning.md` §3（P-product） |
 | `kit-0-change` | change-id、架构预检、调性预选、想法压测 | `prompts/0-change.md` |
 | `kit-1-requirement` | 用户故事、Given/When/Then、v1/v2/out、域语言 | `prompts/1-requirement.md` |
@@ -52,15 +52,15 @@
 
 | 能力 | 落在 |
 |---|---|
-| 最懒资深工程师哲学、持久化、等级 lite/full/ultra | `reference/ponytail.md` §0–3；`RULES.md` R19 |
+| 最懒资深工程师哲学、持久化、等级 lite/full/ultra | `reference/ponytail.md` §0–3；`RULES-FLOW.md` R19 |
 | 阶梯（存在吗 → 仓库有吗 → 标准库 → 平台 → 已装依赖 → 一行 → 最少代码） | `reference/ponytail.md` §2；`SKILL.md` §3 |
 | 范围定义（调用方/测试/夹具/配置）、根因修复 | `reference/ponytail.md` §1 |
-| 绝不省的清单、`ponytail:` 注释（历史 `shortcut:` 同识别；执行钩子：`prompts/4-dev.md` §1.9、`templates/SUMMARY.md`「阶梯判定」、`prompts/M-health.md` §2.5 收割） | `reference/ponytail.md` §3；`RULES.md` R19 |
+| 绝不省的清单、`ponytail:` 注释（历史 `shortcut:` 同识别；执行钩子：`prompts/4-dev.md` §1.9、`templates/SUMMARY.md`「阶梯判定」、`prompts/M-health.md` §2.5 收割） | `reference/ponytail.md` §3；`RULES-FLOW.md` R19 |
 | 输出纪律（代码优先、结尾三行） | `reference/ponytail.md` §4 |
 | diff 审查（上游 `/ponytail-review`，四段发现、三组排序、Verdict/Lean/Not checked） | `reference/ponytail.md` §5；`prompts/6-review.md` 可追加此视角 |
 | 全仓审计（上游 `/ponytail-audit`，排序、上限 20） | `reference/ponytail.md` §6；`prompts/M-health.md` |
 | 捷径台账（上游 `/ponytail-debt`，no-trigger） | `reference/ponytail.md` §7 |
-| 基准与诚实边界（不编 per-repo 节省） | `RULES.md` R19.6；`reference/ponytail.md` §3 |
+| 基准与诚实边界（不编 per-repo 节省） | `RULES-FLOW.md` R19.6；`reference/ponytail.md` §3 |
 | 与 code-kit 各阶段的接线 | `reference/ponytail.md` §8 |
 | 判定例子（日期选择器/邮箱校验/防抖） | `reference/ponytail.md` §9 |
 
@@ -82,6 +82,6 @@
 
 ## 六、维护约定
 
-1. 新增能力先判断落在哪个文件（阶段 → `prompts/`；工程底座 → `reference/`；规则 → `RULES.md`）；不新建平行概念（与 R18.4 一致）。
+1. 新增能力先判断落在哪个文件（阶段 → `prompts/`；工程底座 → `reference/`；规则 → `RULES.md` / `RULES-FLOW.md`）；不新建平行概念（与 R18.4 一致）。
 2. 上游升级时只改对应文件的一节，不在多处复制。
 3. 本表是溯源索引，不是运行时必读。

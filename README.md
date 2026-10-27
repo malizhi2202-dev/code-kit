@@ -4,7 +4,7 @@
 
 **集成能力**：10 阶段主流程（0-change→…→7-integration）+ 8 道专家团门禁（12 个领域角色）+ 逐 task 自动化投票（🤖自动/👤人工）+ git 最小化安全提交（每 task checkpoint，一键回滚）+ 门禁通过自动进入下一阶段（全票/多数→自动，平票→交人裁决）+ 5 道老项目安全护栏 + 语义路由 + 横向命令（含调研/产品文档/五层对齐三条新命令）+ 多 agent 自动化协作架构（七类 agent + 澄清式人工介入 + 沉淀前置，`AUTOMATION.md`）+ BMAD 技能族集成映射（`BMAD.md`）+ 18 个独立可用的工件模板 + 10 个参考文档 + 内置 28 页零依赖界面基线库 + R19 阶梯律（ponytail 最少实现纪律）。纯 markdown + git，零外部依赖。
 
-**v2.1 新增（multica + ponytail + DSH 正典同步）**：16 个工程技能沉淀为 `reference/engineering.md`、`quality.md`、`planning.md`（TDD、增量实现、调试、API 设计、文档/ADR、Git/发版、审查方法、废弃迁移、安全、性能、可观测、五轮测试、质询、调研、PRD/UX、任务拆解）；ponytail「最少实现纪律」熔为默认实现律 R19（`RULES.md` R19 硬规则 + `reference/ponytail.md` 细则：等级 lite/full/ultra、diff 审查四段式、全仓审计、捷径台账；经 4-dev §1.9 阶梯判定、6-review 过度工程专项、M-health 债务收割执行）；`SKILL.md` 重写为 DSH / 技能式入口（三条总律 + 语义路由 + 加载预算 + DSH 工具接线）；主干同步 DSH 现版正典（8 道门禁 + 议题即 change + `AUTOMATION.md` / `BMAD.md` 协议）。来源与许可见 `NOTICE.md` / `reference/coverage.md`。
+**v2.1 新增（multica + ponytail + DSH 正典同步）**：16 个工程技能沉淀为 `reference/engineering.md`、`quality.md`、`planning.md`（TDD、增量实现、调试、API 设计、文档/ADR、Git/发版、审查方法、废弃迁移、安全、性能、可观测、五轮测试、质询、调研、PRD/UX、任务拆解）；ponytail「最少实现纪律」熔为默认实现律 R19（`RULES-FLOW.md` R19 硬规则 + `reference/ponytail.md` 细则：等级 lite/full/ultra、diff 审查四段式、全仓审计、捷径台账；经 4-dev §1.9 阶梯判定、6-review 过度工程专项、M-health 债务收割执行）；`SKILL.md` 重写为 DSH / 技能式入口（三条总律 + 语义路由 + 加载预算 + DSH 工具接线）；主干同步 DSH 现版正典（8 道门禁 + 议题即 change + `AUTOMATION.md` / `BMAD.md` 协议）。来源与许可见 `NOTICE.md` / `reference/coverage.md`。
 
 主要是把最近折腾过的几个开源方法论项目里面我觉得有用的部分挑出来，再按自己的工作流重排一遍。各自的品牌和 CLI 依赖都剥掉了，只留 markdown。
 
@@ -34,11 +34,12 @@ your-project/
 ├──code-kit/          ← 这里
 │   ├── SKILL.md       ← DSH / 技能式加载入口（其他 IDE 可忽略）
 │   ├── METHODOLOGY.md
-│   ├── RULES.md       ← R1–R19 硬规则
+│   ├── RULES.md       ← R1–R8 通用纪律 + 违规处理协议
+│   ├── RULES-FLOW.md  ← R9–R19 阶段协作硬规则（门禁/git/协作/阶梯，按需整读）
 │   ├── AUTOMATION.md    ← 多 agent 自动化 + 澄清式人工介入 + 沉淀前置
 │   ├── BMAD.md          ← BMAD 技能族集成映射
-│   ├── GO.md
-│   ├── prompts/
+│   ├── GO.md + go-gates.md / go-budget.md / go-entry-check.md  ← 路由入口与按需分片
+│   ├── prompts/          ← 阶段 prompt（>300 行已按 R1.10 拆出 4-dev-*/5-test-rounds/2a-ui-*/A-evolve-* 分片）
 │   ├── templates/
 │   ├── reference/      ← 技术栈 / UI 美学 / 反slop / 测试金字塔 / 产品范例
 │   │                     + engineering / quality / planning / ponytail / coverage
@@ -58,6 +59,8 @@ ln -sfn ~/project/code-kit ~/.agents/skills/code-kit
 # 方式 2：复制（不跟随仓库更新）
 cp -r ~/project/code-kit ~/.agents/skills/code-kit
 ```
+
+> **双份维护纪律（仅当你在别处还有本地正典）**：本仓库与本地安装按文件**镜像同步**，唯一各自维护的是 `SKILL.md`（分发入口 vs 本地定位协议）；改动先落正典、验证后镜像进仓推送。
 
 装好后在 DSH 里说"用 code-kit 做 X"或直接触发对应意图即可；`SKILL.md` 负责路由，`GO.md` / `prompts/` / `reference/` 按需加载。
 注意：若目标路径已有旧版本（真实目录而非软链），先备份或删除再软链。
@@ -864,7 +867,7 @@ code-kit 的机制**只依赖 markdown + git**，不依赖也不检测任何外�
 ## Token 成本表（让你提前知道价格）
 
 >code-kit 的设计是 **token 多花、单窗压力小、产物有外溢价值**。下表帮你按场景选挡位。
-> 完整估算逻辑见 `@code-kit/GO.md` 的「Token 预算估计」段。
+> 完整估算逻辑见 `@code-kit/go-budget.md`。
 
 ### 单点调用 · 你只想跑某一阶段
 
@@ -932,7 +935,7 @@ code-kit 的机制**只依赖 markdown + git**，不依赖也不检测任何外�
 | **B1** | 入场扫描自动生成 CONTEXT.md | `prompts/I-intel-scan.md` + `GO.md` 第三步 | AI 不知道项目栈 / 命名风格 / 既有抽象 → 写出格格不入的代码 |
 | **B2** | DESIGN 0.5「既有架构对齐」段 | `prompts/2-design.md` 步骤 0.5 + DESIGN 模板 | 引入与项目格格不入的新模式（如老项目用 Repository，AI 写出直接调 ORM 的 Service） |
 | **B3** | TASK 的 `read_files` + `write_files` 强约束 + R6.5 提交前 diff 边界 verify | `prompts/3-task.md` + `prompts/4-dev.md` 步骤 5 + RULES R7.3 | "顺手改了别的文件" → 提交前自动检测越界并要求回滚 / 扩范围 |
-| **B4** | 1.8 破坏性变更高门槛协议 | `prompts/4-dev.md` 1.8 + RULES R4.6 | 删错 5+ 行代码 / 改坏公共接口 → 强制 grep 引用图 + 反问用户 + 回归测试覆盖 |
+| **B4** | 1.8 破坏性变更高门槛协议 | `prompts/4-dev-breaking.md` + RULES R4.6 | 删错 5+ 行代码 / 改坏公共接口 → 强制 grep 引用图 + 反问用户 + 回归测试覆盖 |
 | **B5** | 1.4 沿用既有抽象 grep | `prompts/4-dev.md` 1.4 + RULES R6.4 | 重复实现已有抽象（项目里已有 formatDate，AI 又写一个）→ 写代码前必须 grep |
 
 ### 老项目首次使用流程
@@ -967,8 +970,8 @@ TDD → verify
 |---|---|---|
 | 老项目用 Repository 模式，AI 加新功能 | 写 Service 直接调 ORM | DESIGN 0.5 强制对齐 → 沿用 Repository |
 | 项目已有 `formatDate`，AI 要做日期展示 | 自己写新 `formatDate2` | 1.4 grep → 找到 → import 用 |
-| 看到一个"没人用"的函数 | 顺手删了（其实是反射调用） | 1.8 协议 → grep 全库 → 反问用户 → 不轻删 |
-| 给公共 hook 加必填参数 | 改了，12 处调用全炸 | 1.8 协议 → grep 引用图 → 反问选兼容期 |
+| 看到一个"没人用"的函数 | 顺手删了（其实是反射调用） | `4-dev-breaking.md` 协议 → grep 全库 → 反问用户 → 不轻删 |
+| 给公共 hook 加必填参数 | 改了，12 处调用全炸 | `4-dev-breaking.md` 协议 → grep 引用图 → 反问选兼容期 |
 | 改某个文件时旁边文件有 bug | 顺手修了，污染 PR | 5 边界 verify → 检测越界 → 要求开新 task |
 | 项目用 zustand，AI 加新状态 | 引入 redux | 1.4 grep package.json → 用 zustand |
 

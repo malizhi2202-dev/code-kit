@@ -65,7 +65,7 @@ updated: 2026-10-26T00:00:00Z
 | 重大变更影响 / correct course | `prompts/C-course-correction.md` |
 | 想不清楚，先问明白 | `reference/planning.md` §1（设计树访谈） |
 
-**规模速判**（档位细则见 `GO.md` 的 Token 预算段）：
+**规模速判**（档位细则见 `@code-kit/go-budget.md`）：
 - < 50 行 / typo / bugfix → 不走闭环，直接改 + 回归测试 + 自审。
 - 50–150 行 / 单会话 → **压缩路径** `0→3→4→6`：允许在 `CHANGE.md` 内写「最小需求/AC」与「最小设计/触碰模块」两节并显式声明豁免，`6-review` 可只交功能轮 + 回归登记。
 - 150 行以上 / 多会话 / 对外交付 → 完整或极简流程。
@@ -101,7 +101,7 @@ updated: 2026-10-26T00:00:00Z
 
 - 产物（`.specs/<id>/*.md`）与模板（`templates/*.md`）：可整读。
 - `reference/*.md`：**首轮 ≤ 150 行**，先 grep 定位节，再 `read offset/limit`；禁止"为了保险"整读。
-- `prompts/<阶段>.md`（< 150 行）可整读；`GO.md` / `RULES.md` 按节读。
+- `prompts/<阶段>.md`（≤ 300 行 · 整读上限 R1.10）可整读；入口内的**条件加载索引**命中哪个触发，才整读对应 `<parent>-<topic>.md` 分片（`prompts/4-dev-*.md`、`go-*.md`、`RULES-FLOW.md` 等）——不命中不读；`GO.md` / `RULES.md` 按节读。
 
 ---
 
@@ -119,7 +119,7 @@ updated: 2026-10-26T00:00:00Z
 | 6-review | 三轮审查（spec/质量/UI）+ 触发式第四轮 + 修复任务 | `REVIEW.md`、`T-FIX-NN` | G4 审查门 |
 | 7-integration | 对齐、全量自动化、UAT、LESSONS、归档 | `UAT.md`、归档、CHANGELOG/STATE 更新（`ALIGNMENT.md` 由 S-align 产出） | — |
 
-门禁构成、投票格式、裁决阈值见 `GO.md` 的「专家团门禁总览」与 `RULES.md` R9/R13；全票/多数通过即自动前进，**禁止再问"要继续吗"**。逐 task 的 `<auto>` 由研发负责人 + 测试 + 安全投票，平票默认 👤（安全优先）。
+门禁构成、投票格式、裁决阈值见 `@code-kit/go-gates.md`「专家团门禁总览」与 `@code-kit/RULES-FLOW.md` R9/R13；全票/多数通过即自动前进，**禁止再问"要继续吗"**。逐 task 的 `<auto>` 由研发负责人 + 测试 + 安全投票，平票默认 👤（安全优先）。
 
 ---
 
@@ -202,8 +202,9 @@ updated: 2026-10-26T00:00:00Z
 
 | 你要做的事 | 加载（节） |
 |---|---|
-| 守规矩 / 判断是否违规 | `RULES.md` 按 R 编号取节；速查用 `SYSTEM.md` |
-| 路由 / 阶段细节 / 门禁构成 | `GO.md` 对应步骤；`prompts/<阶段>.md` |
+| 守规矩 / 判断是否违规 | `RULES.md`（R1–R8）/ `RULES-FLOW.md`（R9–R19 · 协作决策点前整读）按 R 编号取节；速查用 `SYSTEM.md` |
+| 路由 / 阶段细节 | `GO.md` 对应步骤；`prompts/<阶段>.md` |
+| 门禁计票 / 角色装配 | `go-gates.md`（整读）；各 prompt 内联 🛡️ 门禁段 |
 | 写工件 | `templates/<工件>.md` |
 | 恢复中断 / 反重复 | `RULES.md` R1；`templates/PROGRESS.md` |
 | 少写代码 / 审查可删复杂度 / 债务台账 | `reference/ponytail.md` §2–3、§5–§7 |
